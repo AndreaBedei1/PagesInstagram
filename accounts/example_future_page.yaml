@@ -1,0 +1,37 @@
+# TEMPLATE — copy this file to add a new page. Change page_id + content_type,
+# add matching content to the DB (content_type must match), optionally add a
+# template/palette and music. NO code changes are needed.
+#
+# This file is ignored by the engine because its name contains "example".
+page_id: example_future_it
+enabled: false
+display_name: Pagina di Esempio
+content_type: motivational        # reuse an existing content_type, or add a new one
+language: it
+
+publishing:
+  posts_per_day: 1
+  publish_feed: true
+  publish_story: true
+  publish_reel: false
+  feed_time: "11:00"
+  story_time: "18:30"
+  timezone: "Europe/Rome"
+  missed_job_policy: reschedule
+  missed_job_window_minutes: 240
+
+visual:
+  style: minimal_warm
+  show_author: false
+  font_family: default
+  background_profile: soft_pastel
+  logo_enabled: false
+
+music:
+  enabled: true
+  profile: hopeful
+
+content:
+  source: database
+  minimum_quality_score: 0.82
+  avoid_semantic_duplicates: true

@@ -1,0 +1,39 @@
+# Page 2 — Verified famous quotes from public-domain authors (Italian).
+# Secrets from env: ICE_FAMOUS_QUOTES_IT_IG_USER_ID / _ACCESS_TOKEN
+page_id: famous_quotes_it
+enabled: true
+display_name: Citazioni Famose
+content_type: famous_quote
+language: it
+
+publishing:
+  posts_per_day: 1
+  publish_feed: true
+  publish_story: true
+  publish_reel: false
+  feed_time: "13:00"
+  story_time: "20:00"
+  timezone: "Europe/Rome"
+  missed_job_policy: publish_within_window
+  missed_job_window_minutes: 180
+
+visual:
+  style: editorial_soft
+  show_author: true           # quotes → author ALWAYS shown
+  show_source_work: false     # show the work discreetly only if configured
+  font_family: default
+  background_profile: elegant_neutral
+  logo_enabled: true
+  logo_text: "@citazioni.famose"
+
+music:
+  enabled: true
+  profile: calm_reflective
+  volume_db: -18
+  fade_in_seconds: 1.5
+  fade_out_seconds: 2.0
+
+content:
+  source: database
+  minimum_quality_score: 0.80
+  avoid_semantic_duplicates: true

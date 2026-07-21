@@ -1,0 +1,38 @@
+# Page 1 — Original motivational phrases (Italian).
+# Secrets (IG user id + token) come from env: ICE_MOTIVATIONAL_IT_IG_USER_ID / _ACCESS_TOKEN
+page_id: motivational_it
+enabled: true
+display_name: Frasi Motivazionali
+content_type: motivational
+language: it
+
+publishing:
+  posts_per_day: 1
+  publish_feed: true
+  publish_story: true
+  publish_reel: false
+  feed_time: "12:30"
+  story_time: "19:00"
+  timezone: "Europe/Rome"
+  missed_job_policy: publish_within_window
+  missed_job_window_minutes: 180
+
+visual:
+  style: minimal_warm
+  show_author: false          # original phrases → no author
+  font_family: default
+  background_profile: neutral_soft
+  logo_enabled: true
+  logo_text: "@frasi.motivazionali"
+
+music:
+  enabled: true
+  profile: calm_inspirational
+  volume_db: -18
+  fade_in_seconds: 1.5
+  fade_out_seconds: 2.0
+
+content:
+  source: database
+  minimum_quality_score: 0.80
+  avoid_semantic_duplicates: true

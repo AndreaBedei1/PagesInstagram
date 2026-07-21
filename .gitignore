@@ -1,0 +1,66 @@
+# ---- Secrets ----
+.env
+.env.*
+!.env.example
+*.token
+*.secret
+secrets/
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+.uv/
+*.egg
+
+# ---- Testing / coverage ----
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# ---- Database (runtime data, keep schema/migrations in git) ----
+database/*.sqlite
+database/*.sqlite-shm
+database/*.sqlite-wal
+database/*.db
+
+# ---- Generated media (large, reproducible) ----
+generated/backgrounds/*
+generated/posts/*
+generated/stories/*
+generated/reels/*
+generated/failed/*
+!generated/**/.gitkeep
+
+# ---- Logs ----
+logs/*.log
+logs/*.jsonl
+!logs/.gitkeep
+
+# ---- Assets that are large / licensed ----
+assets/music/**/*.mp3
+assets/music/**/*.wav
+assets/music/**/*.m4a
+assets/music/**/*.ogg
+assets/music/**/*.flac
+!assets/music/**/.gitkeep
+!assets/music/**/*.json
+assets/fonts/*.ttf
+assets/fonts/*.otf
+!assets/fonts/.gitkeep
+!assets/fonts/README.md
+
+# ---- OS / IDE ----
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

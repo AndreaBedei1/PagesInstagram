@@ -1,0 +1,74 @@
+# ============================================================================
+#  Global engine settings (NON-SECRET only). Secrets live in .env.
+#  Any value here can be overridden by environment variables (see .env.example).
+# ============================================================================
+
+mode: dry_run            # dry_run | test | production  (env: ICE_MODE)
+timezone: Europe/Rome    # env: ICE_TIMEZONE
+
+comfyui:
+  url: http://127.0.0.1:8188        # env: ICE_COMFYUI_URL
+  launch_command: F:\AI\start_comfyui.bat   # env: ICE_COMFYUI_LAUNCH_BAT
+  auto_start: true
+  startup_timeout_seconds: 180
+  poll_interval_seconds: 1.0
+  output_dir: F:\AI\output          # env: ICE_COMFYUI_OUTPUT_DIR
+  checkpoint: DreamShaper_8_pruned.safetensors
+  default_workflow: sd15_background.json
+  max_retries: 3
+  request_timeout_seconds: 120
+
+rendering:
+  post_size: [1080, 1350]     # 4:5 feed
+  story_size: [1080, 1920]    # 9:16 story
+  safe_margin_ratio: 0.08
+  story_top_safe_ratio: 0.14
+  story_bottom_safe_ratio: 0.18
+  min_font_px: 34
+  max_lines: 8
+
+video:
+  story_duration_seconds: 12.0
+  feed_duration_seconds: 8.0
+  fps: 30
+  ken_burns: true
+  ken_burns_zoom: 1.08
+  audio_bitrate: 192k
+  video_crf: 20
+  ffmpeg_path: null           # null => use bundled imageio-ffmpeg (env: ICE_FFMPEG_PATH)
+
+music:
+  enabled: true
+  default_volume_db: -18.0
+  fade_in_seconds: 1.5
+  fade_out_seconds: 2.0
+  avoid_reuse_last_n: 8
+
+publishing:
+  graph_api_version: v23.0
+  api_flavor: instagram_login   # instagram_login | facebook_login
+  public_media_base_url: ""     # env: ICE_PUBLIC_MEDIA_BASE_URL (required for production)
+  status_poll_interval_seconds: 5.0
+  status_poll_max_seconds: 300.0
+  max_retries: 5
+  backoff_base_seconds: 30.0
+  backoff_max_seconds: 1800.0
+
+quality:
+  min_score: 0.75
+  min_contrast_ratio: 4.5
+  max_repair_attempts: 5
+  ocr_enabled: false
+
+database:
+  path: database/content.sqlite
+  busy_timeout_ms: 5000
+
+logging:
+  level: INFO
+  max_bytes: 5242880
+  backup_count: 5
+
+dashboard:
+  host: 127.0.0.1
+  port: 8765
