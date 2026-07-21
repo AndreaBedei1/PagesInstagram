@@ -32,6 +32,17 @@ class ImageValidation:
     issues: list[str] = field(default_factory=list)
 
 
+@dataclass
+class VideoValidation:
+    score: float
+    passed: bool
+    checks: dict = field(default_factory=dict)
+    issues: list[str] = field(default_factory=list)
+
+
+MAX_VIDEO_BYTES = 100 * 1024 * 1024  # conservative ceiling for feed/story video
+
+
 def _clamp(x: float) -> float:
     return max(0.0, min(1.0, x))
 
@@ -119,6 +130,83 @@ class MediaValidator:
             score=round(score, 4), passed=passed, contrast=round(contrast, 2),
             checks=checks, issues=issues,
         )
+
+    # ---- video validation -------------------------------------------------
+    def validate_video(self, video_path: str | Path, *, aspect: str,
+                       expected_duration: float | None = None,
+                       require_audio: bool = True) -> VideoValidation:
+        from ..video.ffmpeg import measure_loudness, probe_media
+
+        s = self.s
+        checks: dict = {}
+        issues: list[str] = []
+        info = probe_media(str(video_path))
+        target = tuple(s.rendering.story_size if aspect == "story"
+                       else s.rendering.post_size)
+
+        # duration
+        dur = info.duration or 0.0
+        checks["duration"] = round(dur, 2)
+        dur_ok = 2.0 <= dur <= 95.0
+        if expected_duration:
+            dur_ok = dur_ok and abs(dur - expected_duration) <= 2.0
+        if not dur_ok:
+            issues.append(f"durata anomala {dur:.1f}s")
+
+        # resolution / aspect
+        res_ok = (info.width, info.height) == target
+        checks["resolution"] = [info.width, info.height]
+        if not res_ok:
+            issues.append(f"risoluzione {info.width}x{info.height} != {target}")
+
+        # codecs
+        checks["video_codec"] = info.video_codec
+        checks["audio_codec"] = info.audio_codec
+        checks["audio_sr"] = info.audio_sample_rate
+        vcodec_ok = (info.video_codec or "").lower() in ("h264", "avc1")
+        if not vcodec_ok:
+            issues.append(f"codec video {info.video_codec} non H.264")
+
+        # audio presence + level
+        audio_ok = True
+        level_ok = True
+        if require_audio:
+            audio_ok = info.has_audio
+            if not audio_ok:
+                issues.append("audio assente")
+            if audio_ok:
+                mx, mn = measure_loudness(str(video_path))
+                checks["max_volume_db"] = mx
+                checks["mean_volume_db"] = mn
+                if mx is not None and mx > -1.0:
+                    level_ok = False
+                    issues.append(f"audio troppo alto (max {mx} dB, rischio clipping)")
+                if mn is not None and mn > -9.0:
+                    level_ok = False
+                    issues.append(f"audio troppo presente (mean {mn} dB) per uno sfondo")
+                sr_ok = info.audio_sample_rate == 48000
+                if not sr_ok:
+                    issues.append(f"sample rate {info.audio_sample_rate} != 48000")
+
+        # file size
+        size_ok = True
+        if info.size_bytes:
+            checks["file_bytes"] = info.size_bytes
+            size_ok = info.size_bytes < MAX_VIDEO_BYTES
+            if not size_ok:
+                issues.append("file video troppo grande")
+
+        hard_ok = dur_ok and res_ok and vcodec_ok and audio_ok and size_ok
+        score = (
+            0.28 * (1.0 if dur_ok else 0.3)
+            + 0.24 * (1.0 if res_ok else 0.0)
+            + 0.18 * (1.0 if vcodec_ok else 0.0)
+            + 0.15 * (1.0 if audio_ok else 0.0)
+            + 0.15 * (1.0 if level_ok else 0.4)
+        )
+        passed = hard_ok and level_ok
+        return VideoValidation(score=round(score, 4), passed=passed,
+                               checks=checks, issues=issues)
 
     # ---- auto-repair loop -------------------------------------------------
     def _repair_candidates(self, base: RenderOptions,

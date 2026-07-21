@@ -1,0 +1,36 @@
+{
+  "_comment": "Music catalog = the license/provenance registry. Copy to catalog.json. Every track MUST have a 'license'; tracks without one are marked instagram_safe=0 and are NEVER auto-selected. 'file' is relative to assets/music/. Run `ice music generate` to (re)create CC0 placeholder pads, or `ice music sync` to load this catalog into the DB.",
+  "tracks": [
+    {
+      "track_id": "example_real_calm_1",
+      "title": "Quiet Morning",
+      "author": "Your Licensed Artist",
+      "file": "calm/quiet_morning.mp3",
+      "license": "Royalty-Free (Epidemic Sound, personal license #XXXX)",
+      "source": "https://www.epidemicsound.com/track/XXXX/",
+      "category": "calm",
+      "mood": "calm",
+      "duration_seconds": 120,
+      "bpm": 70,
+      "intensity": 0.2,
+      "instagram_safe": true,
+      "attribution_required": false,
+      "attribution_text": null
+    },
+    {
+      "track_id": "example_public_domain_1",
+      "title": "Gymnopédie No.1 (public domain recording)",
+      "author": "Erik Satie (composition, PD); performer CC0",
+      "file": "gentle_piano/gymnopedie_1.mp3",
+      "license": "CC0-1.0 / Public Domain",
+      "source": "https://musopen.org/…",
+      "category": "gentle_piano",
+      "mood": "reflective",
+      "duration_seconds": 180,
+      "bpm": 60,
+      "intensity": 0.15,
+      "instagram_safe": true,
+      "attribution_required": false
+    }
+  ]
+}

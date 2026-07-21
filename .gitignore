@@ -53,6 +53,8 @@ assets/music/**/*.ogg
 assets/music/**/*.flac
 !assets/music/**/.gitkeep
 !assets/music/**/*.json
+assets/music/catalog.json
+!assets/music/catalog.example.json
 assets/fonts/*.ttf
 assets/fonts/*.otf
 !assets/fonts/.gitkeep
