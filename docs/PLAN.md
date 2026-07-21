@@ -88,16 +88,16 @@ Tabelle: `schema_migrations`, `pages`, `contents`, `media_assets`, `publication_
 
 | Fase | Contenuto | Stato |
 |---|---|---|
-| 1 | Analisi, architettura, config, DB schema, README iniziale | ✅ in corso |
-| 2 | Dataset motivazionale + citazioni verificate, dedup, qualità testo | ⏳ |
-| 3 | Client ComfyUI, workflow SD1.5, retry, metadati | ⏳ |
-| 4 | Rendering deterministico post/story, template, autore | ⏳ |
-| 5 | Validazione qualità immagine (contrasto/margini/score) + auto-fix | ⏳ |
-| 6 | Libreria musicale + metadati/licenze + mood matching + video ffmpeg | ⏳ |
-| 7 | Scheduler, worker persistente, recovery, Task Scheduler | ⏳ |
-| 8 | Client pubblicazione Meta + mock + dry-run + idempotenza/retry | ⏳ |
-| 9 | Dashboard locale (review/approvazione) | ⏳ |
-| 10 | Verifica finale: ambiente pulito, test, pipeline dry-run, docs | ⏳ |
+| 1 | Analisi, architettura, config, DB schema, README iniziale | ✅ fatto |
+| 2 | Dataset motivazionale (100) + citazioni verificate (82), dedup, qualità | ✅ fatto+testato |
+| 3 | Client ComfyUI, workflow SD1.5, retry, metadati | ✅ fatto+testato LIVE (RTX 6000) |
+| 4 | Rendering deterministico post/story, template, autore | ✅ fatto+verificato visivamente |
+| 5 | Validazione qualità immagine (contrasto/margini/score) + auto-fix | ✅ fatto+testato |
+| 6 | Libreria musicale + metadati/licenze + mood matching + video ffmpeg | ✅ fatto+video reale validato |
+| 7 | Scheduler, worker persistente, recovery, Task Scheduler | ✅ fatto (Task Scheduler: script ok, registrazione richiede sessione utente) |
+| 8 | Client pubblicazione Meta + mock + dry-run + idempotenza/retry | ✅ fatto+testato (mock) |
+| 9 | Dashboard locale (review/approvazione) | ✅ fatto+testato |
+| 10 | Verifica finale: ambiente pulito, test, pipeline dry-run, docs | ✅ in corso |
 
 ## 6. Punti che richiedono credenziali/risorse reali (blocchi noti)
 
