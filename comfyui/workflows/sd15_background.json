@@ -1,0 +1,42 @@
+{
+  "_comment": "Reference ComfyUI API-format workflow (SD1.5 txt2img background). The engine builds this graph programmatically via src/comfyui/workflow.py:sd15_txt2img; this file mirrors it for the ComfyUI UI and for customization. Placeholders {{...}} are replaced at runtime.",
+  "4": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": { "ckpt_name": "DreamShaper_8_pruned.safetensors" }
+  },
+  "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": { "width": 768, "height": 960, "batch_size": 1 }
+  },
+  "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": { "text": "{{POSITIVE_PROMPT}}", "clip": ["4", 1] }
+  },
+  "7": {
+    "class_type": "CLIPTextEncode",
+    "inputs": { "text": "{{NEGATIVE_PROMPT}}", "clip": ["4", 1] }
+  },
+  "3": {
+    "class_type": "KSampler",
+    "inputs": {
+      "seed": 0,
+      "steps": 26,
+      "cfg": 6.5,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "denoise": 1.0,
+      "model": ["4", 0],
+      "positive": ["6", 0],
+      "negative": ["7", 0],
+      "latent_image": ["5", 0]
+    }
+  },
+  "8": {
+    "class_type": "VAEDecode",
+    "inputs": { "samples": ["3", 0], "vae": ["4", 2] }
+  },
+  "9": {
+    "class_type": "SaveImage",
+    "inputs": { "filename_prefix": "ice_bg", "images": ["8", 0] }
+  }
+}
