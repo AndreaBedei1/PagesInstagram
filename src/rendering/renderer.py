@@ -69,7 +69,11 @@ class RenderResult:
     lines: list[str]
     scrim_strength: float
     box: tuple[int, int, int, int]
-    background_luminance: float
+    background_luminance: float            # raw bg luminance (before scrim)
+    effective_bg_luminance: float          # bg luminance behind text (after scrim)
+    effective_bg_rgb: tuple[int, int, int]  # mean bg color behind text (for WCAG contrast)
+    text_zone_complexity: float            # stddev of luminance in the text band
+    options: "RenderOptions | None" = None
     metadata: dict = field(default_factory=dict)
 
 
@@ -84,11 +88,25 @@ def _cover_resize(img: Image.Image, size: tuple[int, int]) -> Image.Image:
     return img.crop((left, top, left + tw, top + th))
 
 
-def region_luminance(img: Image.Image, box: tuple[int, int, int, int]) -> float:
-    crop = img.crop(box).convert("RGB").resize((24, 24))
+def _luminance_array(img: Image.Image, box: tuple[int, int, int, int], n: int = 32):
+    crop = img.crop(box).convert("RGB").resize((n, n))
     arr = np.asarray(crop, dtype="float32")
-    lum = 0.2126 * arr[..., 0] + 0.7152 * arr[..., 1] + 0.0722 * arr[..., 2]
-    return float(lum.mean()) / 255.0
+    return 0.2126 * arr[..., 0] + 0.7152 * arr[..., 1] + 0.0722 * arr[..., 2]
+
+
+def region_luminance(img: Image.Image, box: tuple[int, int, int, int]) -> float:
+    return float(_luminance_array(img, box).mean()) / 255.0
+
+
+def _region_complexity(img: Image.Image, box: tuple[int, int, int, int]) -> float:
+    """Normalized stddev of luminance in a region (0..1). High = busy background."""
+    return float(_luminance_array(img, box).std()) / 255.0
+
+
+def _region_mean_rgb(img: Image.Image, box: tuple[int, int, int, int]) -> tuple[int, int, int]:
+    crop = img.crop(box).convert("RGB").resize((32, 32))
+    arr = np.asarray(crop, dtype="float32").reshape(-1, 3).mean(axis=0)
+    return int(arr[0]), int(arr[1]), int(arr[2])
 
 
 class Renderer:
@@ -166,6 +184,9 @@ class Renderer:
         canvas = self._apply_scrim(canvas, box, scrim_color, opt.scrim_strength,
                                    opt.full_overlay)
         draw = ImageDraw.Draw(canvas)
+        eff_lum = region_luminance(canvas, box)
+        eff_rgb = _region_mean_rgb(canvas, box)
+        complexity = _region_complexity(canvas, box)
 
         # --- vertical placement of the text block --------------------------
         block_h = fr.text_height
@@ -208,8 +229,13 @@ class Renderer:
             path=out_path, size=size, text_color=text_color, font_size=fr.font_size,
             lines=fr.lines, scrim_strength=opt.scrim_strength, box=box,
             background_luminance=round(lum, 4),
+            effective_bg_luminance=round(eff_lum, 4),
+            effective_bg_rgb=eff_rgb,
+            text_zone_complexity=round(complexity, 4),
+            options=opt,
             metadata={"aspect": aspect, "content_type": content_type,
-                      "has_author": has_author, "vertical": opt.vertical},
+                      "has_author": has_author, "vertical": opt.vertical,
+                      "num_lines": len(fr.lines)},
         )
 
     # -- drawing helpers ---------------------------------------------------
