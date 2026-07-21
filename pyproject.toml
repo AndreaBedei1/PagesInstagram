@@ -33,7 +33,7 @@ dev = [
 ]
 
 [project.scripts]
-ice = "src.cli.__main__:app"
+ice = "src.cli.main:app"
 
 [tool.pytest.ini_options]
 minversion = "8.0"
