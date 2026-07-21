@@ -38,6 +38,7 @@ generated/posts/*
 generated/stories/*
 generated/reels/*
 generated/failed/*
+generated/*.html
 !generated/**/.gitkeep
 
 # ---- Logs ----
