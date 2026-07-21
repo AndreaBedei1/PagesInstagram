@@ -76,6 +76,20 @@ class Database:
     def list_pages(self) -> list[dict]:
         return _rows(self.conn.execute("SELECT * FROM pages ORDER BY page_id"))
 
+    def set_page_enabled(self, page_id: str, enabled: bool) -> None:
+        with transaction(self.conn):
+            self.conn.execute(
+                "UPDATE pages SET enabled=?, updated_at=? WHERE page_id=?",
+                (int(enabled), utcnow_iso(), page_id),
+            )
+
+    def is_page_paused(self, page_id: str) -> bool:
+        """True only if a pages row exists AND is explicitly disabled (dashboard pause)."""
+        row = self.conn.execute(
+            "SELECT enabled FROM pages WHERE page_id=?", (page_id,)
+        ).fetchone()
+        return row is not None and int(row[0]) == 0
+
     # ================= contents ===========================================
     CONTENT_COLUMNS = (
         "content_type", "language", "text", "original_text", "author",

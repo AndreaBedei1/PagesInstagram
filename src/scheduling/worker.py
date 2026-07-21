@@ -85,6 +85,8 @@ class Worker:
         for job in jobs:
             if not job.get("scheduled_at"):
                 continue
+            if self.db.is_page_paused(job["page_id"]):
+                continue
             sched = parse_iso(job["scheduled_at"])
             if sched > horizon:
                 continue  # too far ahead, prepare later
@@ -129,6 +131,8 @@ class Worker:
         now_dt = now_utc()
         jobs = self.db.due_jobs(now_iso, statuses=_PUBLISH_STATES)
         for job in jobs:
+            if self.db.is_page_paused(job["page_id"]):
+                continue
             status = JobStatus(job["status"])
             if status not in _INFLIGHT:  # MEDIA_READY -> subject to missed policy
                 action = self._missed_action(job, now_dt)

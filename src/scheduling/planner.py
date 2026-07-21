@@ -70,6 +70,8 @@ def plan_jobs(db, registry: AccountRegistry, settings: Settings, *,
     """Plan jobs for all enabled pages for ``days`` days starting today (page tz)."""
     total = PlanReport(days=days)
     for page in registry.enabled():
+        if db.is_page_paused(page.page_id):
+            continue
         start = now_in(page.publishing.timezone).date()
         rep = plan_page(db, page, start=start, days=days)
         total.created += rep.created
