@@ -1,0 +1,13 @@
+# Normalize text line endings to LF in the repo; Windows checkout stays native.
+* text=auto eol=lf
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.mp3 binary
+*.wav binary
+*.mp4 binary
+*.ttf binary
+*.otf binary
+*.sqlite binary
