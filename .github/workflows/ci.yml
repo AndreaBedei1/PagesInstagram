@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv venv .venv --python ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: uv pip install --python .venv/bin/python -r requirements.txt
+
+      - name: Run tests (unit + integration; e2e/GPU excluded)
+        env:
+          ICE_MODE: dry_run
+        run: .venv/bin/python -m pytest -q -m "not e2e" --cov=src --cov-report=term-missing
+
+      - name: Secret scan (no tokens committed)
+        run: |
+          .venv/bin/python - <<'PY'
+          import re, subprocess, sys
+          files = subprocess.check_output(["git", "ls-files"]).decode().splitlines()
+          pat = re.compile(r"(EAA[A-Za-z0-9]{20,}|access_token\s*=\s*['\"][A-Za-z0-9]{20,})")
+          bad = []
+          for f in files:
+              if f.endswith((".png", ".jpg", ".mp4", ".wav")): continue
+              try:
+                  t = open(f, encoding="utf-8", errors="ignore").read()
+              except OSError:
+                  continue
+              if pat.search(t):
+                  bad.append(f)
+          if bad:
+              print("Potential secrets in:", bad); sys.exit(1)
+          print("secret scan clean")
+          PY

@@ -19,6 +19,8 @@ app = typer.Typer(help="Instagram Content Engine — multi-account content gener
                   no_args_is_help=True, add_completion=False)
 music_app = typer.Typer(help="Manage the music library")
 app.add_typer(music_app, name="music")
+from .instagram_cmds import app as instagram_app  # noqa: E402
+app.add_typer(instagram_app, name="instagram")
 console = Console()
 
 
@@ -71,6 +73,10 @@ def validate():
         f"{settings.comfyui.url} ({'reachable' if comfy.is_ready() else 'not running — fallback used'})")
     datasets = list(paths.datasets.glob("*.json")) if paths.datasets.exists() else []
     row("Datasets", bool(datasets), f"{len(datasets)} file")
+    um = settings.publishing.upload_method
+    needs_hosting = um == "hosted_url"
+    row("Upload method", True,
+        f"{um}" + (" (serve hosting pubblico)" if needs_hosting else " — nessun hosting/porta richiesti"))
     try:
         registry = load_pages(paths)
         row("Pages", len(registry) > 0, f"{len(registry)}: {', '.join(registry.ids())}")

@@ -44,6 +44,21 @@ class PublishTarget:
     ig_user_id: str
 
 
+def build_publish_target(settings: Settings, page: PageConfig) -> "PublishTarget | None":
+    """Build a real GraphClient target from env credentials, or None if missing."""
+    creds = resolve_credentials(page)
+    if not creds:
+        return None
+    flavor = getattr(page.instagram, "api_flavor", None) or settings.publishing.api_flavor
+    client = GraphClient(
+        creds.access_token,
+        api_version=settings.publishing.graph_api_version,
+        flavor=flavor,
+        upload_timeout=settings.publishing.upload_timeout_seconds,
+    )
+    return PublishTarget(client=client, ig_user_id=creds.ig_user_id)
+
+
 @dataclass
 class PublishOutcome:
     job_id: int
@@ -66,15 +81,7 @@ class Publisher:
 
     # -- helpers -----------------------------------------------------------
     def _default_factory(self, page: PageConfig) -> PublishTarget | None:
-        creds = resolve_credentials(page)
-        if not creds:
-            return None
-        client = GraphClient(
-            creds.access_token,
-            api_version=self.s.publishing.graph_api_version,
-            flavor=self.s.publishing.api_flavor,
-        )
-        return PublishTarget(client=client, ig_user_id=creds.ig_user_id)
+        return build_publish_target(self.s, page)
 
     def media_url_for(self, output_path: str) -> str:
         base = self.s.publishing.public_media_base_url.rstrip("/")

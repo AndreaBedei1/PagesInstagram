@@ -8,10 +8,12 @@ pagina, **feed + storia**), con:
 - testo aggiunto in modo **deterministico** (Pillow) — il modello non scrive mai il testo,
 - **controllo qualità misurabile** con auto-correzione,
 - **musica coerente col mood**, con licenza, incorporata nel video,
-- **video** feed 4:5 e storia 9:16 conformi ai requisiti Meta,
+- **Reel 9:16 (condiviso nel feed) + Story 9:16** dello stesso contenuto/musica del giorno,
 - **scheduler persistente** con ripristino dopo riavvio (Windows Task Scheduler),
-- **pubblicazione tramite API ufficiali Meta** (Instagram Content Publishing API),
-  con modalità `dry_run` / `test` / `production`,
+- **pubblicazione tramite API ufficiali Meta** con **resumable upload diretto**
+  (il file locale viene caricato direttamente ai server Meta): **nessun hosting
+  pubblico, nessuna porta aperta, nessuno storage esterno**. Modalità `dry_run` /
+  `test` / `production`. Dettagli: [docs/META_RESUMABLE_UPLOAD.md](docs/META_RESUMABLE_UPLOAD.md).
 - **dashboard locale** di revisione.
 
 Aggiungere una pagina = aggiungere **un file YAML** in `accounts/`. Nessun codice duplicato.
@@ -208,9 +210,10 @@ l'account professional, ottieni un token short-lived (1h) e scambialo per uno
 **long-lived (60 giorni)**, rinnovabile prima della scadenza. Vedi la
 [doc ufficiale](https://developers.facebook.com/docs/instagram-platform/content-publishing/).
 
-> **La Graph API scarica i media da URL pubblici**: imposta
-> `ICE_PUBLIC_MEDIA_BASE_URL` a un host https che serve la cartella `generated/`.
-> Senza questo, la produzione non può pubblicare (il dry-run sì).
+> **Nessun hosting pubblico richiesto.** Con `upload_method: resumable` (default)
+> il video locale viene caricato **direttamente** ai server Meta
+> (`rupload.facebook.com`). `ICE_PUBLIC_MEDIA_BASE_URL` NON serve — è usato solo
+> dal provider opzionale/legacy `hosted_url`. Vedi [docs/META_RESUMABLE_UPLOAD.md](docs/META_RESUMABLE_UPLOAD.md).
 
 ---
 
@@ -218,11 +221,15 @@ l'account professional, ottieni un token short-lived (1h) e scambialo per uno
 
 Impostabile con `ICE_MODE` o `config/settings.yaml`:
 
-- **`dry_run`** (default): genera tutto (sfondo, immagini, video, caption) ma **non**
-  effettua chiamate di pubblicazione. Il job diventa `PUBLISHED` con media id
-  `DRYRUN-...` — idempotente.
-- **`test`**: pubblica solo con un client esplicito (mock o account di test).
-- **`production`**: pubblica davvero. Richiede token + `ICE_PUBLIC_MEDIA_BASE_URL`.
+- **`dry_run`** (default): nessuna credenziale, nessun upload reale. Genera tutto
+  (sfondo, video, caption); il job diventa `PUBLISHED` con media id `DRYRUN-...` (idempotente).
+- **`test`**: credenziali Instagram necessarie; **resumable upload reale**, ma la
+  pubblicazione avviene **solo con comando esplicito e conferma**
+  (`ice instagram publish-job --confirm`). Il worker **non** pubblica in automatico.
+- **`production`**: upload resumable diretto e worker automatico. Nessun URL
+  pubblico, nessuno storage esterno. Fallback ComfyUI **disabilitato** (una
+  generazione fallita va in `NEEDS_REVIEW` invece di pubblicare media degradati).
+  Richiede account business verificato e token valido.
 
 ```powershell
 $env:ICE_MODE="dry_run"; .venv\Scripts\python.exe -m src.cli publish-next --dry-run
@@ -385,9 +392,12 @@ Rilevati dalla documentazione ufficiale (vedi anche `docs/PLAN.md` §2):
   fabbisogno (1/giorno/pagina) è ampiamente sotto soglia.
 - Account **professional** (Business/Creator) obbligatorio.
 - Token long-lived **60 giorni**, rinnovabile.
-- La Graph API **scarica i media da URL pubblici**: serve hosting https
-  (`ICE_PUBLIC_MEDIA_BASE_URL`). Questo e i token sono gli unici **blocchi reali**
-  per la produzione; tutto il resto è testato in dry-run/mock.
+- **Upload diretto (resumable)**: il video locale viene caricato ai server Meta
+  senza URL pubblici. Endpoint: `POST graph.*/{ver}/{ig-user-id}/media?upload_type=resumable`
+  → upload binario su `rupload.facebook.com` → `media_publish`. Nessun hosting,
+  nessuna porta, nessuno storage esterno. Vedi [docs/META_RESUMABLE_UPLOAD.md](docs/META_RESUMABLE_UPLOAD.md).
+- L'unico **blocco reale** per la produzione sono i **token Meta** + un **account
+  business** di test; tutto il resto è testato in dry-run/mock.
 - **Non** si usano Selenium/automazioni non ufficiali: solo API ufficiali.
 
 ---
@@ -418,7 +428,8 @@ uv pip install --python .venv\Scripts\python.exe -r requirements.txt
 |---|---|
 | `ComfyUI not running` in `validate` | Avvia ComfyUI o imposta `auto_start`; l'engine usa comunque il fallback |
 | Video senza audio | Nessuna traccia `instagram_safe`: aggiungi musica con licenza e `music sync` |
-| `ICE_PUBLIC_MEDIA_BASE_URL non impostato` | In produzione serve un hosting pubblico dei media |
+| `ICE_PUBLIC_MEDIA_BASE_URL non impostato` | Solo se hai impostato `upload_method: hosted_url`. Col default `resumable` non serve alcun hosting |
+| Story fallisce con "account business" | Le Stories via API richiedono un account Instagram **business** (vedi `instagram account-status`) |
 | `missing credentials` | Imposta `ICE_<PAGE>_IG_USER_ID` e `_ACCESS_TOKEN` in `.env` |
 | Font brutto/di sistema | Metti un TTF in `assets/fonts/` (es. Inter/EB Garamond) |
 | Task Scheduler "Accesso negato" | Esegui `register_task_scheduler.ps1` dalla **tua** sessione interattiva |
@@ -445,7 +456,44 @@ dashboard        Avvia la dashboard locale
 pages            Elenca le pagine
 music generate   Genera toni CC0 (uno per mood)
 music sync       Carica catalog.json nel DB
+
+instagram check-config   --page P     Verifica config publishing (offline)
+instagram token-status   --page P     Validità del token (debug_token)
+instagram account-status --page P     Tipo account / id / limite pubblicazione
+instagram upload-test    --page P --file F [--no-publish]   Container+upload di prova (no publish)
+instagram create-container --page P --job J   Crea solo il container resumable per un job
+instagram publish-job    --page P --job J --confirm   Pubblica un job (richiede --confirm)
 ```
+
+## Prima pubblicazione reale (account Business di test)
+
+Non servono credenziali durante lo sviluppo (tutto testato in dry-run/mock).
+Quando vuoi la prima prova reale, imposta in `.env`:
+
+```
+ICE_MOTIVATIONAL_IT_IG_USER_ID=...
+ICE_MOTIVATIONAL_IT_ACCESS_TOKEN=...   # long-lived, account business di test
+META_APP_ID=...
+META_APP_SECRET=...
+```
+
+Poi, con `ICE_MODE=test`, esegui **in ordine**:
+
+```powershell
+$env:ICE_MODE="test"
+.venv\Scripts\python.exe -m src.cli instagram token-status   --page motivational_it   # 1
+.venv\Scripts\python.exe -m src.cli instagram account-status --page motivational_it   # 2 (business?)
+.venv\Scripts\python.exe -m src.cli generate --page motivational_it --count 1          # 3 media (Reel 9:16)
+.venv\Scripts\python.exe -m src.cli schedule --days 1                                  # crea i job
+.venv\Scripts\python.exe -m src.cli worker --once                                      # 4 prepara media (test: NON pubblica)
+# 5-8: upload di prova diretto, si ferma prima della pubblicazione
+.venv\Scripts\python.exe -m src.cli instagram upload-test --page motivational_it --file generated\stories\<video>.mp4 --no-publish
+# 9: pubblicazione manuale esplicita del job, poi 10: verifica del media_id
+.venv\Scripts\python.exe -m src.cli instagram publish-job --page motivational_it --job <JOB_ID> --confirm
+```
+
+Solo dopo una prova reale riuscita su un account **business di test** il sistema
+va considerato pronto per la produzione.
 
 ---
 
