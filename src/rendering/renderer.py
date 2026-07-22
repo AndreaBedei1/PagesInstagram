@@ -132,7 +132,9 @@ class Renderer:
     ) -> RenderResult:
         opt = options or RenderOptions()
         tpl = TEMPLATES.get(content_type, TEMPLATES["motivational"])
-        size = tuple(self.settings.rendering.story_size if aspect == "story"
+        # Reel and Story are both 9:16; only the legacy feed image is 4:5.
+        vertical = aspect in ("story", "reel")
+        size = tuple(self.settings.rendering.story_size if vertical
                      else self.settings.rendering.post_size)
         W, H = size
 
@@ -140,9 +142,13 @@ class Renderer:
 
         # --- text-safe box --------------------------------------------------
         m = int(min(W, H) * self.settings.rendering.safe_margin_ratio)
-        if aspect == "story":
+        if vertical:
+            # Story/Reel: reserve top + bottom safe zones (IG UI, caption, buttons).
             top = int(H * self.settings.rendering.story_top_safe_ratio)
-            bottom = int(H * (1 - self.settings.rendering.story_bottom_safe_ratio))
+            bottom_ratio = self.settings.rendering.story_bottom_safe_ratio
+            if aspect == "reel":
+                bottom_ratio = max(bottom_ratio, 0.20)  # Reel caption/CTA area
+            bottom = int(H * (1 - bottom_ratio))
         else:
             top, bottom = m, H - m
         left, right = m, W - m

@@ -27,13 +27,12 @@ class PlanReport:
 
 
 def _media_types(page: PageConfig) -> list[MediaType]:
+    """Direct-upload model: main content is a REEL (shared to feed) + a STORY."""
     types: list[MediaType] = []
-    if page.publishing.publish_feed:
-        types.append(MediaType.FEED_VIDEO)
+    if page.publishing.publish_feed or page.publishing.publish_reel:
+        types.append(MediaType.REEL)          # main content, share_to_feed
     if page.publishing.publish_story:
         types.append(MediaType.STORY_VIDEO)
-    if page.publishing.publish_reel:
-        types.append(MediaType.REEL)
     return types
 
 

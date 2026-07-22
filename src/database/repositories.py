@@ -308,6 +308,42 @@ class Database:
         )
         return _rows(self.conn.execute(q, (*s, now_iso, now_iso)))
 
+    # ================= daily_content ======================================
+    def get_daily_content(self, page_id: str, local_date: str) -> dict | None:
+        return _row_to_dict(self.conn.execute(
+            "SELECT * FROM daily_content WHERE page_id=? AND local_date=?",
+            (page_id, local_date),
+        ).fetchone())
+
+    def create_daily_content(self, page_id: str, local_date: str, content_id: int,
+                             music_track_id: str | None = None) -> tuple[int, bool]:
+        """Assign the day's content for a page. Idempotent on (page_id, local_date)."""
+        now = utcnow_iso()
+        with transaction(self.conn):
+            cur = self.conn.execute(
+                "INSERT OR IGNORE INTO daily_content(page_id, local_date, content_id,"
+                " music_track_id, created_at, updated_at) VALUES (?,?,?,?,?,?)",
+                (page_id, local_date, content_id, music_track_id, now, now),
+            )
+            if cur.rowcount == 1:
+                return cur.lastrowid, True
+        existing = self.conn.execute(
+            "SELECT id FROM daily_content WHERE page_id=? AND local_date=?",
+            (page_id, local_date),
+        ).fetchone()
+        return existing[0], False
+
+    def update_daily_content(self, daily_id: int, **fields: Any) -> None:
+        if not fields:
+            return
+        fields["updated_at"] = utcnow_iso()
+        cols = ",".join(f"{k}=?" for k in fields)
+        with transaction(self.conn):
+            self.conn.execute(
+                f"UPDATE daily_content SET {cols} WHERE id=?",
+                (*fields.values(), daily_id),
+            )
+
     # ================= publication_logs ===================================
     def log_event(self, *, job_id: int | None, page_id: str | None, event: str,
                   request_summary: str | None = None,
@@ -344,6 +380,10 @@ class Database:
                 + ",".join(f"{c}=excluded.{c}" for c in cols[1:]),
                 (*values, now),
             )
+
+    def get_track(self, track_id: str) -> dict | None:
+        return _row_to_dict(self.conn.execute(
+            "SELECT * FROM music_tracks WHERE track_id=?", (track_id,)).fetchone())
 
     def list_tracks(self, *, category: str | None = None,
                     mood: str | None = None, instagram_safe: bool | None = True) -> list[dict]:

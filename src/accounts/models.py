@@ -13,14 +13,21 @@ from pydantic import BaseModel, Field, field_validator
 
 class PublishingConfig(BaseModel):
     posts_per_day: int = 1
-    publish_feed: bool = True
+    publish_feed: bool = True      # main content -> Reel shared to feed
     publish_story: bool = True
-    publish_reel: bool = False
+    publish_reel: bool = False     # legacy alias; feed content is already a Reel
     feed_time: str = "12:30"      # HH:MM local (page timezone)
     story_time: str = "19:00"
     timezone: str = "Europe/Rome"
     missed_job_policy: str = "publish_within_window"
     missed_job_window_minutes: int = 180
+    # Direct-upload architecture (defaults; can be omitted in YAML)
+    upload_method: str = "resumable"        # resumable | hosted_url
+    feed_media_type: str = "REELS"
+    story_media_type: str = "STORIES"
+    share_reel_to_feed: bool = True
+
+    model_config = {"extra": "allow"}
 
     @field_validator("feed_time", "story_time")
     @classmethod
@@ -72,6 +79,13 @@ class ContentConfig(BaseModel):
     model_config = {"extra": "allow"}
 
 
+class InstagramConfig(BaseModel):
+    account_type: str = "business"          # business required for Stories via API
+    api_flavor: str = "instagram_login"     # instagram_login | facebook_login
+
+    model_config = {"extra": "allow"}
+
+
 class PageConfig(BaseModel):
     page_id: str
     enabled: bool = True
@@ -83,6 +97,7 @@ class PageConfig(BaseModel):
     visual: VisualConfig = Field(default_factory=VisualConfig)
     music: MusicConfig = Field(default_factory=MusicConfig)
     content: ContentConfig = Field(default_factory=ContentConfig)
+    instagram: InstagramConfig = Field(default_factory=InstagramConfig)
 
     # Populated by the registry, not from YAML.
     config_path: str | None = None

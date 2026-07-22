@@ -6,6 +6,7 @@ page's ``missed_job_policy``. A single-instance lock prevents two workers runnin
 """
 from __future__ import annotations
 
+import os
 import threading
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -13,14 +14,14 @@ from datetime import timedelta
 from zoneinfo import ZoneInfo
 
 from ..accounts.registry import AccountRegistry
-from ..core.enums import (ACTIVE_JOB_STATES, JobStatus, MediaType, MissedJobPolicy)
+from ..core.enums import JobStatus, MissedJobPolicy, Mode
 from ..core.logging_setup import get_logger
 from ..core.settings import Settings
 from ..core.timeutils import now_utc, parse_iso, utcnow_iso
 from ..database import Database
 from ..content.service import select_content_for_page
 from ..publishing.publisher import Publisher
-from .pipeline import ASPECT_FOR_MEDIA, GenerationPipeline
+from .pipeline import GenerationPipeline
 
 log = get_logger("scheduling.worker")
 
@@ -80,53 +81,77 @@ class Worker:
         now = now_utc()
         horizon = now + self.prepare_ahead
         jobs = self.db.list_jobs(statuses=_PREPARE_STATES)
-        # group by (page_id, local date) so feed+story of a day share content
+        # group by (page_id, local date): Reel + Story of a day MUST share content
         groups: dict[tuple, list[dict]] = defaultdict(list)
         for job in jobs:
-            if not job.get("scheduled_at"):
+            if not job.get("scheduled_at") or self.db.is_page_paused(job["page_id"]):
                 continue
-            if self.db.is_page_paused(job["page_id"]):
-                continue
-            sched = parse_iso(job["scheduled_at"])
-            if sched > horizon:
+            if parse_iso(job["scheduled_at"]) > horizon:
                 continue  # too far ahead, prepare later
             page = self.registry.get(job["page_id"])
-            local_date = sched.astimezone(ZoneInfo(page.publishing.timezone)).date()
-            groups[(job["page_id"], local_date.isoformat())].append(job)
+            local_date = parse_iso(job["scheduled_at"]).astimezone(
+                ZoneInfo(page.publishing.timezone)).date().isoformat()
+            groups[(job["page_id"], local_date)].append(job)
 
-        for (page_id, _date), group in groups.items():
+        for (page_id, local_date), group in groups.items():
             page = self.registry.get(page_id)
-            # reuse content already chosen for a sibling job, else select fresh
-            content_id = next((j["content_id"] for j in group if j.get("content_id")), None)
-            content = (self.db.get_content(content_id) if content_id
-                       else select_content_for_page(self.db, page))
-            if not content:
-                stats.messages.append(f"no approved content for {page_id}")
-                log.warning("No approved content available for %s", page_id)
+            content = self._resolve_daily_content(page, local_date, stats)
+            if content is None:
                 continue
-            aspects = sorted({ASPECT_FOR_MEDIA[MediaType(j["media_type"])] for j in group})
-            try:
-                result = self.pipeline.generate(page, content, aspects=aspects,
-                                                 try_comfyui=self.try_comfyui)
-            except Exception as e:  # noqa: BLE001
-                log.exception("pipeline failed for %s: %s", page_id, e)
-                stats.failed += 1
-                continue
+            daily = self.db.get_daily_content(page_id, local_date)
+
+            # Generate the shared 9:16 video once; reuse if already produced.
+            video_path = daily.get("video_path") if daily else None
+            if not (video_path and os.path.exists(video_path)):
+                try:
+                    result = self.pipeline.generate_daily(
+                        page, content, music_track_id=(daily or {}).get("music_track_id"),
+                        try_comfyui=self.try_comfyui)
+                except Exception as e:  # noqa: BLE001
+                    log.exception("pipeline failed for %s: %s", page_id, e)
+                    stats.failed += 1
+                    continue
+                if not result.ok:
+                    for job in group:
+                        self.db.update_job(job["id"], content_id=content["id"],
+                                           status=JobStatus.NEEDS_REVIEW,
+                                           last_error=result.message)
+                        self.db.log_event(job_id=job["id"], page_id=page_id,
+                                          event="error", error=result.message)
+                        stats.review += 1
+                    continue
+                video_path = result.video_path
+                self.db.update_daily_content(
+                    daily["id"], content_id=content["id"],
+                    music_track_id=result.music_track_id,
+                    media_asset_id=result.media_asset_id, video_path=video_path)
+
+            # Assign the SAME video to every job of the day (Reel + Story).
             for job in group:
-                vid = result.video_for(job["media_type"])
-                if result.ok and vid:
-                    self.db.update_job(job["id"], content_id=content["id"],
-                                       output_path=vid, generated_at=utcnow_iso(),
-                                       status=JobStatus.MEDIA_READY)
-                    stats.prepared += 1
-                else:
-                    self.db.update_job(job["id"], content_id=content["id"],
-                                       status=JobStatus.NEEDS_REVIEW,
-                                       last_error=result.message or "quality not met")
-                    stats.review += 1
+                self.db.update_job(job["id"], content_id=content["id"],
+                                   output_path=video_path, generated_at=utcnow_iso(),
+                                   status=JobStatus.MEDIA_READY,
+                                   upload_method=page.publishing.upload_method)
+                stats.prepared += 1
+
+    def _resolve_daily_content(self, page, local_date: str, stats: TickStats):
+        """Persistent page+date -> content assignment (feed & story never diverge)."""
+        daily = self.db.get_daily_content(page.page_id, local_date)
+        if daily and daily.get("content_id"):
+            return self.db.get_content(daily["content_id"])
+        content = select_content_for_page(self.db, page)
+        if not content:
+            stats.messages.append(f"no approved content for {page.page_id}")
+            log.warning("No approved content available for %s", page.page_id)
+            return None
+        self.db.create_daily_content(page.page_id, local_date, content["id"])
+        return content
 
     # -- publishing --------------------------------------------------------
     def _publish_due(self, stats: TickStats) -> None:
+        if self.s.mode == Mode.TEST:
+            # test mode: publishing is manual only (CLI 'instagram publish-job --confirm')
+            return
         now_iso = utcnow_iso()
         now_dt = now_utc()
         jobs = self.db.due_jobs(now_iso, statuses=_PUBLISH_STATES)

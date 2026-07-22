@@ -27,9 +27,11 @@ def test_planner_local_time_is_correct(tmp_db, project_paths):
     s = load_settings(project_paths, load_dotenv=False)
     plan_jobs(tmp_db, reg, s, days=1)
     jobs = tmp_db.list_jobs(page_id="motivational_it")
-    feed = next(j for j in jobs if j["media_type"] == "feed_video")
-    local = parse_iso(feed["scheduled_at"]).astimezone(ZoneInfo("Europe/Rome"))
+    # main content is now a REEL (shared to feed) at the feed_time slot
+    reel = next(j for j in jobs if j["media_type"] == "reel")
+    local = parse_iso(reel["scheduled_at"]).astimezone(ZoneInfo("Europe/Rome"))
     assert (local.hour, local.minute) == (12, 30)  # DST-safe
+    assert {j["media_type"] for j in jobs} == {"reel", "story_video"}
 
 
 def test_missed_policy_within_window(tmp_db, project_paths):

@@ -39,8 +39,15 @@ class VideoBuilder:
         self.ffmpeg = resolve_ffmpeg(settings.video.ffmpeg_path)
 
     def _dims(self, aspect: str) -> tuple[int, int]:
-        return tuple(self.s.rendering.story_size if aspect == "story"
+        return tuple(self.s.rendering.story_size if aspect in ("story", "reel")
                      else self.s.rendering.post_size)
+
+    def _default_duration(self, aspect: str) -> float:
+        if aspect == "reel":
+            return self.s.video.reel_duration_seconds
+        if aspect == "story":
+            return self.s.video.story_duration_seconds
+        return self.s.video.feed_duration_seconds
 
     def build(
         self,
@@ -57,9 +64,7 @@ class VideoBuilder:
     ) -> VideoResult:
         s = self.s
         W, H = self._dims(aspect)
-        dur = float(duration if duration is not None
-                    else (s.video.story_duration_seconds if aspect == "story"
-                          else s.video.feed_duration_seconds))
+        dur = float(duration if duration is not None else self._default_duration(aspect))
         fps = s.video.fps
         frames = max(2, int(round(dur * fps)))
         kb = s.video.ken_burns if ken_burns is None else ken_burns

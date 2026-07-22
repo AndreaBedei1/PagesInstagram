@@ -13,6 +13,7 @@ Retries use exponential backoff and only apply to transient (retryable) errors.
 """
 from __future__ import annotations
 
+import os
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -21,7 +22,8 @@ from typing import Callable
 from ..accounts.models import PageConfig
 from ..accounts.registry import AccountRegistry
 from ..content.captions import build_caption
-from ..core.enums import META_MEDIA_TYPE, JobStatus, MediaType, Mode
+from ..core.enums import (META_MEDIA_TYPE, JobStatus, MediaType, Mode,
+                          UploadMethod, UploadStatus)
 from ..core.errors import PublishError
 from ..core.logging_setup import get_logger
 from ..core.settings import Settings
@@ -139,48 +141,176 @@ class Publisher:
         return PublishOutcome(jid, JobStatus.PUBLISHED, Mode.DRY_RUN,
                               remote_media_id=fake_id, message="dry-run (no API call)")
 
+    def _upload_method(self, job: dict, page: PageConfig) -> str:
+        return (job.get("upload_method") or page.publishing.upload_method
+                or self.s.publishing.upload_method or UploadMethod.RESUMABLE)
+
     def _do_publish(self, job: dict, page: PageConfig,
                     target: PublishTarget) -> PublishOutcome:
-        jid = job["id"]
         media_type = MediaType(job["media_type"])
         meta_type = META_MEDIA_TYPE[media_type]
-        is_video = media_type in _VIDEO_TYPES
-        client = target.client
         try:
-            media_url = self.media_url_for(job["output_path"])
-
-            container_id = job.get("container_id")
-            if not container_id:
-                self.db.update_job(jid, status=JobStatus.UPLOADING)
-                kwargs: dict = {"media_type": meta_type}
-                if is_video:
-                    kwargs["video_url"] = media_url
-                else:
-                    kwargs["image_url"] = media_url
-                if media_type not in _STORY_TYPES:  # stories ignore caption
-                    kwargs["caption"] = self._caption_for(job, page)
-                container_id = client.create_media_container(target.ig_user_id, **kwargs)
-                self.db.update_job(jid, container_id=container_id,
-                                   status=JobStatus.CONTAINER_CREATED)
-                self.db.log_event(job_id=jid, page_id=page.page_id,
-                                  event="container_create",
-                                  request_summary=f"{meta_type} url={media_url}",
-                                  response_summary=container_id)
-
-            self._await_finished(client, container_id)
-
-            self.db.update_job(jid, status=JobStatus.PUBLISHING)
-            media_id = client.publish_container(target.ig_user_id, container_id)
-            self.db.update_job(jid, remote_media_id=media_id,
-                               status=JobStatus.PUBLISHED, published_at=utcnow_iso())
-            self.db.log_event(job_id=jid, page_id=page.page_id, event="publish",
-                              response_summary=media_id)
-            log.info("Published job %s -> media %s (%s)", jid, media_id, page.page_id)
-            return PublishOutcome(jid, JobStatus.PUBLISHED, self.s.mode,
-                                  remote_media_id=media_id, container_id=container_id,
-                                  message="published")
+            self._verify_account(target, page, media_type)
+            if self._upload_method(job, page) == UploadMethod.RESUMABLE:
+                return self._publish_resumable(job, page, target, media_type, meta_type)
+            return self._publish_hosted(job, page, target, media_type, meta_type)
         except PublishError as e:
             return self._handle_failure(job, page, e)
+
+    # -- account & media pre-checks ---------------------------------------
+    def _verify_account(self, target: PublishTarget, page: PageConfig,
+                        media_type: MediaType) -> None:
+        try:
+            info = target.client.get_account_info(target.ig_user_id)
+        except PublishError:
+            return  # metadata call failed — don't block publishing on it
+        atype = (info.get("account_type") or "").lower()
+        if atype == "personal":
+            raise PublishError("account personale: pubblicazione via API non supportata",
+                               retryable=False, code="ACCOUNT_TYPE")
+        if media_type == MediaType.STORY_VIDEO and atype and atype != "business":
+            raise PublishError(f"le Stories via API richiedono un account business "
+                               f"(trovato: {atype})", retryable=False, code="ACCOUNT_TYPE")
+
+    def _validate_video_file(self, file_path: str | None, media_type: MediaType) -> int:
+        if not file_path or not os.path.exists(file_path):
+            raise PublishError(f"file media mancante: {file_path}", retryable=False,
+                               code="FILE_MISSING")
+        size = os.path.getsize(file_path)
+        if size <= 0:
+            raise PublishError("file media vuoto", retryable=False, code="FILE_EMPTY")
+        if not str(file_path).lower().endswith((".mp4", ".mov")):
+            raise PublishError("il resumable upload richiede MP4/MOV", retryable=False,
+                               code="FILE_FORMAT")
+        try:
+            from ..video.ffmpeg import probe_media
+            dur = probe_media(str(file_path)).duration or 0.0
+        except Exception:  # noqa: BLE001 — probing must not block on odd ffmpeg output
+            dur = 0.0
+        if dur:
+            if media_type == MediaType.REEL and not (3 <= dur <= 90):
+                raise PublishError(f"durata Reel {dur:.1f}s fuori dai limiti 3–90s",
+                                   retryable=False, code="DURATION")
+            if media_type == MediaType.STORY_VIDEO and not (1 <= dur <= 60):
+                raise PublishError(f"durata Story {dur:.1f}s fuori dai limiti 1–60s",
+                                   retryable=False, code="DURATION")
+        return size
+
+    # -- resumable (direct upload) path -----------------------------------
+    def _publish_resumable(self, job: dict, page: PageConfig, target: PublishTarget,
+                           media_type: MediaType, meta_type: str) -> PublishOutcome:
+        jid = job["id"]
+        client = target.client
+        file_path = job["output_path"]
+        size = self._validate_video_file(file_path, media_type)
+        is_reel = media_type == MediaType.REEL
+        caption = self._caption_for(job, page) if is_reel else None  # no caption on Story
+        share = page.publishing.share_reel_to_feed if is_reel else None
+
+        container_id = job.get("container_id")
+        upload_uri = job.get("upload_uri")
+
+        # Reuse or recreate an existing container (crash-before-upload safe).
+        if container_id:
+            try:
+                status = client.get_container_status(container_id)
+            except PublishError:
+                status = "UNKNOWN"
+            if status == "PUBLISHED":
+                self.db.update_job(jid, status=JobStatus.PUBLISHED,
+                                   published_at=utcnow_iso(),
+                                   remote_media_id=job.get("remote_media_id") or "PUBLISHED")
+                return PublishOutcome(jid, JobStatus.PUBLISHED, self.s.mode,
+                                      remote_media_id=job.get("remote_media_id"),
+                                      container_id=container_id,
+                                      message="already published (idempotent)")
+            if status in ("EXPIRED", "ERROR"):
+                container_id = upload_uri = None
+                self.db.update_job(jid, container_id=None, upload_uri=None,
+                                   upload_offset=0)
+
+        if not container_id:
+            self.db.update_job(jid, status=JobStatus.UPLOADING,
+                               upload_method=UploadMethod.RESUMABLE,
+                               upload_status=UploadStatus.IN_PROGRESS,
+                               upload_size_bytes=size, upload_started_at=utcnow_iso())
+            container_id, upload_uri = client.create_resumable_container(
+                target.ig_user_id, media_type=meta_type, caption=caption,
+                share_to_feed=share)
+            self.db.update_job(jid, container_id=container_id, upload_uri=upload_uri,
+                               status=JobStatus.CONTAINER_CREATED)
+            self.db.log_event(job_id=jid, page_id=page.page_id, event="container_create",
+                              request_summary=f"{meta_type} resumable share_to_feed={share} "
+                                              f"size={size}",
+                              response_summary=container_id)
+
+        # Resume-aware binary upload. Remote is the source of truth for the offset.
+        offset = int(job.get("upload_offset") or 0)
+        try:
+            st = client.get_upload_status(container_id)
+            if st.get("bytes_transferred") is not None:
+                offset = max(offset, int(st["bytes_transferred"]))
+            if st.get("status_code") == "FINISHED":
+                offset = size
+        except PublishError:
+            pass
+
+        if offset < size:
+            self.db.update_job(jid, status=JobStatus.UPLOADING, upload_offset=offset)
+            client.upload_video_file(upload_uri, file_path, offset=offset,
+                                     timeout=self.s.publishing.upload_timeout_seconds)
+            self.db.log_event(job_id=jid, page_id=page.page_id, event="upload",
+                              request_summary=f"offset={offset} size={size}",
+                              response_summary="success")
+        self.db.update_job(jid, upload_offset=size, upload_status=UploadStatus.COMPLETED,
+                           upload_completed_at=utcnow_iso())
+
+        self._await_finished(client, container_id)
+        return self._finalize_publish(job, page, target, container_id)
+
+    # -- hosted_url (legacy/optional) path --------------------------------
+    def _publish_hosted(self, job: dict, page: PageConfig, target: PublishTarget,
+                        media_type: MediaType, meta_type: str) -> PublishOutcome:
+        jid = job["id"]
+        client = target.client
+        is_video = media_type in _VIDEO_TYPES
+        media_url = self.media_url_for(job["output_path"])
+        container_id = job.get("container_id")
+        if not container_id:
+            self.db.update_job(jid, status=JobStatus.UPLOADING,
+                               upload_method=UploadMethod.HOSTED_URL)
+            kwargs: dict = {"media_type": meta_type}
+            kwargs["video_url" if is_video else "image_url"] = media_url
+            if media_type not in _STORY_TYPES:
+                kwargs["caption"] = self._caption_for(job, page)
+            if media_type == MediaType.REEL:
+                kwargs["share_to_feed"] = page.publishing.share_reel_to_feed
+            container_id = client.create_media_container(target.ig_user_id, **kwargs)
+            self.db.update_job(jid, container_id=container_id,
+                               status=JobStatus.CONTAINER_CREATED)
+            self.db.log_event(job_id=jid, page_id=page.page_id, event="container_create",
+                              request_summary=f"{meta_type} url={media_url}",
+                              response_summary=container_id)
+        self._await_finished(client, container_id)
+        return self._finalize_publish(job, page, target, container_id)
+
+    def _finalize_publish(self, job: dict, page: PageConfig, target: PublishTarget,
+                          container_id: str) -> PublishOutcome:
+        jid = job["id"]
+        if job.get("remote_media_id"):  # idempotent: already published
+            return PublishOutcome(jid, JobStatus.PUBLISHED, self.s.mode,
+                                  remote_media_id=job["remote_media_id"],
+                                  container_id=container_id, message="already published")
+        self.db.update_job(jid, status=JobStatus.PUBLISHING)
+        media_id = target.client.publish_container(target.ig_user_id, container_id)
+        self.db.update_job(jid, remote_media_id=media_id, status=JobStatus.PUBLISHED,
+                           published_at=utcnow_iso())
+        self.db.log_event(job_id=jid, page_id=page.page_id, event="publish",
+                          response_summary=media_id)
+        log.info("Published job %s -> media %s (%s)", jid, media_id, page.page_id)
+        return PublishOutcome(jid, JobStatus.PUBLISHED, self.s.mode,
+                              remote_media_id=media_id, container_id=container_id,
+                              message="published")
 
     def _await_finished(self, client, container_id: str) -> None:
         interval = self.s.publishing.status_poll_interval_seconds
@@ -214,6 +344,8 @@ class Publisher:
                           last_error=str(e), next_retry_at=next_iso)
             if clear_container:
                 fields["container_id"] = None
+                fields["upload_uri"] = None
+                fields["upload_offset"] = 0
             self.db.update_job(jid, **fields)
             self.db.log_event(job_id=jid, page_id=page.page_id, event="retry",
                               error=str(e))

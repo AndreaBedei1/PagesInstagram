@@ -23,7 +23,8 @@ from .workflow import sd15_txt2img
 log = get_logger("comfyui.backgrounds")
 
 # Generation resolutions (SD1.5-friendly, multiples of 8); upscaled at render time.
-DIMS = {"feed": (768, 960), "story": (576, 1024)}
+# Reel and Story are both 9:16; feed (legacy 4:5) kept for the hosted_url path.
+DIMS = {"feed": (768, 960), "story": (576, 1024), "reel": (576, 1024)}
 
 NEGATIVE = (
     "text, words, letters, typography, watermark, signature, logo, caption, "

@@ -28,6 +28,11 @@ class ComfyUISettings(BaseModel):
     default_workflow: str = "sd15_background.json"
     max_retries: int = 3
     request_timeout_seconds: int = 120
+    # Fallback (deterministic gradient) policy per mode. In production a ComfyUI
+    # failure must NOT silently degrade quality — the job goes to NEEDS_REVIEW.
+    allow_fallback_in_dry_run: bool = True
+    allow_fallback_in_test: bool = True
+    allow_fallback_in_production: bool = False
 
 
 class RenderingSettings(BaseModel):
@@ -41,8 +46,9 @@ class RenderingSettings(BaseModel):
 
 
 class VideoSettings(BaseModel):
+    reel_duration_seconds: float = 12.0   # main content (3–90s allowed by Meta)
     story_duration_seconds: float = 12.0
-    feed_duration_seconds: float = 8.0
+    feed_duration_seconds: float = 8.0    # legacy 4:5 (hosted_url only)
     fps: int = 30
     ken_burns: bool = True
     ken_burns_zoom: float = 1.08
@@ -60,9 +66,19 @@ class MusicSettings(BaseModel):
 
 
 class PublishingSettings(BaseModel):
-    graph_api_version: str = "v23.0"
+    graph_api_version: str = "v23.0"     # Meta docs currently show v25.0; configurable
     api_flavor: str = "instagram_login"  # instagram_login | facebook_login
-    public_media_base_url: str = ""  # maps to ./generated when hosting publicly
+    # Direct upload is the DEFAULT and needs no public hosting.
+    upload_method: str = "resumable"     # resumable | hosted_url
+    feed_media_type: str = "REELS"       # main content -> Reel (share_to_feed)
+    story_media_type: str = "STORIES"
+    share_reel_to_feed: bool = True
+    # Resumable upload tuning
+    upload_timeout_seconds: int = 600
+    upload_chunk_size: int = 8 * 1024 * 1024   # streaming chunk (no full-file in RAM)
+    resumable_max_retries: int = 5
+    # hosted_url provider (legacy/optional): only used when upload_method=hosted_url
+    public_media_base_url: str = ""
     status_poll_interval_seconds: float = 5.0
     status_poll_max_seconds: float = 300.0
     max_retries: int = 5
@@ -120,6 +136,14 @@ class Settings(BaseModel):
     def db_path(self) -> Path:
         p = Path(self.database.path)
         return p if p.is_absolute() else self.paths.root / p
+
+    def comfyui_fallback_allowed(self) -> bool:
+        """Whether the deterministic background fallback is allowed in the current mode."""
+        if self.mode == Mode.PRODUCTION:
+            return self.comfyui.allow_fallback_in_production
+        if self.mode == Mode.TEST:
+            return self.comfyui.allow_fallback_in_test
+        return self.comfyui.allow_fallback_in_dry_run
 
 
 def _apply_env_overrides(data: dict) -> dict:
