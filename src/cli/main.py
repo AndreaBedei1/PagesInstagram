@@ -131,11 +131,6 @@ def generate(page: str = typer.Option(..., help="page_id"),
     paths, settings, registry, db = _ctx()
     pcfg = registry.get(page)
     pipeline = GenerationPipeline(settings, db)
-    aspects = []
-    if pcfg.publishing.publish_feed:
-        aspects.append("feed")
-    if pcfg.publishing.publish_story:
-        aspects.append("story")
     made = 0
     seen: set[int] = set()
     for _ in range(count):
@@ -144,11 +139,12 @@ def generate(page: str = typer.Option(..., help="page_id"),
         if not content or content["id"] in seen:
             break
         seen.add(content["id"])
-        res = pipeline.generate(pcfg, content, aspects=aspects, try_comfyui=comfyui)
+        # Produces the single 9:16 Reel video (shared by Reel + Story).
+        res = pipeline.generate_daily(pcfg, content, try_comfyui=comfyui)
         made += 1
         status = "[green]OK[/]" if res.ok else "[yellow]REVIEW[/]"
-        console.print(f"{status} content {content['id']} — " +
-                      ", ".join(f"{a}:{o.video_path}" for a, o in res.outputs.items()))
+        console.print(f"{status} content {content['id']} — reel/story 9:16: {res.video_path}"
+                      + (f"  music={res.music_track_id}" if res.music_track_id else " (no audio)"))
     console.print(f"[green]Generati {made} contenuti[/] (media in generated/)")
     db.close()
 
@@ -169,7 +165,7 @@ def render(page: str = typer.Option(...), count: int = typer.Option(3),
     contents = db.list_contents(content_type=pcfg.content_type,
                                 status="approved_for_publication")[:count]
     for content in contents:
-        for aspect in (["feed", "story"] if pcfg.publishing.publish_story else ["feed"]):
+        for aspect in ["reel"]:   # main content is a 9:16 Reel (shared with Story)
             stem = f"{page}_{content['id']}_{aspect}"
             bgres = bg.generate(out_path=paths.backgrounds / f"{stem}_bg.png",
                                 background_prompt=content.get("background_prompt"),
