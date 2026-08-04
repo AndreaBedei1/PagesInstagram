@@ -28,6 +28,7 @@ CATEGORY_TAGS: dict[str, list[str]] = {
     "politica": ["#storia"],
     "societa": ["#società"],
     "tecnologia": ["#tecnologia"],
+    "invenzioni": ["#invenzioni"],
     "sport": ["#sport"],
     "cultura": ["#cultura"],
     "natura": ["#natura"],

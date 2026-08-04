@@ -12,7 +12,8 @@ Editorial rules:
   photographic evidence of a real place or event.
 
 Each authored entry is
-``(title, location, fact, explanation, category, source_name, source_url)``.
+``(title, location, fact, explanation, category, source_url)``; the source
+*name* is derived from the URL host so the authored data stays readable.
 """
 from __future__ import annotations
 
@@ -89,10 +90,28 @@ CALLS_TO_ACTION = [
 ]
 
 
+def source_name_for(url: str) -> str:
+    """Human-readable source name derived from the URL host."""
+    if "treccani.it" in url:
+        return "Treccani — Enciclopedia"
+    if "whc.unesco.org" in url or "unesco.org" in url:
+        return "UNESCO World Heritage Centre"
+    if "nasa.gov" in url:
+        return "NASA"
+    if "esa.int" in url:
+        return "ESA"
+    if "iucnredlist.org" in url:
+        return "IUCN Red List"
+    if "britannica.com" in url:
+        return "Encyclopaedia Britannica"
+    return "Wikipedia in italiano"
+
+
 def build() -> list[dict]:
     items: list[dict] = []
     for i, entry in enumerate(CURIOSITIES):
-        title, location, fact, explanation, category, src_name, src_url = entry
+        title, location, fact, explanation, category, src_url = entry
+        src_name = source_name_for(src_url)
         base, prompts, mood = CATEGORY_PROFILES[category]
         items.append({
             "id": f"wc-{i:04d}-{slugify(title)[:32]}",
