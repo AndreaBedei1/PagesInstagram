@@ -58,8 +58,7 @@ def build() -> list[dict]:
     items: list[dict] = []
     for i, entry in enumerate(WORDS):
         lemma, pos, definition, example, etymology, register = entry
-        caption_parts = [f"{lemma.capitalize()}: {definition}",
-                         f"Esempio: «{example}»"]
+        caption_parts = [f"{lemma} — {definition}", f"Esempio: «{example}»"]
         if etymology:
             caption_parts.append(f"Origine: {etymology}")
         caption_parts.append(f"Fonte: {SOURCE_NAME}.")
