@@ -61,6 +61,7 @@ class VideoBuilder:
         fade_in: float | None = None,
         fade_out: float | None = None,
         ken_burns: bool | None = None,
+        silent_audio: bool | None = None,
     ) -> VideoResult:
         s = self.s
         W, H = self._dims(aspect)
@@ -84,9 +85,17 @@ class VideoBuilder:
             vf = (f"scale={W}:{H}:force_original_aspect_ratio=increase,"
                   f"crop={W}:{H},format=yuv420p")
 
-        has_audio = bool(music_path and os.path.exists(str(music_path)))
+        has_music = bool(music_path and os.path.exists(str(music_path)))
+        # Silent track: Meta's video container spec expects an audio stream, and
+        # these pages deliberately publish without music (no third-party audio,
+        # no dependency on the Instagram sound library).
+        silent = (not has_music) and bool(
+            silent_audio if silent_audio is not None
+            else s.video.silent_audio_when_no_music)
+        has_audio = has_music or silent
+
         args: list[str] = ["-loop", "1", "-i", str(image_path)]
-        if has_audio:
+        if has_music:
             vol = s.music.default_volume_db if volume_db is None else volume_db
             fi = s.music.fade_in_seconds if fade_in is None else fade_in
             fo = s.music.fade_out_seconds if fade_out is None else fade_out
@@ -96,6 +105,9 @@ class VideoBuilder:
                   f"volume={vol}dB")
             args += ["-filter_complex", f"[0:v]{vf}[v];[1:a]{af}[a]",
                      "-map", "[v]", "-map", "[a]"]
+        elif silent:
+            args += ["-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=48000"]
+            args += ["-filter_complex", f"[0:v]{vf}[v]", "-map", "[v]", "-map", "1:a"]
         else:
             args += ["-vf", vf, "-map", "0:v"]
 
@@ -111,8 +123,8 @@ class VideoBuilder:
 
         run_ffmpeg(self.ffmpeg, args, timeout=max(120, int(dur * 20)))
         info = probe_media(str(out_path), self.ffmpeg)
-        log.info("video built %s (%.1fs, audio=%s) -> %s", aspect, dur, has_audio,
-                 out_path.name)
+        log.info("video built %s (%.1fs, audio=%s%s) -> %s", aspect, dur, has_audio,
+                 " silent" if silent else "", out_path.name)
         return VideoResult(
             path=out_path,
             duration=info.duration or dur,
@@ -122,8 +134,8 @@ class VideoBuilder:
             has_audio=has_audio and info.has_audio,
             size_bytes=info.size_bytes or (out_path.stat().st_size if out_path.exists() else 0),
             source_image=str(image_path),
-            music_path=str(music_path) if has_audio else None,
-            metadata={"aspect": aspect, "ken_burns": kb,
+            music_path=str(music_path) if has_music else None,
+            metadata={"aspect": aspect, "ken_burns": kb, "silent_audio": silent,
                       "video_codec": info.video_codec, "audio_codec": info.audio_codec,
                       "audio_sr": info.audio_sample_rate},
         )

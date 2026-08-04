@@ -105,6 +105,110 @@ def account_status(page: str = typer.Option(...)):
     db.close()
 
 
+@app.command("health-check")
+def health_check(
+    page: str = typer.Option(None, help="page_id (omesso con --all)"),
+    all_pages: bool = typer.Option(False, "--all", help="controlla tutte le pagine"),
+    warn_days: int = typer.Option(10, help="preavviso scadenza token, in giorni"),
+):
+    """Credential health for one or every page — never publishes, never prints a token.
+
+    Checks, per page: credentials present, token valid, known expiry (with an
+    advance warning), account reachable, account type, publishing limit and the
+    publishing configuration. Exit code: 0 all green, 1 at least one failure,
+    2 only warnings.
+    """
+    from datetime import datetime, timezone
+
+    paths = Paths.create()
+    settings = load_settings(paths)
+    setup_logging(paths.logs, settings.logging.level, console=False)
+    reg = load_pages(paths)
+    if not all_pages and not page:
+        console.print("[red]Serve --page <id> oppure --all[/]")
+        raise typer.Exit(1)
+    pages = reg.all() if all_pages else [reg.get(page)]
+
+    t = Table(title="Instagram — health check")
+    for col in ("pagina", "credenziali", "token", "scadenza", "account",
+                "tipo", "limite 24h", "upload"):
+        t.add_column(col)
+
+    failures = warnings = 0
+    for pcfg in pages:
+        prefix = pcfg.env_prefix()
+        has_uid = bool(os.environ.get(f"{prefix}_IG_USER_ID"))
+        has_tok = bool(os.environ.get(f"{prefix}_ACCESS_TOKEN")
+                       or os.environ.get("META_ACCESS_TOKEN"))
+        creds = "[green]ok[/]" if (has_uid and has_tok) else "[yellow]mancanti[/]"
+        token_col = expiry_col = account_col = type_col = limit_col = "—"
+        upload_col = pcfg.publishing.upload_method
+
+        target = build_publish_target(settings, pcfg) if (has_uid and has_tok) else None
+        if target is None:
+            warnings += 1
+        else:
+            try:
+                data = (target.client.debug_token() or {}).get("data", {})
+                valid = bool(data.get("is_valid"))
+                token_col = "[green]valido[/]" if valid else "[red]non valido[/]"
+                if not valid:
+                    failures += 1
+                exp = data.get("expires_at")
+                if exp in (0, None):
+                    expiry_col = "senza scadenza nota"
+                else:
+                    dt = datetime.fromtimestamp(int(exp), tz=timezone.utc)
+                    left = (dt - datetime.now(timezone.utc)).days
+                    expiry_col = f"{dt.date().isoformat()} ({left} gg)"
+                    if left < 0:
+                        expiry_col = f"[red]{expiry_col}[/]"
+                        failures += 1
+                    elif left <= warn_days:
+                        expiry_col = f"[yellow]{expiry_col}[/]"
+                        warnings += 1
+            except PublishError as e:
+                token_col = "[red]errore[/]"
+                console.print(f"[red]{pcfg.page_id} token:[/] {e}")
+                failures += 1
+            try:
+                info = target.client.get_account_info(target.ig_user_id)
+                account_col = f"[green]{info.get('username') or 'ok'}[/]"
+                atype = (info.get("account_type") or "?").lower()
+                type_col = atype
+                if atype == "personal":
+                    type_col = "[red]personal[/]"
+                    failures += 1
+                elif atype and atype != "business":
+                    type_col = f"[yellow]{atype}[/]"
+                    warnings += 1
+            except PublishError as e:
+                account_col = "[red]irraggiungibile[/]"
+                console.print(f"[red]{pcfg.page_id} account:[/] {e}")
+                failures += 1
+            try:
+                lim = target.client.get_publishing_limit(target.ig_user_id) or {}
+                quota = (lim.get("data") or [{}])[0] if isinstance(lim.get("data"), list) else lim
+                limit_col = str(quota.get("quota_usage", quota.get("config", "?")))
+            except PublishError:
+                limit_col = "[yellow]n/d[/]"
+
+        if pcfg.publishing.upload_method == "hosted_url":
+            upload_col = "[yellow]hosted_url (serve hosting)[/]"
+            warnings += 1
+        else:
+            upload_col = "[green]resumable (nessun hosting)[/]"
+
+        t.add_row(pcfg.page_id, creds, token_col, expiry_col, account_col,
+                  type_col, limit_col, upload_col)
+
+    console.print(t)
+    console.print("[dim]Nessun token viene mai stampato o registrato.[/]")
+    if failures:
+        raise typer.Exit(1)
+    raise typer.Exit(2 if warnings else 0)
+
+
 @app.command("upload-test")
 def upload_test(page: str = typer.Option(...), file: str = typer.Option(...),
                 media_type: str = typer.Option("REELS", help="REELS|STORIES"),

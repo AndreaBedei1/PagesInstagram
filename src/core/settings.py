@@ -24,10 +24,21 @@ class ComfyUISettings(BaseModel):
     startup_timeout_seconds: int = 180
     poll_interval_seconds: float = 1.0
     output_dir: str | None = None  # ComfyUI's own output dir (to fetch images)
-    checkpoint: str = "DreamShaper_8_pruned.safetensors"
-    default_workflow: str = "sd15_background.json"
+    # Local model. Default = official Stability SDXL Base 1.0 single-file
+    # checkpoint (see docs/LOCAL_MODEL_SETUP.md). Overridable without code
+    # changes via ICE_COMFYUI_CHECKPOINT / ICE_COMFYUI_MODEL_FAMILY.
+    model_family: str = "sdxl"            # sdxl | sd15
+    checkpoint: str = "sd_xl_base_1.0.safetensors"
+    default_workflow: str = "sdxl_background.json"
+    #: Explicit legacy fallback kept for development on small GPUs.
+    legacy_checkpoint: str = "DreamShaper_8_pruned.safetensors"
+    legacy_workflow: str = "sd15_background.json"
+    steps: int | None = None              # None => family default
+    cfg: float | None = None
+    sampler_name: str | None = None
+    scheduler: str | None = None
     max_retries: int = 3
-    request_timeout_seconds: int = 120
+    request_timeout_seconds: int = 300
     # Fallback (deterministic gradient) policy per mode. In production a ComfyUI
     # failure must NOT silently degrade quality — the job goes to NEEDS_REVIEW.
     allow_fallback_in_dry_run: bool = True
@@ -46,15 +57,18 @@ class RenderingSettings(BaseModel):
 
 
 class VideoSettings(BaseModel):
-    reel_duration_seconds: float = 12.0   # main content (3–90s allowed by Meta)
-    story_duration_seconds: float = 12.0
+    reel_duration_seconds: float = 8.0    # main content (Meta allows 3–90 s)
+    story_duration_seconds: float = 8.0
     feed_duration_seconds: float = 8.0    # legacy 4:5 (hosted_url only)
     fps: int = 30
     ken_burns: bool = True
-    ken_burns_zoom: float = 1.08
-    audio_bitrate: str = "192k"
+    ken_burns_zoom: float = 1.04          # very gentle motion
+    audio_bitrate: str = "128k"
     video_crf: int = 20
     ffmpeg_path: str | None = None  # if None, use imageio-ffmpeg bundled binary
+    #: Emit a silent AAC track when the page has no music, so every published
+    #: file carries an audio stream without ever using third-party music.
+    silent_audio_when_no_music: bool = True
 
 
 class MusicSettings(BaseModel):
@@ -164,6 +178,12 @@ def _apply_env_overrides(data: dict) -> dict:
         comfy["launch_command"] = env["ICE_COMFYUI_LAUNCH_BAT"]
     if env.get("ICE_COMFYUI_OUTPUT_DIR"):
         comfy["output_dir"] = env["ICE_COMFYUI_OUTPUT_DIR"]
+    if env.get("ICE_COMFYUI_CHECKPOINT"):
+        comfy["checkpoint"] = env["ICE_COMFYUI_CHECKPOINT"]
+    if env.get("ICE_COMFYUI_WORKFLOW"):
+        comfy["default_workflow"] = env["ICE_COMFYUI_WORKFLOW"]
+    if env.get("ICE_COMFYUI_MODEL_FAMILY"):
+        comfy["model_family"] = env["ICE_COMFYUI_MODEL_FAMILY"]
 
     video = data.setdefault("video", {})
     if env.get("ICE_FFMPEG_PATH"):

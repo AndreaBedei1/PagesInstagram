@@ -65,15 +65,22 @@ def plan_page(db, page: PageConfig, *, start: date_cls, days: int) -> PlanReport
 
 
 def plan_jobs(db, registry: AccountRegistry, settings: Settings, *,
-              days: int = 1) -> PlanReport:
-    """Plan jobs for all enabled pages for ``days`` days starting today (page tz)."""
-    total = PlanReport(days=days)
+              days: int | None = None) -> PlanReport:
+    """Plan jobs for all enabled pages, starting today in each page's timezone.
+
+    ``days=None`` (the worker's normal call) uses each page's own
+    ``generation.planning_horizon_days`` — that is the rolling job buffer. An
+    explicit ``days`` overrides it (used by ``ice schedule --days N``).
+    """
+    total = PlanReport(days=days or 0)
     for page in registry.enabled():
         if db.is_page_paused(page.page_id):
             continue
+        horizon = days if days is not None else page.generation.planning_horizon_days
         start = now_in(page.publishing.timezone).date()
-        rep = plan_page(db, page, start=start, days=days)
+        rep = plan_page(db, page, start=start, days=horizon)
         total.created += rep.created
         total.existing += rep.existing
+        total.days = max(total.days, horizon)
     log.info("Planned: %s", total.summary())
     return total

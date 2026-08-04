@@ -19,7 +19,8 @@ from ..core.logging_setup import get_logger
 from ..core.settings import Settings
 from ..core.timeutils import now_utc, parse_iso, utcnow_iso
 from ..database import Database
-from ..content.service import select_content_for_page
+from ..content.service import (SelectionError, select_content_for_date,
+                               select_content_for_page)
 from ..publishing.publisher import Publisher
 from .pipeline import GenerationPipeline
 
@@ -41,6 +42,7 @@ class TickStats:
     rescheduled: int = 0
     failed: int = 0
     review: int = 0
+    cleaned: int = 0
     messages: list[str] = field(default_factory=list)
 
 
@@ -48,17 +50,22 @@ class Worker:
     def __init__(self, settings: Settings, db: Database, registry: AccountRegistry, *,
                  pipeline: GenerationPipeline | None = None,
                  publisher: Publisher | None = None,
-                 generate_ahead_days: int = 2,
-                 prepare_ahead_minutes: int = 60,
-                 try_comfyui: bool = True):
+                 generate_ahead_days: int | None = None,
+                 prepare_ahead_minutes: int | None = None,
+                 try_comfyui: bool = True,
+                 cleanup_enabled: bool = True):
         self.s = settings
         self.db = db
         self.registry = registry
         self.pipeline = pipeline or GenerationPipeline(settings, db)
         self.publisher = publisher or Publisher(settings, db, registry)
+        #: ``None`` => each page's own ``generation.planning_horizon_days``.
         self.generate_ahead_days = generate_ahead_days
-        self.prepare_ahead = timedelta(minutes=prepare_ahead_minutes)
+        #: ``None`` => each page's own ``generation.prepare_ahead_days``.
+        self.prepare_ahead = (timedelta(minutes=prepare_ahead_minutes)
+                              if prepare_ahead_minutes is not None else None)
         self.try_comfyui = try_comfyui
+        self.cleanup_enabled = cleanup_enabled
 
     # -- tick --------------------------------------------------------------
     def run_once(self) -> TickStats:
@@ -66,9 +73,12 @@ class Worker:
         self._plan(stats)
         self._prepare_media(stats)
         self._publish_due(stats)
+        if self.cleanup_enabled:
+            self._cleanup_media(stats)
         log.info("tick: planned=%d prepared=%d published=%d skipped=%d resched=%d "
-                 "review=%d failed=%d", stats.planned, stats.prepared, stats.published,
-                 stats.skipped, stats.rescheduled, stats.review, stats.failed)
+                 "review=%d failed=%d cleaned=%d", stats.planned, stats.prepared,
+                 stats.published, stats.skipped, stats.rescheduled, stats.review,
+                 stats.failed, stats.cleaned)
         return stats
 
     def _plan(self, stats: TickStats) -> None:
@@ -76,28 +86,34 @@ class Worker:
         rep = plan_jobs(self.db, self.registry, self.s, days=self.generate_ahead_days)
         stats.planned = rep.created
 
+    def _prepare_horizon(self, page) -> timedelta:
+        """How far ahead media is generated for this page (rolling buffer)."""
+        if self.prepare_ahead is not None:
+            return self.prepare_ahead
+        return timedelta(days=page.generation.prepare_ahead_days)
+
     # -- media preparation -------------------------------------------------
     def _prepare_media(self, stats: TickStats) -> None:
         now = now_utc()
-        horizon = now + self.prepare_ahead
         jobs = self.db.list_jobs(statuses=_PREPARE_STATES)
         # group by (page_id, local date): Reel + Story of a day MUST share content
         groups: dict[tuple, list[dict]] = defaultdict(list)
         for job in jobs:
             if not job.get("scheduled_at") or self.db.is_page_paused(job["page_id"]):
                 continue
-            if parse_iso(job["scheduled_at"]) > horizon:
-                continue  # too far ahead, prepare later
             page = self.registry.get(job["page_id"])
+            if parse_iso(job["scheduled_at"]) > now + self._prepare_horizon(page):
+                continue  # beyond the rolling buffer, prepare on a later tick
             local_date = parse_iso(job["scheduled_at"]).astimezone(
                 ZoneInfo(page.publishing.timezone)).date().isoformat()
             groups[(job["page_id"], local_date)].append(job)
 
-        for (page_id, local_date), group in groups.items():
+        for (page_id, local_date), group in sorted(groups.items()):
             page = self.registry.get(page_id)
-            content = self._resolve_daily_content(page, local_date, stats)
-            if content is None:
+            resolved = self._resolve_daily_content(page, local_date, stats, group)
+            if resolved is None:
                 continue
+            content, cycle_number = resolved
             daily = self.db.get_daily_content(page_id, local_date)
 
             # Generate the shared 9:16 video once; reuse if already produced.
@@ -106,19 +122,15 @@ class Worker:
                 try:
                     result = self.pipeline.generate_daily(
                         page, content, music_track_id=(daily or {}).get("music_track_id"),
-                        try_comfyui=self.try_comfyui)
+                        try_comfyui=self.try_comfyui, scheduled_date=local_date,
+                        cycle_number=cycle_number)
                 except Exception as e:  # noqa: BLE001
                     log.exception("pipeline failed for %s: %s", page_id, e)
                     stats.failed += 1
                     continue
                 if not result.ok:
-                    for job in group:
-                        self.db.update_job(job["id"], content_id=content["id"],
-                                           status=JobStatus.NEEDS_REVIEW,
-                                           last_error=result.message)
-                        self.db.log_event(job_id=job["id"], page_id=page_id,
-                                          event="error", error=result.message)
-                        stats.review += 1
+                    self._route_to_review(group, page_id, result.message, stats,
+                                          content_id=content["id"])
                     continue
                 video_path = result.video_path
                 self.db.update_daily_content(
@@ -134,18 +146,75 @@ class Worker:
                                    upload_method=page.publishing.upload_method)
                 stats.prepared += 1
 
-    def _resolve_daily_content(self, page, local_date: str, stats: TickStats):
-        """Persistent page+date -> content assignment (feed & story never diverge)."""
+    def _route_to_review(self, group: list[dict], page_id: str, message: str,
+                         stats: TickStats, content_id: int | None = None) -> None:
+        for job in group:
+            fields = {"status": JobStatus.NEEDS_REVIEW, "last_error": message}
+            if content_id is not None:
+                fields["content_id"] = content_id
+            self.db.update_job(job["id"], **fields)
+            self.db.log_event(job_id=job["id"], page_id=page_id, event="error",
+                              error=message)
+            stats.review += 1
+
+    def _resolve_daily_content(self, page, local_date: str, stats: TickStats,
+                               group: list[dict]) -> tuple[dict, int] | None:
+        """Persistent page+date -> content assignment (feed & story never diverge).
+
+        The assignment is written to ``daily_content`` the first time and reused
+        afterwards, so a crash mid-day cannot change what gets published. For the
+        deterministic policies the stored row and a fresh computation always
+        agree anyway — the row is a cache, not the source of truth.
+        """
         daily = self.db.get_daily_content(page.page_id, local_date)
         if daily and daily.get("content_id"):
-            return self.db.get_content(daily["content_id"])
-        content = select_content_for_page(self.db, page)
-        if not content:
-            stats.messages.append(f"no approved content for {page.page_id}")
-            log.warning("No approved content available for %s", page.page_id)
+            content = self.db.get_content(daily["content_id"])
+            if content:
+                return content, int(daily.get("cycle_number") or 0)
+
+        try:
+            sel = select_content_for_date(self.db, page, local_date)
+        except SelectionError as e:
+            stats.messages.append(str(e))
+            log.warning("selection failed: %s", e)
+            self._route_to_review(group, page.page_id, str(e), stats)
             return None
-        self.db.create_daily_content(page.page_id, local_date, content["id"])
-        return content
+
+        daily_id, _ = self.db.create_daily_content(page.page_id, local_date,
+                                                   sel.content_id)
+        self.db.update_daily_content(daily_id, cycle_number=sel.cycle_number,
+                                     sequence_index=sel.sequence_index)
+        return sel.content, sel.cycle_number
+
+    # -- rolling retention -------------------------------------------------
+    def _cleanup_media(self, stats: TickStats) -> None:
+        """Delete local media of jobs published longer ago than the retention.
+
+        Database rows, logs and metadata are kept. Files belonging to FAILED or
+        NEEDS_REVIEW jobs are never touched, and a file shared by several jobs
+        (Reel + Story of the same day) is removed only once every referencing
+        job is published.
+        """
+        now = now_utc()
+        for page in self.registry.all():
+            days = page.generation.published_media_retention_days
+            if days <= 0:
+                continue
+            cutoff = (now - timedelta(days=days)).replace(
+                microsecond=0).isoformat().replace("+00:00", "Z")
+            for job in self.db.jobs_pending_media_cleanup(cutoff):
+                if job["page_id"] != page.page_id:
+                    continue
+                path = job.get("output_path")
+                if path and self.db.paths_still_referenced(path) == 0:
+                    try:
+                        if os.path.exists(path):
+                            os.remove(path)
+                            stats.cleaned += 1
+                    except OSError as e:  # noqa: PERF203 — per-file failure is fine
+                        log.warning("retention: impossibile eliminare %s: %s", path, e)
+                        continue
+                self.db.update_job(job["id"], media_deleted_at=utcnow_iso())
 
     # -- publishing --------------------------------------------------------
     def _publish_due(self, stats: TickStats) -> None:

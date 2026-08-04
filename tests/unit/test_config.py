@@ -25,21 +25,30 @@ def test_env_override_mode(project_paths, monkeypatch):
     assert s.mode == Mode.PRODUCTION
 
 
-def test_load_pages_two_live_pages(project_paths):
+FIVE_PAGES = {
+    "pensiero_essenziale_it", "curiosita_mondo_it", "parola_giorno_it",
+    "oggi_nella_storia_it", "domanda_giorno_it",
+}
+
+
+def test_load_pages_exactly_five_live_pages(project_paths):
     reg = load_pages(project_paths)
     ids = set(reg.ids())
-    assert {"motivational_it", "famous_quotes_it"} <= ids
+    assert ids == FIVE_PAGES
+    assert len(reg.enabled()) == 5
     # the example file must be excluded by default
     assert "example_future_it" not in ids
+    # archived demo pages must not be loaded
+    assert "motivational_it" not in ids and "famous_quotes_it" not in ids
 
 
 def test_page_author_rules(project_paths):
     reg = load_pages(project_paths)
-    mot = reg.get("motivational_it")
-    quo = reg.get("famous_quotes_it")
-    assert mot.visual.show_author is False       # original phrases: no author
-    assert quo.visual.show_author is True        # quotes: author always shown
-    assert mot.env_prefix() == "ICE_MOTIVATIONAL_IT"
+    for page in reg.all():
+        # evergreen pages are original or sourced content: never an author line
+        assert page.visual.show_author is False
+    assert reg.get("pensiero_essenziale_it").env_prefix() == "ICE_PENSIERO_ESSENZIALE_IT"
+    assert reg.get("oggi_nella_storia_it").env_prefix() == "ICE_OGGI_NELLA_STORIA_IT"
 
 
 def test_example_page_included_when_requested(project_paths):

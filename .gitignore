@@ -61,6 +61,19 @@ assets/fonts/*.otf
 !assets/fonts/.gitkeep
 !assets/fonts/README.md
 
+# ---- Local generative models (multi-GB, licensed, never committed) ----
+*.safetensors
+*.safetensors.sha256
+*.ckpt
+*.pt
+*.pth
+models/
+
+# ---- Dataset validation / preview reports (regenerable) ----
+reports/*.json
+reports/*.html
+!reports/.gitkeep
+
 # ---- OS / IDE ----
 .DS_Store
 Thumbs.db

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from datetime import time
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class PublishingConfig(BaseModel):
@@ -57,6 +57,19 @@ class VisualConfig(BaseModel):
     logo_enabled: bool = False
     logo_text: str | None = None            # small page name watermark
     palette: str | None = None              # optional named palette override
+    #: Rendering template id. ``None`` => use the one registered for the page's
+    #: ``content_type`` (see :mod:`src.rendering.templates`).
+    template: str | None = None
+
+    model_config = {"extra": "allow"}
+
+
+class GenerationConfig(BaseModel):
+    """Rolling buffer sizing. Nothing is pre-generated beyond these windows."""
+
+    prepare_ahead_days: int = 30            # days of media generated in advance
+    planning_horizon_days: int = 60         # days of jobs created in advance
+    published_media_retention_days: int = 45  # delete published local media after
 
     model_config = {"extra": "allow"}
 
@@ -75,8 +88,35 @@ class ContentConfig(BaseModel):
     source: str = "database"
     minimum_quality_score: float = 0.80
     avoid_semantic_duplicates: bool = True
+    #: ``cyclic_ordered`` | ``calendar_rotating`` | ``unused_random`` (legacy).
+    selection_policy: str = "unused_random"
+    #: Day 0 of the cycle (local date). Required by the deterministic policies.
+    cycle_anchor_date: str | None = None
+    cycle_length: int = 1000
 
     model_config = {"extra": "allow"}
+
+    @field_validator("selection_policy")
+    @classmethod
+    def _known_policy(cls, v: str) -> str:
+        allowed = {"cyclic_ordered", "calendar_rotating", "unused_random"}
+        if v not in allowed:
+            raise ValueError(
+                f"selection_policy must be one of {sorted(allowed)}, got {v!r}")
+        return v
+
+    @field_validator("cycle_anchor_date")
+    @classmethod
+    def _valid_anchor(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        from datetime import date as _date
+
+        try:
+            _date.fromisoformat(str(v)[:10])
+        except Exception as e:  # noqa: BLE001
+            raise ValueError(f"cycle_anchor_date must be YYYY-MM-DD, got {v!r}") from e
+        return str(v)[:10]
 
 
 class InstagramConfig(BaseModel):
@@ -98,11 +138,26 @@ class PageConfig(BaseModel):
     music: MusicConfig = Field(default_factory=MusicConfig)
     content: ContentConfig = Field(default_factory=ContentConfig)
     instagram: InstagramConfig = Field(default_factory=InstagramConfig)
+    generation: GenerationConfig = Field(default_factory=GenerationConfig)
 
     # Populated by the registry, not from YAML.
     config_path: str | None = None
 
     model_config = {"extra": "allow"}
+
+    @model_validator(mode="after")
+    def _policy_needs_anchor(self) -> "PageConfig":
+        if (self.content.selection_policy in ("cyclic_ordered", "calendar_rotating")
+                and not self.content.cycle_anchor_date):
+            raise ValueError(
+                f"page {self.page_id!r}: content.cycle_anchor_date è obbligatorio "
+                f"con selection_policy={self.content.selection_policy!r}"
+            )
+        return self
+
+    def template_id(self) -> str:
+        """Rendering template: explicit override, else the content type."""
+        return self.visual.template or self.content_type
 
     @field_validator("page_id")
     @classmethod

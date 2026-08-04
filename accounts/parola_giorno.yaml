@@ -1,0 +1,53 @@
+# Pagina 3 — Parola del Giorno (lessico italiano con fonte lessicografica).
+# Segreti SOLO da .env:
+#   ICE_PAROLA_GIORNO_IT_IG_USER_ID / ICE_PAROLA_GIORNO_IT_ACCESS_TOKEN
+page_id: parola_giorno_it
+enabled: true
+display_name: Parola del Giorno
+content_type: word_of_the_day
+language: it
+
+publishing:
+  posts_per_day: 1
+  publish_feed: true
+  publish_story: false
+  publish_reel: false
+  feed_time: "13:30"
+  story_time: "20:00"
+  timezone: "Europe/Rome"
+  missed_job_policy: publish_within_window
+  missed_job_window_minutes: 240
+  upload_method: resumable
+  feed_media_type: REELS
+  share_reel_to_feed: true
+  story_media_type: STORIES
+
+instagram:
+  account_type: business
+  api_flavor: instagram_login
+
+visual:
+  style: editorial_paper
+  template: word_of_the_day
+  show_author: false
+  font_family: default
+  background_profile: word_editorial_paper
+  logo_enabled: true
+  logo_text: "@parola.del.giorno"
+
+music:
+  enabled: false
+  profile: reflective
+
+content:
+  source: database
+  minimum_quality_score: 0.55   # la "frase" è una parola singola: soglia dedicata
+  avoid_semantic_duplicates: true
+  selection_policy: cyclic_ordered
+  cycle_anchor_date: "2026-01-01"
+  cycle_length: 1000
+
+generation:
+  prepare_ahead_days: 30
+  planning_horizon_days: 60
+  published_media_retention_days: 45

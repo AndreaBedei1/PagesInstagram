@@ -19,6 +19,8 @@ app = typer.Typer(help="Instagram Content Engine — multi-account content gener
                   no_args_is_help=True, add_completion=False)
 music_app = typer.Typer(help="Manage the music library")
 app.add_typer(music_app, name="music")
+comfy_app = typer.Typer(help="Local ComfyUI model checks")
+app.add_typer(comfy_app, name="comfyui")
 from .instagram_cmds import app as instagram_app  # noqa: E402
 app.add_typer(instagram_app, name="instagram")
 console = Console()
@@ -118,6 +120,116 @@ def import_content(dataset: str = typer.Option(None, help="Specific dataset file
     for f in files:
         rep = import_dataset(db, f, approve_floor=approve_floor)
         console.print(rep.summary())
+    db.close()
+
+
+@app.command("validate-datasets")
+def validate_datasets(
+    expected: int = typer.Option(1000, help="elementi attesi per dataset"),
+    report: str = typer.Option(None, help="percorso del report JSON"),
+    skip_quality: bool = typer.Option(False, "--skip-quality",
+                                      help="salta il calcolo del punteggio qualità"),
+):
+    """Validate every dataset in ``datasets/``. Exit code != 0 on any violation."""
+    from ..content.dataset_validation import validate_all, write_report
+
+    paths = Paths.create()
+    summary = validate_all(paths.datasets, expected_items=expected,
+                           check_quality=not skip_quality)
+    target = Path(report) if report else paths.root / "reports" / "datasets_validation.json"
+    out = write_report(summary, target)
+
+    table = Table(title="Validazione dataset")
+    for col in ("dataset", "tipo", "elementi", "errori", "avvisi", "esito"):
+        table.add_column(col)
+    for rep in summary.reports:
+        table.add_row(rep.dataset, rep.content_type, str(rep.total),
+                      str(len(rep.errors)), str(len(rep.warnings)),
+                      "[green]OK[/]" if rep.ok else "[red]FAIL[/]")
+    console.print(table)
+    for rep in summary.reports:
+        for err in rep.errors[:12]:
+            console.print(f"  [red]{rep.dataset}[/]: {err}")
+        if len(rep.errors) > 12:
+            console.print(f"  [red]{rep.dataset}[/]: … e altri "
+                          f"{len(rep.errors) - 12} errori (vedi il report)")
+    console.print(f"Totale contenuti: [bold]{summary.total_items}[/]  —  report: {out}")
+    raise typer.Exit(code=0 if summary.ok else 1)
+
+
+@app.command("security-check")
+def security_check(
+    include_untracked: bool = typer.Option(
+        False, "--include-untracked",
+        help="analizza anche i file non tracciati (NON usare su .env reali)"),
+    report: str = typer.Option(None, help="percorso del report JSON"),
+):
+    """Scan tracked files for anything that looks like a Meta credential."""
+    import json as _json
+
+    from ..security import scan_repository
+
+    paths = Paths.create()
+    res = scan_repository(paths.root, include_untracked=include_untracked)
+
+    console.print(f"File analizzati: [bold]{res.scanned_files}[/]")
+    if res.gitignore_issues:
+        for issue in res.gitignore_issues:
+            console.print(f"[red]gitignore[/]: {issue}")
+    else:
+        console.print("[green].gitignore: .env, secrets/ e *.safetensors esclusi[/]")
+    for tracked in res.tracked_env_files:
+        console.print(f"[red]file .env tracciato da Git[/]: {tracked}")
+    if res.findings:
+        t = Table(title="Possibili segreti")
+        for col in ("file", "riga", "regola", "estratto (redatto)"):
+            t.add_column(col)
+        for f in res.findings:
+            t.add_row(f.path, str(f.line), f.rule, f.excerpt)
+        console.print(t)
+    else:
+        console.print("[green]Nessun segreto rilevato nei file tracciati[/]")
+
+    if report:
+        p = Path(report)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(_json.dumps(res.as_dict(), ensure_ascii=False, indent=2),
+                     encoding="utf-8")
+        console.print(f"Report: {p}")
+    raise typer.Exit(code=0 if res.ok else 1)
+
+
+@app.command("preview-pages")
+def preview_pages(
+    per_page: int = typer.Option(5, help="anteprime per pagina"),
+    comfyui: bool = typer.Option(False, help="usa ComfyUI (lento) invece del fallback"),
+    out: str = typer.Option(None, help="cartella di output"),
+):
+    """Render N real previews per page and build a comparison index."""
+    from ..monitoring.previews import build_page_previews
+
+    paths, settings, registry, db = _ctx()
+    target = Path(out) if out else paths.root / "reports" / "previews"
+    result = build_page_previews(settings, db, registry, out_dir=target,
+                                 per_page=per_page, try_comfyui=comfyui)
+    for page_id, images in result.images.items():
+        console.print(f"[green]{page_id}[/]: {len(images)} anteprime")
+    console.print(f"[bold]Indice:[/] {result.index_path}")
+    db.close()
+
+
+@app.command("sample-review")
+def sample_review(
+    count: int = typer.Option(25, help="contenuti campionati per pagina"),
+    out: str = typer.Option(None, help="file HTML di output"),
+):
+    """Build an HTML sheet with a random content sample per page for review."""
+    from ..monitoring.previews import build_sample_review
+
+    paths, settings, registry, db = _ctx()
+    target = Path(out) if out else paths.root / "reports" / "sample_review.html"
+    p = build_sample_review(db, registry, target, per_page=count)
+    console.print(f"[green]Campione di revisione:[/] {p}")
     db.close()
 
 
@@ -333,6 +445,61 @@ def pages():
                   p.publishing.feed_time, p.publishing.story_time, str(p.visual.show_author))
     console.print(t)
     db.close()
+
+
+# ---- comfyui sub-app ------------------------------------------------------
+@comfy_app.command("status")
+def comfyui_status():
+    """Show the configured local model and whether ComfyUI can be reached."""
+    from ..comfyui.client import ComfyUIClient
+
+    paths = Paths.create()
+    settings = load_settings(paths)
+    c = settings.comfyui
+    client = ComfyUIClient(c.url)
+    t = Table(title="Modello locale / ComfyUI")
+    t.add_column("Voce")
+    t.add_column("Valore")
+    t.add_row("URL", c.url)
+    t.add_row("Raggiungibile", "[green]sì[/]" if client.is_ready() else "[yellow]no[/]")
+    t.add_row("Famiglia modello", c.model_family)
+    t.add_row("Checkpoint", c.checkpoint)
+    t.add_row("Workflow", c.default_workflow)
+    t.add_row("Fallback consentito", str(settings.comfyui_fallback_allowed()))
+    t.add_row("Modalità", str(settings.mode))
+    console.print(t)
+
+
+@comfy_app.command("test-generation")
+def comfyui_test_generation(
+    page: str = typer.Option("pensiero_essenziale_it", help="page_id per il profilo"),
+    out: str = typer.Option(None, help="percorso PNG di output"),
+    allow_fallback: bool = typer.Option(
+        False, help="consenti il fallback deterministico (default: NO)"),
+):
+    """Generate one real background through ComfyUI (proves the model works)."""
+    from ..comfyui.backgrounds import BackgroundGenerator
+    from ..core.errors import ComfyUIError
+
+    paths, settings, registry, db = _ctx(migrate=False)
+    db.close()
+    pcfg = registry.get(page)
+    gen = BackgroundGenerator(settings)
+    target = Path(out) if out else paths.backgrounds / f"test_{page}.png"
+    try:
+        res = gen.generate(
+            out_path=target, background_prompt=None, mood=None,
+            profile=pcfg.visual.background_profile, aspect="reel", seed=12345,
+            allow_fallback=allow_fallback, try_comfyui=True)
+    except ComfyUIError as e:
+        console.print(f"[red]Generazione ComfyUI fallita:[/] {e}")
+        raise typer.Exit(1) from e
+    color = "green" if res.source == "comfyui" else "yellow"
+    console.print(f"[{color}]sorgente={res.source}[/] {res.width}x{res.height} "
+                  f"seed={res.seed} -> {res.path}")
+    console.print(f"checkpoint: {settings.comfyui.checkpoint} "
+                  f"({settings.comfyui.model_family})")
+    raise typer.Exit(code=0 if res.source == "comfyui" else 2)
 
 
 # ---- music sub-app --------------------------------------------------------

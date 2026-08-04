@@ -25,9 +25,11 @@ from ..core.errors import ComfyUIError
 from ..core.logging_setup import get_logger
 from ..core.settings import Settings
 from ..database import Database
+from ..content.selection import background_seed
 from ..music.selector import select_track
 from ..quality.validator import MediaValidator
 from ..rendering.renderer import RenderOptions, Renderer
+from ..rendering.templates import build_fields
 from ..video.builder import VideoBuilder
 
 log = get_logger("scheduling.pipeline")
@@ -99,27 +101,38 @@ class GenerationPipeline:
     # -- one 9:16 (or legacy) render+video --------------------------------
     def _generate_one(self, page: PageConfig, content: dict, aspect: str,
                       music_path: str | None, *, try_comfyui: bool,
-                      allow_fallback: bool, max_bg_regens: int = 2) -> AspectOutput:
+                      allow_fallback: bool, max_bg_regens: int = 2,
+                      scheduled_date: str | None = None,
+                      cycle_number: int = 0) -> AspectOutput:
         p = self.s.paths
         stem = self._stem(page, content["id"], aspect)
         img_dir = p.posts if aspect == "feed" else p.stories
+        template_id = page.template_id()
+        fields = build_fields(template_id, content,
+                             show_author=page.visual.show_author)
         rres = val = None
         bgres = None
         for regen in range(max_bg_regens + 1):
             bg_path = p.backgrounds / f"{stem}_bg{regen}.png"
+            seed = background_seed(
+                page_id=page.page_id, content_id=int(content["id"]),
+                scheduled_date=scheduled_date or "", cycle_number=cycle_number,
+                media_type=aspect, attempt=regen)
             bgres = self.bg.generate(
                 out_path=bg_path, background_prompt=content.get("background_prompt"),
                 mood=content.get("mood"), profile=page.visual.background_profile,
-                aspect=aspect, allow_fallback=allow_fallback, try_comfyui=try_comfyui)
+                aspect=aspect, seed=seed, allow_fallback=allow_fallback,
+                try_comfyui=try_comfyui)
             counter = {"n": 0}
 
             def render_fn(opts, _bg=bgres.path, _dir=img_dir, _stem=stem, _c=counter,
-                          _aspect=aspect):
+                          _aspect=aspect, _tpl=template_id, _fields=fields):
                 _c["n"] += 1
                 out = _dir / f"{_stem}_try{_c['n']}.png"
                 return self.renderer.render(
                     background_path=_bg, out_path=out, text=content["text"],
                     content_type=page.content_type, aspect=_aspect,
+                    template_id=_tpl, fields=_fields,
                     author=content.get("author_display_name") or content.get("author"),
                     show_author=page.visual.show_author,
                     show_source_work=getattr(page.visual, "show_source_work", False),
@@ -169,12 +182,17 @@ class GenerationPipeline:
     # -- MAIN: one shared 9:16 daily video --------------------------------
     def generate_daily(self, page: PageConfig, content: dict, *,
                        music_track_id: str | None = None,
-                       try_comfyui: bool = True) -> DailyMedia:
+                       try_comfyui: bool = True,
+                       scheduled_date: str | None = None,
+                       cycle_number: int = 0) -> DailyMedia:
         allow_fallback = self.s.comfyui_fallback_allowed()
         track_id, music_path = self._resolve_music(page, content, music_track_id)
         try:
             out = self._generate_one(page, content, "reel", music_path,
-                                     try_comfyui=try_comfyui, allow_fallback=allow_fallback)
+                                     try_comfyui=try_comfyui,
+                                     allow_fallback=allow_fallback,
+                                     scheduled_date=scheduled_date,
+                                     cycle_number=cycle_number)
         except ComfyUIError as e:
             log.error("Background generation failed (fallback disabled): %s", e)
             return DailyMedia(content_id=content["id"], ok=False,
@@ -187,7 +205,10 @@ class GenerationPipeline:
             story_image_path=out.image_path, post_video_path=out.video_path,
             story_video_path=out.video_path, music_path=music_path,
             render_metadata={"music_track_id": used_track, "aspect": "reel(9:16)",
-                             "score": out.score, "shared_reel_and_story": True},
+                             "score": out.score, "shared_reel_and_story": True,
+                             "template": page.template_id(),
+                             "scheduled_date": scheduled_date,
+                             "cycle_number": cycle_number},
             validation_score=out.score)
         if used_track:
             self.db.record_music_usage(used_track, page.page_id, None)

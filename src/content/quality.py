@@ -38,6 +38,29 @@ _CLICHE_FRAGMENTS = (
 
 _SENTENCE_SPLIT = re.compile(r"[.!?]+")
 
+#: Per-content-type text length bands: (comfortable_min, comfortable_max, hard_max).
+#: The heuristics were originally tuned for motivational one-liners; the evergreen
+#: pages have very different natural shapes (a single lemma, a fact, a question),
+#: so each type declares its own band instead of being penalised for its format.
+LENGTH_PROFILES: dict[str, tuple[int, int, int]] = {
+    "famous_quote": (20, 180, 240),
+    "philosophical_thought": (25, 125, 170),
+    "daily_question": (20, 125, 160),
+    "world_curiosity": (40, 190, 250),
+    "today_in_history": (18, 125, 170),
+    "word_of_the_day": (3, 28, 40),
+    "motivational": (15, 110, 160),
+}
+
+#: Types whose ``text`` is a single lexical item, not a sentence.
+_SINGLE_TOKEN_TYPES = frozenset({"word_of_the_day"})
+
+#: Types whose ``text`` is legitimately lowercase (dictionary lemmas).
+_LOWERCASE_OK_TYPES = frozenset({"word_of_the_day"})
+
+#: Types whose ``text`` must be a question.
+_QUESTION_TYPES = frozenset({"daily_question"})
+
 
 def gulpease_index(text: str) -> float:
     """Italian readability (Gulpease). 0..100, higher = easier to read."""
@@ -74,15 +97,26 @@ def _length_subscore(text: str, lo: int, hi: int, hard_max: int) -> tuple[float,
     return 1.0, issues
 
 
-def _structure_subscore(text: str) -> tuple[float, list[str]]:
+def _structure_subscore(text: str, content_type: str = "motivational"
+                        ) -> tuple[float, list[str]]:
     toks = tokens(text)
     wc = len(toks)
     issues: list[str] = []
+    if content_type in _SINGLE_TOKEN_TYPES:
+        # A dictionary lemma: one or two tokens is exactly right.
+        if wc == 0:
+            return 0.0, ["parola mancante"]
+        if wc > 3:
+            return 0.5, ["non è un lemma singolo"]
+        return 1.0, issues
     if wc < 3:
         return 0.3, ["troppo poche parole"]
-    if wc > 28:
+    if wc > 32:
         issues.append("molte parole")
         return 0.7, issues
+    if wc > 28:
+        issues.append("molte parole")
+        return 0.85, issues
     return 1.0, issues
 
 
@@ -112,15 +146,19 @@ def _genericity_subscore(text: str) -> tuple[float, list[str]]:
     return score, issues
 
 
-def _style_subscore(text: str) -> tuple[float, list[str]]:
+def _style_subscore(text: str, content_type: str = "motivational"
+                    ) -> tuple[float, list[str]]:
     issues: list[str] = []
     s = 1.0
     t = unify_punctuation(text.strip())
     if not t:
         return 0.0, ["vuoto"]
-    if t[0].islower():
+    if t[0].islower() and content_type not in _LOWERCASE_OK_TYPES:
         s -= 0.25
         issues.append("non inizia con la maiuscola")
+    if content_type in _QUESTION_TYPES and not t.endswith("?"):
+        s -= 0.35
+        issues.append("la domanda non termina con '?'")
     if "  " in t:
         s -= 0.2
         issues.append("doppi spazi")
@@ -160,20 +198,18 @@ def score_content(
     use_languagetool: bool = False,
 ) -> QualityResult:
     """Score a content item. Returns a :class:`QualityResult`."""
-    if content_type == "famous_quote":
-        lo, hi, hard_max = 20, 180, 240
-    else:
-        lo, hi, hard_max = 15, 110, 160
+    lo, hi, hard_max = LENGTH_PROFILES.get(content_type,
+                                           LENGTH_PROFILES["motivational"])
 
     subs: dict[str, float] = {}
     issues: list[str] = []
 
     for name, (val, iss) in {
         "length": _length_subscore(text, lo, hi, hard_max),
-        "structure": _structure_subscore(text),
+        "structure": _structure_subscore(text, content_type),
         "readability": _readability_subscore(text),
         "genericity": _genericity_subscore(text),
-        "style": _style_subscore(text),
+        "style": _style_subscore(text, content_type),
     }.items():
         subs[name] = round(val, 3)
         issues.extend(iss)
@@ -217,14 +253,19 @@ def score_content(
     score = sum(subs[k] * w for k, w in weights.items()) / total_w
 
     # Degeneracy gate: ultra-short / near-empty text can never look "good"
-    # regardless of how the weighted average lands.
+    # regardless of how the weighted average lands. Single-lemma types are
+    # exempt — for them one short token is the correct shape, not degeneracy.
     wc = len(tokens(text))
     n = len(text.strip())
-    if wc < 4:
-        score *= 0.55
-        issues.append("frase troppo breve per essere pubblicabile")
-    if n < 12:
-        score *= 0.6
+    if content_type not in _SINGLE_TOKEN_TYPES:
+        if wc < 4:
+            score *= 0.55
+            issues.append("frase troppo breve per essere pubblicabile")
+        if n < 12:
+            score *= 0.6
+    elif n < 3:
+        score *= 0.4
+        issues.append("lemma troppo corto")
     subs["_gate_wc"] = wc
 
     return QualityResult(score=round(min(1.0, score), 4), subscores=subs, issues=issues)

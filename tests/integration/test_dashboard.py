@@ -55,11 +55,11 @@ def test_dashboard_pause_page(tmp_path, project_paths, monkeypatch):
     client = TestClient(create_app(s))  # startup registers pages from YAML
 
     db = Database.open(s.db_path())
-    assert db.is_page_paused("motivational_it") is False
+    assert db.is_page_paused("pensiero_essenziale_it") is False
     db.close()
 
-    r = client.post("/page/motivational_it/toggle?token=local", follow_redirects=False)
+    r = client.post("/page/pensiero_essenziale_it/toggle?token=local", follow_redirects=False)
     assert r.status_code == 303
     db = Database.open(s.db_path())
-    assert db.is_page_paused("motivational_it") is True
+    assert db.is_page_paused("pensiero_essenziale_it") is True
     db.close()

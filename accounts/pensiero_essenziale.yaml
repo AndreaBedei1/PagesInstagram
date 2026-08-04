@@ -1,0 +1,53 @@
+# Pagina 1 — Pensiero Essenziale (pensieri filosofici originali, italiano).
+# Segreti (IG user id + token) SOLO da .env:
+#   ICE_PENSIERO_ESSENZIALE_IT_IG_USER_ID / ICE_PENSIERO_ESSENZIALE_IT_ACCESS_TOKEN
+page_id: pensiero_essenziale_it
+enabled: true
+display_name: Pensiero Essenziale
+content_type: philosophical_thought
+language: it
+
+publishing:
+  posts_per_day: 1
+  publish_feed: true            # contenuto principale -> Reel condiviso nel Feed
+  publish_story: false          # abilitabile senza toccare il codice
+  publish_reel: false
+  feed_time: "08:30"
+  story_time: "21:30"           # usato solo se publish_story: true
+  timezone: "Europe/Rome"
+  missed_job_policy: publish_within_window
+  missed_job_window_minutes: 240
+  upload_method: resumable      # nessun hosting pubblico
+  feed_media_type: REELS
+  share_reel_to_feed: true
+  story_media_type: STORIES
+
+instagram:
+  account_type: business
+  api_flavor: instagram_login
+
+visual:
+  style: minimal_warm
+  template: philosophical_thought
+  show_author: false            # pensieri originali → mai un autore
+  font_family: default
+  background_profile: philosophy_warm_minimal
+  logo_enabled: true
+  logo_text: "@pensiero.essenziale"
+
+music:
+  enabled: false                # video silenzioso (traccia AAC muta di compatibilità)
+  profile: reflective
+
+content:
+  source: database
+  minimum_quality_score: 0.72
+  avoid_semantic_duplicates: true
+  selection_policy: cyclic_ordered
+  cycle_anchor_date: "2026-01-01"
+  cycle_length: 1000
+
+generation:
+  prepare_ahead_days: 30
+  planning_horizon_days: 60
+  published_media_retention_days: 45

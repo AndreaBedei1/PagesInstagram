@@ -45,6 +45,9 @@ def _setup(project_paths, mode, *, public_url=""):
     return s, load_pages(project_paths)
 
 
+PAGE_ID = "pensiero_essenziale_it"
+
+
 def _job(db: Database, s, key, media_type="reel", *, size=4000, make_file=True):
     cid, _ = db.insert_content(dict(
         content_type="motivational", text="Un passo alla volta.",
@@ -55,7 +58,7 @@ def _job(db: Database, s, key, media_type="reel", *, size=4000, make_file=True):
     out.parent.mkdir(parents=True, exist_ok=True)
     if make_file:
         out.write_bytes(b"\x00" * size)   # dummy mp4 (probe returns dur=0 -> skip dur check)
-    jid, _ = db.create_job(page_id="motivational_it", content_id=cid,
+    jid, _ = db.create_job(page_id=PAGE_ID, content_id=cid,
                            media_type=media_type, idempotency_key=key,
                            scheduled_at=None, status=JobStatus.MEDIA_READY)
     db.update_job(jid, output_path=str(out))

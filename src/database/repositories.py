@@ -97,6 +97,9 @@ class Database:
         "attribution_confidence", "category", "mood", "explanation", "caption",
         "hashtags", "call_to_action", "background_prompt", "normalized_text",
         "content_hash", "semantic_cluster", "quality_score", "status",
+        # 0003_evergreen_content
+        "sequence_index", "calendar_key", "metadata_json", "verification_status",
+        "verified_at", "source_name",
     )
 
     def insert_content(self, data: dict) -> tuple[int | None, bool]:
@@ -112,6 +115,9 @@ class Database:
         payload.setdefault("status", ContentStatus.DRAFT.value)
         if isinstance(payload.get("hashtags"), (list, tuple)):
             payload["hashtags"] = json.dumps(list(payload["hashtags"]), ensure_ascii=False)
+        if isinstance(payload.get("metadata_json"), (dict, list)):
+            payload["metadata_json"] = json.dumps(payload["metadata_json"],
+                                                  ensure_ascii=False)
         now = utcnow_iso()
         cols = [c for c in self.CONTENT_COLUMNS if c in payload]
         all_cols = cols + ["created_at", "updated_at"]
@@ -206,6 +212,58 @@ class Database:
             (content_type, status, min_quality, page_id),
         ).fetchone()
         return _row_to_dict(row)
+
+    # -- deterministic selection (0003) ------------------------------------
+    def content_by_sequence(
+        self, content_type: str, sequence_index: int, *, min_quality: float = 0.0,
+        status: str = ContentStatus.APPROVED_FOR_PUBLICATION,
+    ) -> dict | None:
+        """The approved item at ``sequence_index`` — the cyclic policy's lookup.
+
+        ``sequence_index`` is unique per content type in a valid dataset; the
+        ``ORDER BY id`` tiebreak keeps the result stable even if a hand-edited
+        database ever contained a duplicate.
+        """
+        row = self.conn.execute(
+            "SELECT * FROM contents WHERE content_type=? AND sequence_index=? "
+            "AND status=? AND COALESCE(quality_score,0) >= ? ORDER BY id LIMIT 1",
+            (content_type, int(sequence_index), status, min_quality),
+        ).fetchone()
+        return _row_to_dict(row)
+
+    def contents_by_calendar_key(
+        self, content_type: str, key: str, *, min_quality: float = 0.0,
+        status: str = ContentStatus.APPROVED_FOR_PUBLICATION,
+    ) -> list[dict]:
+        """Approved items for one ``MM-DD`` key, in a stable rotation order."""
+        return _rows(self.conn.execute(
+            "SELECT * FROM contents WHERE content_type=? AND calendar_key=? "
+            "AND status=? AND COALESCE(quality_score,0) >= ? "
+            "ORDER BY COALESCE(sequence_index, 2147483647), id",
+            (content_type, key, status, min_quality),
+        ))
+
+    def sequence_indexes(self, content_type: str,
+                         status: str | None = None) -> list[int]:
+        q = ("SELECT sequence_index FROM contents WHERE content_type=? "
+             "AND sequence_index IS NOT NULL")
+        args: list[Any] = [content_type]
+        if status:
+            q += " AND status=?"
+            args.append(status)
+        q += " ORDER BY sequence_index"
+        return [int(r[0]) for r in self.conn.execute(q, args).fetchall()]
+
+    def calendar_key_counts(
+        self, content_type: str,
+        status: str = ContentStatus.APPROVED_FOR_PUBLICATION,
+    ) -> dict[str, int]:
+        rows = self.conn.execute(
+            "SELECT calendar_key, COUNT(*) FROM contents WHERE content_type=? "
+            "AND status=? AND calendar_key IS NOT NULL GROUP BY calendar_key",
+            (content_type, status),
+        ).fetchall()
+        return {r[0]: int(r[1]) for r in rows}
 
     # ================= media_assets =======================================
     def insert_media(self, content_id: int, page_id: str, **paths: Any) -> int:
@@ -307,6 +365,33 @@ class Database:
             "ORDER BY scheduled_at, id"
         )
         return _rows(self.conn.execute(q, (*s, now_iso, now_iso)))
+
+    def jobs_pending_media_cleanup(self, older_than_iso: str) -> list[dict]:
+        """PUBLISHED jobs whose local media may be deleted.
+
+        Only successfully published jobs qualify: FAILED / NEEDS_REVIEW /
+        RETRY_PENDING jobs keep their files so they stay reviewable and
+        retryable.
+        """
+        return _rows(self.conn.execute(
+            "SELECT * FROM publication_jobs WHERE status=? "
+            "AND published_at IS NOT NULL AND published_at < ? "
+            "AND output_path IS NOT NULL AND media_deleted_at IS NULL "
+            "ORDER BY published_at",
+            (JobStatus.PUBLISHED.value, older_than_iso),
+        ))
+
+    def paths_still_referenced(self, path: str) -> int:
+        """How many non-published (still needed) jobs point at ``path``."""
+        return int(self.conn.execute(
+            "SELECT COUNT(*) FROM publication_jobs WHERE output_path=? "
+            "AND status <> ? AND media_deleted_at IS NULL",
+            (path, JobStatus.PUBLISHED.value),
+        ).fetchone()[0])
+
+    def jobs_for_path(self, path: str) -> list[dict]:
+        return _rows(self.conn.execute(
+            "SELECT * FROM publication_jobs WHERE output_path=?", (path,)))
 
     # ================= daily_content ======================================
     def get_daily_content(self, page_id: str, local_date: str) -> dict | None:
