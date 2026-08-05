@@ -135,6 +135,30 @@ sha256(page_id | content_id | scheduled_date | cycle_number | media_type | attem
 
 ---
 
+## 4-bis. Esito delle verifiche finali (2026-08-05)
+
+| Verifica | Comando | Esito |
+|---|---|---|
+| Suite di test | `pytest -q` | 135 test verdi |
+| Ambiente | `src.cli validate` | uscita `0` |
+| Dataset | `src.cli validate-datasets` | 5 × 1.000 = **5.000**, 0 errori bloccanti, 14 avvisi non bloccanti |
+| Segreti | `src.cli security-check` | 193 file, nessun segreto, uscita `0` |
+| Import | `src.cli import-content` | 5.000 aggiunti, 5.000 approvati |
+| Pianificazione | `src.cli schedule --days 7` | 35 job (5/giorno, solo reel) |
+| Buffer | `src.cli worker --once` | 150 media pronti (30 gg × 5 pagine) |
+| Modello locale | `install_local_model.ps1` | `sd_xl_base_1.0.safetensors`, 6,46 GB, SHA-256 registrato |
+| Generazione reale | `src.cli comfyui test-generation` | `sorgente=comfyui 768x1344` — **non** una mock |
+| Anteprime SDXL reali | `src.cli preview-pages --comfyui` | 15 anteprime, `reports/previews_sdxl/index.html` |
+| Dry-run cinque pagine | `src.cli worker --once` | `published=5 failed=0`, un reel per pagina |
+
+Il dry-run delle cinque pagine è stato eseguito anticipando gli orari dei cinque
+job del 2026-08-07 (su una copia di sicurezza del database, poi ripristinata):
+tutti e cinque sono passati a `PUBLISHED` con `upload_method=resumable`, indice
+ciclico 218 per le quattro pagine cicliche e chiave di calendario `08-07` per
+`oggi_nella_storia_it`.
+
+---
+
 ## 5. Rischi noti e mitigazioni
 
 | Rischio | Mitigazione |

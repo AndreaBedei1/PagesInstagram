@@ -73,7 +73,7 @@ models/
 # ---- Dataset validation / preview reports (regenerable) ----
 reports/*.json
 reports/*.html
-reports/previews/
+reports/previews*/
 !reports/.gitkeep
 
 # ---- OS / IDE ----
