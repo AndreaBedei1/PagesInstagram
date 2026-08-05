@@ -44,6 +44,7 @@ generated/*.html
 # ---- Logs ----
 logs/*.log
 logs/*.jsonl
+logs/*.json
 logs/*.lock
 !logs/.gitkeep
 
