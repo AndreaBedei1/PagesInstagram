@@ -102,9 +102,13 @@ def scan_text(text: str, path: str = "<memory>") -> list[SecretFinding]:
     findings: list[SecretFinding] = []
     for lineno, line in enumerate(text.splitlines(), start=1):
         stripped = line.strip()
-        if stripped.startswith("#") and "=" not in stripped:
-            continue
+        # A comment can still leak a real token, so the high-confidence token
+        # patterns keep running; the generic "name = value" heuristic does not,
+        # because prose like "# token (60 days)" is not an assignment.
+        comment = stripped.startswith("#")
         for rule, pattern, group in _RULES:
+            if comment and rule == "credential_assignment":
+                continue
             for m in pattern.finditer(line):
                 value = m.group(group) if group else m.group(0)
                 if not value or PLACEHOLDER_RE.match(value):

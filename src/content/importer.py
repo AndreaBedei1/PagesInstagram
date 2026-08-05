@@ -65,7 +65,8 @@ _CALENDAR_KEY_RE = re.compile(r"^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$")
 _ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 #: Words that would make an "original" thought look like a (fake) quotation.
-_ATTRIBUTION_MARKERS = ("diceva", "come scriveva", "citazione di", "secondo il filosofo")
+_ATTRIBUTION_MARKERS = ("come diceva", "come scriveva", "citazione di",
+                        "secondo il filosofo", "diceva sempre")
 
 
 @dataclass

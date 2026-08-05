@@ -61,6 +61,11 @@ _LOWERCASE_OK_TYPES = frozenset({"word_of_the_day"})
 #: Types whose ``text`` must be a question.
 _QUESTION_TYPES = frozenset({"daily_question"})
 
+#: Types whose ``text`` is a headline, not a full sentence. Two content words
+#: ("Scoperto Plutone") are a perfectly good title, so the sentence-oriented
+#: word-count gates must not apply to them.
+_TITLE_TYPES = frozenset({"today_in_history"})
+
 
 def gulpease_index(text: str) -> float:
     """Italian readability (Gulpease). 0..100, higher = easier to read."""
@@ -108,6 +113,13 @@ def _structure_subscore(text: str, content_type: str = "motivational"
             return 0.0, ["parola mancante"]
         if wc > 3:
             return 0.5, ["non è un lemma singolo"]
+        return 1.0, issues
+    if content_type in _TITLE_TYPES:
+        if wc < 2:
+            return 0.3, ["titolo troppo breve"]
+        if wc > 18:
+            issues.append("titolo lungo")
+            return 0.8, issues
         return 1.0, issues
     if wc < 3:
         return 0.3, ["troppo poche parole"]
@@ -257,15 +269,18 @@ def score_content(
     # exempt — for them one short token is the correct shape, not degeneracy.
     wc = len(tokens(text))
     n = len(text.strip())
-    if content_type not in _SINGLE_TOKEN_TYPES:
+    if content_type not in _SINGLE_TOKEN_TYPES and content_type not in _TITLE_TYPES:
         if wc < 4:
             score *= 0.55
             issues.append("frase troppo breve per essere pubblicabile")
         if n < 12:
             score *= 0.6
-    elif n < 3:
+    elif content_type in _SINGLE_TOKEN_TYPES and n < 3:
         score *= 0.4
         issues.append("lemma troppo corto")
+    elif content_type in _TITLE_TYPES and n < 10:
+        score *= 0.6
+        issues.append("titolo troppo corto per essere pubblicabile")
     subs["_gate_wc"] = wc
 
     return QualityResult(score=round(min(1.0, score), 4), subscores=subs, issues=issues)
