@@ -1,13 +1,43 @@
 # Meta Resumable Upload — riferimento ufficiale (Instagram Content Publishing)
 
 > Fonte primaria: **solo** documentazione ufficiale Meta. Nessun blog / nessuna
-> implementazione non ufficiale usata come fonte. Verificato il 2026‑07‑22.
+> implementazione non ufficiale usata come fonte.
+> Prima verifica: 2026‑07‑22. **Riverificato il 2026‑08‑04.**
 
 ## Riferimenti ufficiali
 - Content Publishing: https://developers.facebook.com/docs/instagram-platform/content-publishing/
 - **Resumable Uploads**: https://developers.facebook.com/docs/instagram-platform/content-publishing/resumable-uploads/
 - IG User `/media` reference (parametri): https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-user/media/
 - Overview / Login flavor: https://developers.facebook.com/docs/instagram-platform/overview/
+
+## Esito della riverifica del 2026‑08‑04
+
+| Aspetto | Esito |
+|---|---|
+| Flusso resumable (container → upload binario → polling → publish) | **invariato** |
+| Host dell'upload binario | invariato: `rupload.facebook.com/ig-api-upload/<VER>/<CONTAINER_ID>` |
+| Header obbligatori | invariati: `Authorization: OAuth <TOKEN>`, `offset`, `file_size` |
+| Parametro `upload_type=resumable` sulla creazione container | invariato |
+| `media_type` | invariato: `REELS` / `STORIES` / `VIDEO` |
+| Ripresa di un upload interrotto (`bytes_transferred` → nuovo `offset`) | invariato |
+| Versione Graph API | gli esempi correnti di content publishing usano **v25.0**; alcune pagine mostrano ancora versioni precedenti. Resta configurabile con `META_GRAPH_API_VERSION` (default di progetto `v23.0`) |
+| `share_to_feed` | documentato nel riferimento IG User `/media` per i Reels; **non** compare nella pagina dedicata al resumable upload |
+| Necessità di URL pubblici | **nessuna**: il file locale viaggia direttamente verso i server Meta |
+
+Nessuna modifica al client è risultata necessaria. In particolare **non** è stato
+reintrodotto alcun requisito di `ICE_PUBLIC_MEDIA_BASE_URL` per il provider
+resumable: quella variabile resta usata soltanto dal provider opzionale e
+inattivo `hosted_url`.
+
+### Rinnovo automatico del token
+
+La documentazione corrente descrive lo scambio short‑lived → long‑lived e il
+rinnovo del token long‑lived, ma richiede credenziali applicative e un flusso di
+autorizzazione che dipende dalla configurazione dell'app. **Il rinnovo automatico
+non è stato implementato**: il sistema si limita a segnalare in anticipo la
+scadenza con `instagram health-check --all`, che avvisa quando mancano meno di
+dieci giorni. È una scelta prudente: un rinnovo automatico non testato su un
+account reale rischierebbe di invalidare token funzionanti.
 
 ## Perché resumable (vincolo di rete)
 Il resumable upload invia il **file binario locale direttamente ai server Meta**
