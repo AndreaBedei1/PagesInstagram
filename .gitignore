@@ -44,6 +44,7 @@ generated/*.html
 # ---- Logs ----
 logs/*.log
 logs/*.jsonl
+logs/*.lock
 !logs/.gitkeep
 
 # ---- Assets that are large / licensed ----
@@ -72,6 +73,7 @@ models/
 # ---- Dataset validation / preview reports (regenerable) ----
 reports/*.json
 reports/*.html
+reports/previews/
 !reports/.gitkeep
 
 # ---- OS / IDE ----

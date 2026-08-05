@@ -48,12 +48,22 @@ Write-Host "Validazione ambiente..." -ForegroundColor Cyan
 
 # 6) DB + datasets + music
 & $Py -m src.cli init-db
-if (-not $SkipDatasets) { & $Py -m src.cli import-content }
+if (-not $SkipDatasets) {
+  & $Py -m src.cli validate-datasets
+  if ($LASTEXITCODE -ne 0) { throw "validate-datasets ha rilevato errori bloccanti" }
+  & $Py -m src.cli import-content
+}
 if (-not $SkipMusic) {
   & $Py -m src.cli music generate --per-mood 1
   & $Py -m src.cli music sync
 }
 
+# 7) controllo segreti (nessun token deve essere tracciato da Git)
+& $Py -m src.cli security-check
+if ($LASTEXITCODE -ne 0) { throw "security-check ha rilevato un possibile segreto" }
+
 Write-Host "`nInstallazione completata." -ForegroundColor Green
-Write-Host "Prova la pipeline (dry-run):  $Py -m src.cli generate --page motivational_it --count 1"
-Write-Host "Registra l'avvio automatico:  scripts\register_task_scheduler.ps1"
+Write-Host "Bootstrap completo cinque pagine: scripts\bootstrap_five_pages.ps1"
+Write-Host "Prova la pipeline (dry-run):      $Py -m src.cli generate --page pensiero_essenziale_it --count 1"
+Write-Host "Modello locale SDXL:              scripts\install_local_model.ps1"
+Write-Host "Registra l'avvio automatico:      scripts\register_task_scheduler.ps1"
