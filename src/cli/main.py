@@ -968,3 +968,85 @@ def verify_corpus_cmd(
     total_failed = sum(o.failed for o in outcomes)
     console.print(f"Report: {out}")
     raise typer.Exit(code=1 if total_failed else 0)
+
+
+@app.command("rebuild-unverified-corpus")
+def rebuild_unverified_corpus(
+    dataset: list[str] = typer.Option(None, "--dataset", help="limita a questi dataset"),
+    limit: int = typer.Option(None, help="massimo di elementi da ricostruire"),
+    resume: bool = typer.Option(True, "--resume/--no-resume",
+                                help="riusa i checkpoint (predefinito)"),
+    cache_dir: str = typer.Option(None, help="directory di cache e checkpoint"),
+    report: str = typer.Option(None, help="percorso del report JSON"),
+    dry_run: bool = typer.Option(False, "--dry-run",
+                                 help="mostra quanti elementi verrebbero sostituiti"),
+    replace: bool = typer.Option(True, "--replace/--no-replace",
+                                 help="sostituisce davvero gli elementi non verificati"),
+):
+    """Rebuild every unverified content from a source, instead of hunting a
+    source for a content that was written first.
+
+    Keeps sequence_index and calendar_key, so the rotation and the calendar
+    coverage do not move; only the claim changes, and it changes because it came
+    out of the evidence.
+    """
+    import json as _json
+    import shutil
+
+    from ..content.dataset_io import load_dataset
+    from ..content.rebuild import BUILDERS, rebuild_dataset
+    from ..content.verification import is_publishable
+
+    paths = Paths.create()
+    cdir = Path(cache_dir) if cache_dir else paths.root / ".cache"
+    cdir.mkdir(parents=True, exist_ok=True)
+    if not resume:
+        for stale in cdir.glob("rebuild_*.json"):
+            stale.unlink()
+
+    names = list(dataset) if dataset else [
+        p.name for p in sorted(paths.datasets.glob("*.json"))
+        if (load_dataset(p).get("content_type") or "") in BUILDERS]
+
+    if dry_run or not replace:
+        t = Table(title="Elementi da ricostruire")
+        for col in ("dataset", "totale", "pronti", "da sostituire"):
+            t.add_column(col)
+        for name in names:
+            path = paths.datasets / name
+            data = load_dataset(path)
+            ctype = data.get("content_type") or ""
+            items = data.get("items") or []
+            ready = sum(1 for i in items if is_publishable(i, content_type=ctype).ok)
+            t.add_row(name, str(len(items)), str(ready), str(len(items) - ready))
+        console.print(t)
+        console.print("[yellow]anteprima[/]: nessun dataset modificato")
+        raise typer.Exit(code=0)
+
+    outcomes = []
+    for name in names:
+        path = paths.datasets / name
+        console.print(f"[bold]{name}[/] …")
+        outcomes.append(rebuild_dataset(
+            path, cache_dir=cdir, limit=limit,
+            progress=lambda d, tot: console.print(f"    [dim]{d}/{tot}[/]")))
+
+    out = Path(report) if report else paths.root / "reports" / "rebuild.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(_json.dumps([o.as_dict() for o in outcomes],
+                               ensure_ascii=False, indent=2), encoding="utf-8")
+
+    t = Table(title="Ricostruzione source-first")
+    for col in ("dataset", "mantenuti", "da sostituire", "ricostruiti",
+                "ancora non pronti"):
+        t.add_column(col)
+    for o in outcomes:
+        t.add_row(o.dataset.replace("_it.json", ""), str(o.kept), str(o.needed),
+                  f"[green]{o.rebuilt}[/]",
+                  f"[red]{o.still_failing}[/]" if o.still_failing else "0")
+    console.print(t)
+    for o in outcomes:
+        for note in o.notes[:4]:
+            console.print(f"  [dim]{o.dataset}: {note}[/]")
+    console.print(f"Report: {out}")
+    raise typer.Exit(code=1 if any(o.still_failing for o in outcomes) else 0)

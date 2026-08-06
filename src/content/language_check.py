@@ -108,8 +108,10 @@ _RULES: tuple[tuple[str, str, re.Pattern, str], ...] = (
      re.compile(r"\b(perche|poiche|finche|benche|cioe|percio|piu|gia|cosi|"
                 r"pero|caffe|citta|liberta|verita|meta(?=\s)|puo)\b"),
      "manca l'accento"),
+    # Case-sensitive on purpose: "il XV secolo" and "il XI capitolo" are Roman
+    # numerals, not words beginning with an impure s.
     ("articolo_s_impura", ERROR,
-     re.compile(r"\b(il|un)\s+(s[bcdfgklmnpqrtvz]|z|gn|ps|pn|x|y)\w", re.IGNORECASE),
+     re.compile(r"\b(il|un|Il|Un)\s+(s[bcdfgklmnpqrtvz]|z|gn|ps|pn|x|y)[a-zà-ù]"),
      "davanti a s impura / z / gn / ps / pn / x / y servono «lo» e «uno»"),
     ("url_nel_testo", ERROR, re.compile(r"https?://|\bwww\."),
      "un URL non deve comparire nel testo mostrato"),

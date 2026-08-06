@@ -156,16 +156,25 @@ def wikipedia_title(url: str) -> str | None:
 
 def fetch_wikipedia_extracts(titles: list[str], *, session: requests.Session,
                              cache: PageCache, rate: float = 4.0,
+                             intro_only: bool = False,
                              progress=None) -> dict[str, dict]:
     """``title -> {title, text, missing}`` for every requested article.
 
     Uses ``prop=extracts&explaintext``, which returns the article as plain text
-    without markup — one request per twenty articles, and no scraping.
+    without markup, and no scraping.
+
+    ``intro_only`` matters more than it looks: MediaWiki serves **one** page per
+    request for full-article extracts, whatever ``exlimit`` says, but twenty per
+    request for lead sections. Fetching two thousand articles without it means
+    two thousand requests, and in practice means most of them silently coming
+    back empty. The day-page path needs whole articles to find a year; the
+    curiosity path only ever reads the lead, so it asks for the lead.
     """
     out: dict[str, dict] = {}
     pending = []
     for t in titles:
-        cached = cache.get(f"wiki:{t}")
+        prefix = "wikiintro" if intro_only else "wiki"
+        cached = cache.get(f"{prefix}:{t}")
         if cached is not None:
             out[t] = cached
         else:
@@ -175,10 +184,12 @@ def fetch_wikipedia_extracts(titles: list[str], *, session: requests.Session,
     for start in range(0, len(pending), WIKI_BATCH):
         chunk = pending[start:start + WIKI_BATCH]
         try:
-            r = session.get(WIKI_API, timeout=40, params={
-                "action": "query", "format": "json", "redirects": "1",
-                "prop": "extracts", "explaintext": "1", "exlimit": "max",
-                "titles": "|".join(chunk)})
+            params = {"action": "query", "format": "json", "redirects": "1",
+                      "prop": "extracts", "explaintext": "1", "exlimit": "max",
+                      "titles": "|".join(chunk)}
+            if intro_only:
+                params["exintro"] = "1"
+            r = session.get(WIKI_API, timeout=40, params=params)
             data = r.json()
         except (requests.RequestException, ValueError) as e:
             for t in chunk:
@@ -204,7 +215,7 @@ def fetch_wikipedia_extracts(titles: list[str], *, session: requests.Session,
                 "missing": page is None or "missing" in (page or {}),
             }
             out[t] = record
-            cache.put(f"wiki:{t}", record)
+            cache.put(f"{'wikiintro' if intro_only else 'wiki'}:{t}", record)
         cache.save()
         if progress:
             progress(min(start + WIKI_BATCH, len(pending)), len(pending))
@@ -345,6 +356,39 @@ _POS_PATTERNS = {
 }
 
 
+#: Treccani's own grammatical markers. Order matters: "v. tr. e intr."
+#: must read as transitive before the bare "v. intr." pattern claims it,
+#: and the pronominal marker must win over both.
+_POS_MARKERS: tuple[tuple[str, str], ...] = (
+    ('v\\.\\s*intr\\.\\s*pron\\.', 'verbo riflessivo'),
+    ('v\\.\\s*rifl\\.', 'verbo riflessivo'),
+    ('v\\.\\s*tr\\.\\s*e\\s*intr\\.', 'verbo transitivo'),
+    ('v\\.\\s*tr\\.', 'verbo transitivo'),
+    ('v\\.\\s*intr\\.', 'verbo intransitivo'),
+    ('s\\.\\s*m\\.\\s*e\\s*f\\.', 'sostantivo maschile'),
+    ('s\\.\\s*m\\.', 'sostantivo maschile'),
+    ('s\\.\\s*f\\.', 'sostantivo femminile'),
+    ('agg\\.', 'aggettivo'),
+    ('avv\\.', 'avverbio'),
+    ('locuz\\.', 'locuzione'),
+)
+
+
+def part_of_speech_from_entry(text: str) -> str:
+    """The grammatical category the dictionary itself declares, or ''.
+
+    Reading it from the entry is the point: asserting a category and checking
+    whether the page agrees fails on every lemma the dictionary classes
+    differently (``declinare`` is "v. tr. e intr."), and the dictionary is the
+    authority here, not the candidate list.
+    """
+    head = _fold(text or "")[:2500]
+    for pattern, label in _POS_MARKERS:
+        if re.search(pattern, head):
+            return label
+    return ""
+
+
 def verify_lemma(lemma: str, part_of_speech: str, definition: str,
                  page: dict) -> Evidence:
     """Is this Treccani page the dictionary entry for this lemma?
@@ -372,11 +416,12 @@ def verify_lemma(lemma: str, part_of_speech: str, definition: str,
                                    f"non «{lemma}»")
 
     low = _fold(text)[:6000]
+    declared = part_of_speech_from_entry(text)
     patterns = _POS_PATTERNS.get(part_of_speech, ())
     pos_ok = any(re.search(p, low) for p in patterns) if patterns else True
-    if not pos_ok:
+    if not pos_ok and not declared:
         return Evidence(False, source_title=title,
-                        reason=f"la voce non dichiara «{part_of_speech}»")
+                        reason=f"la voce non dichiara una categoria grammaticale")
 
     want = content_tokens(definition, min_len=5)
     hits = len(want & content_tokens(text)) if want else 0
@@ -389,7 +434,8 @@ def verify_lemma(lemma: str, part_of_speech: str, definition: str,
         passage = text[:280]
     return Evidence(True, passage=passage, source_title=title,
                     matched_tokens=hits, required_tokens=len(want),
-                    extra={"pos_confirmed": pos_ok})
+                    extra={"pos_confirmed": pos_ok,
+                           "declared_pos": declared or part_of_speech})
 
 
 # -- history ----------------------------------------------------------------
