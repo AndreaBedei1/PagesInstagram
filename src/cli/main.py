@@ -108,7 +108,8 @@ def init_db():
 
 @app.command("import-content")
 def import_content(dataset: str = typer.Option(None, help="Specific dataset file; default: all datasets/*.json"),
-                   approve_floor: float = typer.Option(0.80)):
+                   approve_floor: float = typer.Option(
+                       None, help="soglia di qualità; predefinito: quella del tipo")):
     """Import dataset JSON files into the DB (dedup + quality gating)."""
     from ..content.importer import import_dataset
 
@@ -1190,3 +1191,53 @@ def arming_status():
                   s.armed_at or "—")
     console.print(t)
     db.close()
+
+
+@app.command("prepare-buffer")
+def prepare_buffer(
+    from_: str = typer.Option(..., "--from", help="prima data locale, YYYY-MM-DD"),
+    days: int = typer.Option(30, help="giorni di buffer"),
+    all_pages: bool = typer.Option(True, "--all-pages/--enabled-only"),
+    require_comfyui: bool = typer.Option(
+        False, "--require-comfyui",
+        help="fallisce invece di usare lo sfondo di ripiego"),
+):
+    """Generate the rolling media buffer for real, without publishing anything.
+
+    With ``--require-comfyui`` a background that falls back to the deterministic
+    gradient is a failure, not a silent downgrade: a buffer built on the fallback
+    looks fine in a report and wrong on the account.
+    """
+    from ..scheduling.planner import plan_page
+    from ..scheduling.worker import Worker
+
+    paths, settings, registry, db = _ctx()
+    if require_comfyui:
+        settings.comfyui.allow_fallback_in_dry_run = False
+        settings.comfyui.allow_fallback_in_test = False
+        from ..comfyui.client import ComfyUIClient
+        if not ComfyUIClient(settings.comfyui.url).is_ready():
+            console.print("[red]ComfyUI non raggiungibile[/] e il fallback è "
+                          "vietato: avvialo prima di generare il buffer.")
+            db.close()
+            raise typer.Exit(code=1)
+
+    start = __import__("datetime").date.fromisoformat(from_)
+    planned = 0
+    for page in registry.enabled():
+        planned += plan_page(db, page, start=start, days=days).created
+    console.print(f"pianificati {planned} job su {days} giorni")
+
+    worker = Worker(settings, db, registry, try_comfyui=True,
+                    plan_enabled=False, cleanup_enabled=False,
+                    prepare_ahead_minutes=days * 24 * 60)
+    stats = worker._prepare_media  # noqa: SLF001 - the tick's media phase only
+    from ..scheduling.worker import TickStats
+    tick = TickStats()
+    stats(tick)
+    console.print(f"preparati={tick.prepared} falliti={tick.failed} "
+                  f"review={tick.review}")
+    for message in tick.messages[:5]:
+        console.print(f"  [yellow]{message}[/]")
+    db.close()
+    raise typer.Exit(code=0 if tick.failed == 0 and tick.review == 0 else 1)
