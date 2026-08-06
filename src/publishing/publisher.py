@@ -25,6 +25,7 @@ from ..content.captions import build_caption
 from ..core.enums import (META_MEDIA_TYPE, JobStatus, MediaType, Mode,
                           UploadMethod, UploadStatus)
 from ..core.errors import PublishError
+from .arming import may_publish
 from ..core.logging_setup import get_logger
 from ..core.settings import Settings
 from ..core.timeutils import now_utc, parse_iso, utcnow_iso
@@ -121,6 +122,18 @@ class Publisher:
 
         if mode == Mode.DRY_RUN:
             return self._dry_run(job, page)
+
+        # Production mode is one variable, and one variable is one mistake away
+        # from five accounts posting at once. A page also has to be armed, by
+        # hand, after its own controlled canary.
+        allowed, reason = may_publish(self.db, page.page_id, mode)
+        if not allowed:
+            self.db.update_job(job_id, status=JobStatus.NEEDS_REVIEW,
+                               last_error=reason)
+            self.db.log_event(job_id=job_id, page_id=page.page_id,
+                              event="blocked", error=reason)
+            return PublishOutcome(job_id, JobStatus.NEEDS_REVIEW, mode,
+                                  message=reason)
 
         target = self._factory(page)
         if target is None:

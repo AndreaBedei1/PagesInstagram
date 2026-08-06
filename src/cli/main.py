@@ -1140,3 +1140,53 @@ def production_readiness(
             console.print(f"  [yellow]{p.page_id}[/]: {problem}")
     console.print(f"Report: {out_json}\n        {out_html}")
     raise typer.Exit(code=0 if result.ok else 1)
+
+
+@app.command("arm-page")
+def arm_page(
+    page: str = typer.Argument(..., help="page_id, oppure 'all' per tutte"),
+    disarm: bool = typer.Option(False, "--disarm", help="disarma invece di armare"),
+):
+    """Arm a page for real publication, after its controlled canary.
+
+    Production mode alone never publishes: a page must also be armed here.
+    Every page starts disarmed and nothing in the normal run path arms one.
+    """
+    from ..publishing.arming import all_states, set_armed
+
+    paths, settings, registry, db = _ctx()
+    ids = registry.ids() if page == "all" else [page]
+    for pid in ids:
+        if pid not in registry:
+            console.print(f"[red]pagina sconosciuta:[/] {pid}")
+            db.close()
+            raise typer.Exit(code=2)
+    for pid in ids:
+        state = set_armed(db, pid, not disarm)
+        verb = "disarmata" if disarm else "[green]ARMATA[/]"
+        console.print(f"  {pid:24s} {verb} ({state.armed_at})")
+
+    t = Table(title="Stato di armamento")
+    t.add_column("pagina"); t.add_column("stato"); t.add_column("dal")
+    for s in all_states(db, registry.ids()):
+        t.add_row(s.page_id, "[green]armata[/]" if s.armed else "disarmata",
+                  s.armed_at or "—")
+    console.print(t)
+    if not disarm:
+        console.print("[yellow]ICE_MODE resta invariato[/]: armare non pubblica")
+    db.close()
+
+
+@app.command("arming-status")
+def arming_status():
+    """Which pages may publish, and since when."""
+    from ..publishing.arming import all_states
+
+    paths, settings, registry, db = _ctx()
+    t = Table(title=f"Armamento — ICE_MODE={settings.mode}")
+    t.add_column("pagina"); t.add_column("stato"); t.add_column("dal")
+    for s in all_states(db, registry.ids()):
+        t.add_row(s.page_id, "[green]armata[/]" if s.armed else "disarmata",
+                  s.armed_at or "—")
+    console.print(t)
+    db.close()
