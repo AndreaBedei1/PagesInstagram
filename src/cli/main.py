@@ -851,6 +851,11 @@ def preproduction_smoke_test(
 @app.command("media-audit")
 def media_audit_cmd(
     per_page: int = typer.Option(1, help="video da controllare per pagina"),
+    buffer: bool = typer.Option(False, "--buffer",
+                                help="controlla tutto il buffer generato"),
+    all_files: bool = typer.Option(False, "--all",
+                                   help="non limitare il numero per pagina"),
+    file: str = typer.Option(None, "--file", help="controlla un singolo file"),
     report: str = typer.Option(None, help="percorso del report JSON"),
 ):
     """Probe generated videos with ffprobe against Meta's Reel specifications."""
@@ -858,14 +863,18 @@ def media_audit_cmd(
 
     paths, settings, registry, db = _ctx()
     files: list[tuple[str, str]] = []
-    for page in registry.enabled():
-        rows = db.conn.execute(
-            "SELECT output_path FROM publication_jobs WHERE page_id=? "
-            "AND output_path IS NOT NULL ORDER BY id DESC LIMIT ?",
-            (page.page_id, per_page)).fetchall()
-        for r in rows:
-            if r[0] and Path(r[0]).exists():
-                files.append((page.page_id, r[0]))
+    if file:
+        files.append(("(singolo)", file))
+    else:
+        limit = 100000 if (buffer or all_files) else per_page
+        for page in registry.enabled():
+            rows = db.conn.execute(
+                "SELECT DISTINCT output_path FROM publication_jobs WHERE page_id=? "
+                "AND output_path IS NOT NULL ORDER BY output_path LIMIT ?",
+                (page.page_id, limit)).fetchall()
+            for r in rows:
+                if r[0] and Path(r[0]).exists():
+                    files.append((page.page_id, r[0]))
     db.close()
 
     if not files:
