@@ -6,6 +6,31 @@ non è soddisfatta.
 
 ---
 
+## 0. Gli otto sbarramenti
+
+Nessuno di questi è facoltativo, e vanno **in quest'ordine**. Gli ultimi due
+esistono perché la tentazione di saltarli è forte e le conseguenze ricadono su
+account reali.
+
+| # | Sbarramento | Come si verifica |
+|---|---|---|
+| 1 | **CI verde** sul commit che stai per mettere in produzione | la spunta accanto al commit su GitHub, non un'esecuzione locale |
+| 2 | **Graph API aggiornata** e coerente ovunque | `pytest tests/unit/test_meta_api_version.py` |
+| 3 | **Security check verde** | `python -m src.cli security-check` |
+| 4 | **Almeno un account di prova verificato** | `instagram health-check --page <id>` |
+| 5 | **Upload resumable riuscito senza pubblicare** | `instagram upload-test --no-publish` |
+| 6 | **Una sola pubblicazione reale, controllata** | `instagram publish-job --confirm`, guardata a occhio |
+| 7 | **Revisione editoriale** con abbastanza contenuti pronti | `python -m src.cli status` |
+| 8 | **Nessuna attivazione in massa** al primo tentativo | una pagina, poi una settimana, poi la successiva |
+
+Sul punto 7: la produzione pubblica soltanto contenuti `production_ready`. Se ne
+hai 482, hai 482 giorni-pagina di contenuto pubblicabile, non 5.000. Un giorno il
+cui indice punta a un contenuto non pronto **si blocca** in `NEEDS_REVIEW`, non
+ripiega su un altro contenuto. Rivedi il numero di contenuti pronti prima di
+attivare una pagina, non dopo.
+
+---
+
 ## A. Ambiente
 
 - [ ] Python ≥ 3.11 e dipendenze installate
@@ -32,10 +57,18 @@ non è soddisfatta.
 
 - [ ] I cinque dataset validano senza errori bloccanti
       → `python -m src.cli validate-datasets`
-- [ ] 5.000 contenuti importati e approvati
-      → `python -m src.cli status` (5.000 in `approved_for_publication`)
-- [ ] Nessun contenuto fattuale approvato senza fonte
-      → verificato dal validatore e dai test `test_fact_checked_datasets_*`
+- [ ] Le fonti citate esistono davvero
+      → `python -m src.cli audit-sources`; i link rotti restano bloccati
+- [ ] Nessun contenuto **pubblicabile** ha una fonte rotta o mai controllata
+      → invariante bloccante di `validate-datasets` e
+        `test_no_publishable_item_has_an_unverified_source`
+- [ ] Contenuti `production_ready` sufficienti per il periodo che vuoi coprire
+      → `python -m src.cli status`; ricorda che un giorno non coperto si blocca
+- [ ] Le pagine non appaiono generate da uno script
+      → `python -m src.cli editorial-stats --strict`
+- [ ] Campione editoriale letto da una persona
+      → `python -m src.cli editorial-sample --per-dataset 100 --seed <nuovo>`,
+        poi `apply-review` con i verdetti
 - [ ] Campione rivisto a occhio
       → `python -m src.cli sample-review --count 25` e apri
         `reports/sample_review.html`
@@ -102,8 +135,14 @@ python -m src.cli instagram publish-job --page pensiero_essenziale_it `
 
 - [ ] Suite completa verde
       → `python -m pytest -q`
-- [ ] Dry-run di un giorno → esattamente 5 pubblicazioni principali
-- [ ] Dry-run di sette giorni → esattamente 35 job principali
+- [ ] **CI verde sul commit in produzione** — la spunta su GitHub, non il
+      risultato locale. Un test che gira solo sulla tua macchina non è una prova
+      che il repository sia sano.
+- [ ] Dry-run riproducibile delle cinque pagine
+      → `python -m src.cli preproduction-smoke-test --date <YYYY-MM-DD>`
+      (cinque reel, zero Storie, cinque pagine, idempotente)
+- [ ] Video conformi alle specifiche Meta
+      → `python -m src.cli media-audit`
 - [ ] Nessuna Story pianificata con la configurazione predefinita
 - [ ] Un solo worker può acquisire il lock
 
@@ -152,8 +191,11 @@ Get-Content logs\engine.log -Tail 80
 - [ ] Nessuna porta aperta verso l'esterno
 - [ ] Nessuna chiave o token in file tracciati da Git
 - [ ] Nessuna dipendenza da Claude o da altre API LLM nel funzionamento quotidiano
-- [ ] Nessun contenuto fattuale approvato senza fonte
+- [ ] Nessun contenuto **pubblicabile** senza fonte verificata da una persona
 - [ ] `comfyui.allow_fallback_in_production` a `false`
+- [ ] Nessun artefatto runtime tracciato da Git (database, log, report, cache,
+      file di modello) → `python -m src.cli security-check`
+- [ ] Cinque pagine attivate tutte insieme al primo tentativo
 
 ## Manutenzione ricorrente
 

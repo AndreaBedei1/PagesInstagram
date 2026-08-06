@@ -157,6 +157,283 @@ def validate_datasets(
     raise typer.Exit(code=0 if summary.ok else 1)
 
 
+@app.command("apply-review")
+def apply_review(
+    verdicts: str = typer.Argument(..., help="file JSON dei verdetti di revisione"),
+    write: bool = typer.Option(False, "--write",
+                               help="applica ai dataset (senza, è un'anteprima)"),
+):
+    """Apply a human review verdict file to the datasets.
+
+    The only path that can set ``manually_verified`` or ``approved``. Nothing
+    automatic writes those values.
+    """
+    from ..content.editorial_review import apply_verdicts
+
+    paths = Paths.create()
+    try:
+        payload, reports = apply_verdicts(paths.datasets, verdicts, write=write)
+    except (OSError, ValueError) as e:
+        console.print(f"[red]{e}[/]")
+        raise typer.Exit(code=2)
+
+    console.print(f"Revisore: [bold]{payload['reviewer']}[/] "
+                  f"({payload['reviewed_at']})")
+    console.print(f"[dim]{payload.get('method', '')}[/]\n")
+    t = Table(title="Verdetti applicati")
+    for col in ("dataset", "elementi", "verdetti fonte", "verdetti editoriali",
+                "saltati"):
+        t.add_column(col)
+    for rep in reports:
+        t.add_row(rep.dataset, str(rep.applied),
+                  str(rep.by_source_verdict) if rep.by_source_verdict else "—",
+                  str(rep.by_editorial_verdict) if rep.by_editorial_verdict else "—",
+                  str(len(rep.skipped)))
+    console.print(t)
+    for rep in reports:
+        for msg in rep.skipped[:5]:
+            console.print(f"  [yellow]{rep.dataset}[/]: {msg}")
+    if not write:
+        console.print("[yellow]anteprima[/]: usa --write per applicare")
+
+
+@app.command("editorial-stats")
+def editorial_stats(
+    report: str = typer.Option(None, help="percorso del report JSON"),
+    strict: bool = typer.Option(
+        False, "--strict", help="esce con codice != 0 se ci sono segnalazioni"),
+):
+    """Measure how repetitive the pages look over 7, 30, 90 and 365 days."""
+    from ..content.editorial_report import write_stats_html, write_stats_json
+    from ..content.editorial_stats import analyse_all
+
+    paths = Paths.create()
+    stats = analyse_all(paths.datasets)
+    out_json = write_stats_json(stats, Path(report) if report
+                                else paths.root / "reports" / "editorial_stats.json")
+    out_html = write_stats_html(stats, paths.root / "reports" / "editorial_stats.html")
+
+    t = Table(title="Ripetitività editoriale")
+    for col in ("dataset", "CTA", "vuote", "combo tag", "prompt", "categorie",
+                "mood", "run cat.", "run mood", "segnalazioni"):
+        t.add_column(col)
+    for s in stats:
+        t.add_row(s.dataset.replace("_it.json", ""), str(s.distinct_cta),
+                  str(s.empty_cta), str(s.distinct_hashtag_sets),
+                  str(s.distinct_prompts), str(s.distinct_categories),
+                  str(s.distinct_moods), str(s.longest_category_run),
+                  str(s.longest_mood_run),
+                  "[green]0[/]" if s.ok else f"[yellow]{len(s.warnings)}[/]")
+    console.print(t)
+    for s in stats:
+        for wmsg in s.warnings[:6]:
+            console.print(f"  [yellow]{s.dataset}[/]: {wmsg}")
+        if len(s.warnings) > 6:
+            console.print(f"  [yellow]{s.dataset}[/]: … e altre "
+                          f"{len(s.warnings) - 6} (vedi il report)")
+    console.print(f"Report: {out_json}\n        {out_html}")
+    failed = any(not s.ok for s in stats)
+    raise typer.Exit(code=1 if (strict and failed) else 0)
+
+
+@app.command("editorial-sample")
+def editorial_sample(
+    per_dataset: int = typer.Option(100, help="contenuti da estrarre per dataset"),
+    seed: int = typer.Option(20260805, help="seed: stesso seed, stesso campione"),
+    report: str = typer.Option(None, help="percorso del report JSON"),
+):
+    """Extract a reproducible stratified sample for human review."""
+    from ..content.dataset_io import load_dataset
+    from ..content.editorial_report import (write_sample_html, write_sample_json)
+    from ..content.editorial_stats import _strata, stratified_sample
+    from ..content.language_check import check_item
+
+    paths = Paths.create()
+    payload = {"generated_at": __import__("datetime").datetime.now(
+                   __import__("datetime").timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+               "seed": seed, "per_dataset": per_dataset,
+               "total": 0, "datasets": []}
+
+    for path in sorted(paths.datasets.glob("*.json")):
+        data = load_dataset(path)
+        items = data.get("items") or []
+        ctype = data.get("content_type") or ""
+        picked = stratified_sample(items, count=per_dataset, seed=seed)
+        covered: set[str] = set()
+        rows = []
+        for idx in picked:
+            item = items[idx]
+            covered.update(_strata(item, idx, len(items)))
+            warnings = [f"{i.rule}: {i.message}"
+                        for i in check_item(item, content_type=ctype)]
+            rows.append({
+                "index": idx,
+                "sequence_index": item.get("sequence_index"),
+                "id": item.get("id"),
+                "text": item.get("text"),
+                "caption": item.get("caption"),
+                "call_to_action": item.get("call_to_action"),
+                "hashtags": item.get("hashtags"),
+                "category": item.get("category"),
+                "mood": item.get("mood"),
+                "calendar_key": item.get("calendar_key"),
+                "metadata": item.get("metadata"),
+                "source_name": item.get("source_name"),
+                "source_url": item.get("source_url"),
+                "source_audit_status": item.get("source_audit_status"),
+                "editorial_status": item.get("editorial_status"),
+                "warnings": warnings,
+            })
+        payload["datasets"].append({
+            "dataset": path.name, "content_type": ctype,
+            "total_items": len(items), "items": rows,
+            "strata_covered": sorted(covered),
+        })
+        payload["total"] += len(rows)
+
+    out_json = write_sample_json(payload, Path(report) if report
+                                 else paths.root / "reports" / "editorial_sample.json")
+    out_html = write_sample_html(payload, paths.root / "reports" / "editorial_sample.html")
+
+    t = Table(title=f"Campione editoriale (seed {seed})")
+    for col in ("dataset", "estratti", "su", "strati coperti", "con avvisi"):
+        t.add_column(col)
+    for ds in payload["datasets"]:
+        with_warnings = sum(1 for r in ds["items"] if r["warnings"])
+        t.add_row(ds["dataset"].replace("_it.json", ""), str(len(ds["items"])),
+                  str(ds["total_items"]), str(len(ds["strata_covered"])),
+                  str(with_warnings))
+    console.print(t)
+    console.print(f"Totale: [bold]{payload['total']}[/] contenuti")
+    console.print(f"Report: {out_json}\n        {out_html}")
+
+
+@app.command("audit-sources")
+def audit_sources(
+    dataset: list[str] = typer.Option(
+        None, "--dataset", help="dataset da controllare; default: i tre fattuali"),
+    limit: int = typer.Option(
+        None, help="massimo di URL NUOVI da interrogare (l'audit è riprendibile)"),
+    max_age_days: int = typer.Option(
+        30, help="riusa dalla cache i controlli più recenti di N giorni"),
+    rate: float = typer.Option(4.0, help="richieste al secondo per host"),
+    timeout: float = typer.Option(20.0, help="timeout per richiesta, in secondi"),
+    retries: int = typer.Option(2, help="tentativi aggiuntivi sugli errori transitori"),
+    apply: bool = typer.Option(
+        False, "--apply",
+        help="scrive source_audit_status nei file dei dataset"),
+    refresh: bool = typer.Option(False, "--refresh", help="ignora la cache"),
+):
+    """Check that the cited source URLs actually resolve.
+
+    A reachable URL is *not* a verified fact: it only rules out the sources that
+    are plainly broken. Reachable items become ``reachable``; only a human can
+    move them to ``manually_verified``.
+    """
+    import json as _json
+
+    from ..content import source_audit as sa
+    from ..content.editorial import source_status_from_check
+
+    paths = Paths.create()
+    default = ["world_curiosities_it.json", "words_of_the_day_it.json",
+               "today_in_history_it.json"]
+    names = list(dataset) if dataset else default
+    targets = [paths.datasets / n if not Path(n).is_absolute() else Path(n)
+               for n in names]
+    missing = [str(p) for p in targets if not p.exists()]
+    if missing:
+        console.print(f"[red]dataset non trovati:[/] {', '.join(missing)}")
+        raise typer.Exit(code=2)
+
+    cache_path = paths.root / ".cache" / "source_audit_cache.json"
+    cache = sa.AuditCache(cache_path, max_age_days=0 if refresh else max_age_days)
+    session = sa.build_session()
+    limiter = sa.make_limiter(rate)
+
+    console.print(f"User agent: [dim]{sa.USER_AGENT}[/]")
+    console.print(f"Cache: {cache_path} ({len(cache)} URL noti)")
+
+    reports: list[sa.DatasetSourceAudit] = []
+    all_checks: dict[str, sa.UrlCheck] = {}
+    budget = limit
+    for path in targets:
+        console.print(f"[bold]{path.name}[/] …")
+        seen = {"n": 0}
+
+        def progress(chk, _seen=seen, _name=path.name):
+            _seen["n"] += 1
+            if _seen["n"] % 100 == 0:
+                console.print(f"  {_name}: {_seen['n']} controllati")
+
+        rep, checks = sa.audit_dataset(
+            path, cache=cache, session=session, limiter=limiter,
+            timeout=timeout, retries=retries, limit=budget, progress=progress)
+        reports.append(rep)
+        all_checks.update(checks)
+        if budget is not None:
+            budget = max(0, budget - rep.checked)
+        console.print(f"  unici={rep.urls_unique} nuovi={rep.checked} "
+                      f"cache={rep.from_cache} esiti={rep.by_status}")
+
+    partial = any(r.by_status.get("not_checked") for r in reports)
+    out_json = sa.write_json_report(reports, paths.root / "reports" / "source_audit.json",
+                                    partial=partial)
+    out_html = sa.write_html_report(reports, paths.root / "reports" / "source_audit.html",
+                                    partial=partial)
+
+    t = Table(title="Audit delle fonti")
+    for col in ("dataset", "URL", "unici", "nuovi", "cache", "raggiungibili",
+                "rotti", "transitori", "non controllati"):
+        t.add_column(col)
+    for r in reports:
+        reach = sum(v for k, v in r.by_status.items() if k in sa.REACHABLE)
+        broken = sum(v for k, v in r.by_status.items() if k in sa.BROKEN)
+        trans = sum(v for k, v in r.by_status.items() if k in sa.TRANSIENT)
+        t.add_row(r.dataset, str(r.urls_total), str(r.urls_unique), str(r.checked),
+                  str(r.from_cache), f"[green]{reach}[/]",
+                  f"[red]{broken}[/]" if broken else "0",
+                  f"[yellow]{trans}[/]" if trans else "0",
+                  str(r.by_status.get("not_checked", 0)))
+    console.print(t)
+
+    if apply:
+        from ..content.dataset_io import load_dataset, save_dataset
+
+        changed_total = 0
+        for path in targets:
+            data = load_dataset(path)
+            changed = 0
+            for item in data.get("items") or []:
+                url = (item.get("source_url") or "").strip()
+                chk = all_checks.get(url)
+                if not url or chk is None:
+                    continue
+                # Never downgrade a human verdict with a machine result.
+                if (item.get("source_audit_status") or "") == "manually_verified":
+                    continue
+                new_status = source_status_from_check(chk.status)
+                if item.get("source_audit_status") != new_status:
+                    changed += 1
+                item["source_audit_status"] = new_status
+                item["source_audited_at"] = chk.checked_at
+                item["source_audit_note"] = (
+                    f"{chk.status}"
+                    + (f" HTTP {chk.http_status}" if chk.http_status else "")
+                    + (f" · {chk.note}" if chk.note else ""))
+            save_dataset(path, data)
+            console.print(f"  {path.name}: {changed} stati aggiornati")
+            changed_total += changed
+        console.print(f"[bold]{changed_total}[/] elementi aggiornati nei dataset")
+
+    console.print(f"Report: {out_json}\n        {out_html}")
+    broken_total = sum(v for r in reports for k, v in r.by_status.items()
+                       if k in sa.BROKEN)
+    if broken_total:
+        console.print(f"[red]{broken_total} URL rotti[/] — vanno corretti o sostituiti")
+    raise typer.Exit(code=1 if broken_total else 0)
+
+
 @app.command("security-check")
 def security_check(
     include_untracked: bool = typer.Option(
@@ -180,6 +457,9 @@ def security_check(
         console.print("[green].gitignore: .env, secrets/ e *.safetensors esclusi[/]")
     for tracked in res.tracked_env_files:
         console.print(f"[red]file .env tracciato da Git[/]: {tracked}")
+    for bad in res.forbidden_tracked:
+        console.print(f"[red]artefatto runtime tracciato[/] ({bad['reason']}): "
+                      f"{bad['path']}")
     if res.findings:
         t = Table(title="Possibili segreti")
         for col in ("file", "riga", "regola", "estratto (redatto)"):
@@ -527,3 +807,94 @@ def music_sync():
 
 if __name__ == "__main__":
     app()
+
+
+@app.command("preproduction-smoke-test")
+def preproduction_smoke_test(
+    date: str = typer.Option(..., help="data locale da simulare, YYYY-MM-DD"),
+    report: str = typer.Option(None, help="percorso del report JSON"),
+    keep: bool = typer.Option(False, "--keep",
+                              help="non cancellare la directory temporanea"),
+):
+    """Reproducible five-page dry-run in a throwaway database.
+
+    Builds a database from scratch, imports the real datasets, plans the given
+    date, generates the media and runs the real worker twice — then checks that
+    exactly five reels published, no Stories, five distinct pages, the right
+    content per page, and that the second tick published nothing.
+    """
+    from ..scheduling.smoke_test import run_smoke_test, write_report
+
+    paths, settings, _registry, db = _ctx()
+    db.close()
+    result = run_smoke_test(settings, local_date=date, paths=paths, keep=keep,
+                            progress=lambda m: console.print(f"  [dim]{m}[/]"))
+    out = write_report(result, Path(report) if report
+                       else paths.root / "reports" / "preproduction_smoke_test.json")
+
+    t = Table(title=f"Smoke test di pre-produzione — {date}")
+    t.add_column("controllo")
+    t.add_column("esito")
+    t.add_column("dettaglio")
+    for check in result.checks:
+        t.add_row(check.name, "[green]OK[/]" if check.ok else "[red]FAIL[/]",
+                  check.detail)
+    console.print(t)
+    for m in result.media:
+        console.print(f"  {m['page_id']:24s} {m['media_type']:5s} "
+                      f"{m['size_bytes'] // 1024:>5d} KB  {m['upload_method']}")
+    console.print(f"Report: {out}")
+    raise typer.Exit(code=0 if result.ok else 1)
+
+
+@app.command("media-audit")
+def media_audit_cmd(
+    per_page: int = typer.Option(1, help="video da controllare per pagina"),
+    report: str = typer.Option(None, help="percorso del report JSON"),
+):
+    """Probe generated videos with ffprobe against Meta's Reel specifications."""
+    from ..video.media_audit import audit_files, safe_area_box, write_report
+
+    paths, settings, registry, db = _ctx()
+    files: list[tuple[str, str]] = []
+    for page in registry.enabled():
+        rows = db.conn.execute(
+            "SELECT output_path FROM publication_jobs WHERE page_id=? "
+            "AND output_path IS NOT NULL ORDER BY id DESC LIMIT ?",
+            (page.page_id, per_page)).fetchall()
+        for r in rows:
+            if r[0] and Path(r[0]).exists():
+                files.append((page.page_id, r[0]))
+    db.close()
+
+    if not files:
+        console.print("[yellow]Nessun media generato da controllare. "
+                      "Esegui prima 'worker --once' o 'preproduction-smoke-test'.[/]")
+        raise typer.Exit(code=1)
+
+    checks = audit_files(files, ffmpeg_path=settings.video.ffmpeg_path)
+    out = write_report(checks, Path(report) if report
+                       else paths.root / "reports" / "media_audit.json")
+
+    t = Table(title="Audit dei media")
+    for col in ("pagina", "file", "contenitore", "video", "audio", "risoluzione",
+                "fps", "durata", "faststart", "esito"):
+        t.add_column(col)
+    for c in checks:
+        t.add_row(c.page_id, c.file[:26], c.container.split(",")[0],
+                  f"{c.video_codec}/{c.pixel_format}",
+                  f"{c.audio_codec} {c.audio_sample_rate}Hz×{c.audio_channels}",
+                  f"{c.width}×{c.height}", f"{c.fps:g}",
+                  f"{c.duration_seconds:g}s",
+                  "[green]sì[/]" if c.faststart else "[red]no[/]",
+                  "[green]OK[/]" if c.ok else "[red]FAIL[/]")
+    console.print(t)
+    for c in checks:
+        for p in c.problems:
+            console.print(f"  [red]{c.file}[/]: {p}")
+    box = safe_area_box()
+    console.print(f"Area sicura 9:16: x {box['left']}–{box['right']}, "
+                  f"y {box['top']}–{box['bottom']} "
+                  f"({box['usable_width']}×{box['usable_height']} px utilizzabili)")
+    console.print(f"Report: {out}")
+    raise typer.Exit(code=0 if all(c.ok for c in checks) else 1)

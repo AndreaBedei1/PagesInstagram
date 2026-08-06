@@ -141,47 +141,87 @@ def background_seed(*, page_id: str, content_id: int, scheduled_date: str,
 
 
 # --------------------------------------------------------------------------
-def select_for_date(db, page: PageConfig, local_date: str | date_cls) -> Selection:
+def select_for_date(db, page: PageConfig, local_date: str | date_cls,
+                    *, require_production_ready: bool = False) -> Selection:
     """Resolve the content a page must publish on ``local_date``.
 
     Raises :class:`SelectionError` when nothing valid exists — the caller routes
     the day to ``NEEDS_REVIEW`` rather than publishing something arbitrary.
+
+    ``require_production_ready`` turns on the editorial gate (see
+    :mod:`src.content.editorial`). The date arithmetic is unchanged: the gate
+    can only *block* a day, never redirect it to a different item, so turning it
+    on or off never changes which content a given date maps to.
     """
     day = parse_date(local_date)
     iso = day.isoformat()
     policy = page_policy(page)
 
     if policy == POLICY_CYCLIC:
-        return _select_cyclic(db, page, day, iso)
+        return _select_cyclic(db, page, day, iso, require_production_ready)
     if policy == POLICY_CALENDAR:
-        return _select_calendar(db, page, day, iso)
+        return _select_calendar(db, page, day, iso, require_production_ready)
     return _select_unused(db, page, iso)
 
 
-def _select_cyclic(db, page: PageConfig, day: date_cls, iso: str) -> Selection:
+def _blocked_hint(db, content_type: str, *, sequence_index: int | None = None,
+                  key: str | None = None) -> str:
+    """Explain *why* the gate blocked a day, when it is the gate that blocked it."""
+    try:
+        if sequence_index is not None:
+            row = db.content_by_sequence(content_type, sequence_index)
+        else:
+            rows = db.contents_by_calendar_key(content_type, key or "")
+            row = rows[0] if rows else None
+    except Exception:                                   # pragma: no cover
+        return ""
+    if row is None:
+        return ""
+    from .editorial import is_production_ready
+    _, reasons = is_production_ready(
+        content_type, status=row.get("status") or "",
+        verification_status=row.get("verification_status"),
+        source_audit_status=row.get("source_audit_status"),
+        editorial_status=row.get("editorial_status"))
+    if not reasons:
+        return ""
+    return (f" — il contenuto id={row.get('id')} esiste ma non è pubblicabile: "
+            + "; ".join(reasons))
+
+
+def _select_cyclic(db, page: PageConfig, day: date_cls, iso: str,
+                   require_production_ready: bool = False) -> Selection:
     length = page_cycle_length(page)
     pos = cycle_position(page_anchor(page), day, length)
     row = db.content_by_sequence(page.content_type, pos.sequence_index,
-                                 min_quality=page.content.minimum_quality_score)
+                                 min_quality=page.content.minimum_quality_score,
+                                 require_production_ready=require_production_ready)
     if row is None:
+        hint = (_blocked_hint(db, page.content_type,
+                              sequence_index=pos.sequence_index)
+                if require_production_ready else "")
         raise SelectionError(
             f"page {page.page_id!r}: nessun contenuto approvato con "
             f"sequence_index={pos.sequence_index} per il tipo "
-            f"{page.content_type!r} (data {iso})"
+            f"{page.content_type!r} (data {iso}){hint}"
         )
     return Selection(content=row, policy=POLICY_CYCLIC, local_date=iso,
                      sequence_index=pos.sequence_index,
                      cycle_number=pos.cycle_number)
 
 
-def _select_calendar(db, page: PageConfig, day: date_cls, iso: str) -> Selection:
+def _select_calendar(db, page: PageConfig, day: date_cls, iso: str,
+                     require_production_ready: bool = False) -> Selection:
     key = calendar_key(day)
     rows = db.contents_by_calendar_key(
-        page.content_type, key, min_quality=page.content.minimum_quality_score)
+        page.content_type, key, min_quality=page.content.minimum_quality_score,
+        require_production_ready=require_production_ready)
     if not rows:
+        hint = (_blocked_hint(db, page.content_type, key=key)
+                if require_production_ready else "")
         raise SelectionError(
             f"page {page.page_id!r}: nessun evento approvato per calendar_key="
-            f"{key} (data {iso})"
+            f"{key} (data {iso}){hint}"
         )
     anchor_year = page_anchor(page).year
     idx = (day.year - anchor_year) % len(rows)

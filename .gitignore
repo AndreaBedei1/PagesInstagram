@@ -83,3 +83,6 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+
+# ---- Source-audit cache (runtime, regenerable, host-dependent) ----
+.cache/

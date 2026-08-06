@@ -21,6 +21,16 @@ type                         approval rule
 
 Nothing factual is ever auto-approved without a source: the three fact-checked
 types fall back to ``needs_review`` so a human sees them in the dashboard.
+
+**What ``approved_for_publication`` does and does not mean.** It is a *structural*
+verdict: the item is well formed, non-duplicate, long enough to render, and
+carries the provenance fields its type requires. It is **not** evidence that the
+source exists, that it supports the claim, or that anyone read the text. Those
+live on separate axes (``source_audit_status``, ``editorial_status``, see
+:mod:`src.content.editorial`) which this importer only ever *copies* from the
+dataset — it can never promote an item to a human verdict. Production
+publication requires all of them, so a dataset full of structurally valid
+content still publishes nothing until it is reviewed.
 """
 from __future__ import annotations
 
@@ -191,6 +201,41 @@ def _verification_status(content_type: str, item: dict) -> str:
     return "original"
 
 
+def _editorial_columns(content_type: str, item: dict) -> dict:
+    """Carry the dataset's audit fields into the row, defaulting to the honest value.
+
+    A dataset that says nothing about an item gets ``not_checked`` — never
+    ``manually_verified``. Nothing in this import path can promote an item to a
+    human verdict; only :mod:`src.content.editorial_review` (driven by a person)
+    writes those values into the dataset files.
+    """
+    from .editorial import (EditorialStatus, SourceAuditStatus, tier_for_host)
+    from urllib.parse import urlparse
+
+    src_status = (item.get("source_audit_status") or "").strip().lower()
+    if src_status not in set(SourceAuditStatus):
+        src_status = SourceAuditStatus.NOT_CHECKED.value
+    ed_status = (item.get("editorial_status") or "").strip().lower()
+    if ed_status not in set(EditorialStatus):
+        ed_status = EditorialStatus.NOT_CHECKED.value
+
+    tier = item.get("source_tier")
+    if not tier and item.get("source_url"):
+        try:
+            tier = tier_for_host(urlparse(str(item["source_url"])).netloc)
+        except ValueError:
+            tier = None
+
+    return {
+        "source_audit_status": src_status,
+        "source_audited_at": item.get("source_audited_at"),
+        "source_audit_note": item.get("source_audit_note"),
+        "editorial_status": ed_status,
+        "editorial_note": item.get("editorial_note"),
+        "source_tier": tier,
+    }
+
+
 def import_dataset(
     db: Database,
     dataset_path: str | Path,
@@ -285,6 +330,8 @@ def import_dataset(
             "metadata_json": item.get("metadata") or {},
             "verification_status": _verification_status(content_type, item),
             "verified_at": item.get("verified_at"),
+            # 0004 columns
+            **_editorial_columns(content_type, item),
         }
         new_id, inserted = db.insert_content(row)
         if not inserted:

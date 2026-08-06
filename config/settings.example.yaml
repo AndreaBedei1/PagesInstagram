@@ -49,7 +49,7 @@ music:
   avoid_reuse_last_n: 8
 
 publishing:
-  graph_api_version: v23.0      # Meta docs currently show v25.0; bump if needed
+  graph_api_version: v25.0      # verificata il 2026-08-05, vedi docs/META_RESUMABLE_UPLOAD.md
   api_flavor: instagram_login   # instagram_login | facebook_login
   # Direct resumable upload = default. NO public hosting / ports / external storage.
   upload_method: resumable      # resumable | hosted_url

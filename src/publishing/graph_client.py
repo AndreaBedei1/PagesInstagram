@@ -21,6 +21,7 @@ import requests
 
 from ..core.errors import PublishError
 from ..core.logging_setup import get_logger, register_secret
+from ..core.meta_api import DEFAULT_GRAPH_API_VERSION
 
 log = get_logger("publishing.graph")
 
@@ -31,7 +32,8 @@ _AUTH_CODES = {190, 102, 10, 200, 803}
 
 
 class GraphClient:
-    def __init__(self, access_token: str, *, api_version: str = "v23.0",
+    def __init__(self, access_token: str, *,
+                 api_version: str = DEFAULT_GRAPH_API_VERSION,
                  flavor: str = "instagram_login", session: requests.Session | None = None,
                  timeout: int = 60, upload_timeout: int = 600):
         self.token = access_token

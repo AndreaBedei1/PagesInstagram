@@ -100,7 +100,23 @@ class Database:
         # 0003_evergreen_content
         "sequence_index", "calendar_key", "metadata_json", "verification_status",
         "verified_at", "source_name",
+        # 0004_editorial_states
+        "source_audit_status", "source_audited_at", "source_audit_note",
+        "editorial_status", "editorial_note", "source_tier",
     )
+
+    #: Extra SQL predicate that keeps un-reviewed content out of production.
+    #: Original types (thoughts, questions) need an editorial sign-off only;
+    #: fact-checked types additionally need a human verdict on the source.
+    _PRODUCTION_READY_SQL = """
+        AND editorial_status = 'approved'
+        AND (
+            content_type NOT IN ('world_curiosity', 'word_of_the_day',
+                                 'today_in_history')
+            OR (verification_status = 'verified'
+                AND source_audit_status = 'manually_verified')
+        )
+    """
 
     def insert_content(self, data: dict) -> tuple[int | None, bool]:
         """Insert a content row. Returns (id, inserted). Duplicate hash → (existing_id, False).
@@ -217,16 +233,25 @@ class Database:
     def content_by_sequence(
         self, content_type: str, sequence_index: int, *, min_quality: float = 0.0,
         status: str = ContentStatus.APPROVED_FOR_PUBLICATION,
+        require_production_ready: bool = False,
     ) -> dict | None:
         """The approved item at ``sequence_index`` — the cyclic policy's lookup.
 
         ``sequence_index`` is unique per content type in a valid dataset; the
         ``ORDER BY id`` tiebreak keeps the result stable even if a hand-edited
         database ever contained a duplicate.
+
+        ``require_production_ready`` adds the editorial gate. It deliberately
+        does **not** fall back to a different index: the day's content is a
+        function of the date, so a blocked index blocks that day (the caller
+        routes it to ``NEEDS_REVIEW``) instead of quietly publishing a
+        neighbouring item and breaking determinism.
         """
+        gate = self._PRODUCTION_READY_SQL if require_production_ready else ""
         row = self.conn.execute(
             "SELECT * FROM contents WHERE content_type=? AND sequence_index=? "
-            "AND status=? AND COALESCE(quality_score,0) >= ? ORDER BY id LIMIT 1",
+            f"AND status=? AND COALESCE(quality_score,0) >= ? {gate} "
+            "ORDER BY id LIMIT 1",
             (content_type, int(sequence_index), status, min_quality),
         ).fetchone()
         return _row_to_dict(row)
@@ -234,14 +259,50 @@ class Database:
     def contents_by_calendar_key(
         self, content_type: str, key: str, *, min_quality: float = 0.0,
         status: str = ContentStatus.APPROVED_FOR_PUBLICATION,
+        require_production_ready: bool = False,
     ) -> list[dict]:
         """Approved items for one ``MM-DD`` key, in a stable rotation order."""
+        gate = self._PRODUCTION_READY_SQL if require_production_ready else ""
         return _rows(self.conn.execute(
             "SELECT * FROM contents WHERE content_type=? AND calendar_key=? "
-            "AND status=? AND COALESCE(quality_score,0) >= ? "
+            f"AND status=? AND COALESCE(quality_score,0) >= ? {gate} "
             "ORDER BY COALESCE(sequence_index, 2147483647), id",
             (content_type, key, status, min_quality),
         ))
+
+    def production_ready_counts(self) -> dict[str, dict[str, int]]:
+        """Per content type: how many items pass each stage of the funnel.
+
+        Reported by ``status`` and ``editorial-stats`` so the difference between
+        "structurally valid" and "publishable" is always visible, never implied.
+        """
+        out: dict[str, dict[str, int]] = {}
+        rows = self.conn.execute(
+            "SELECT content_type, COUNT(*) AS total,"
+            " SUM(CASE WHEN status='approved_for_publication' THEN 1 ELSE 0 END),"
+            " SUM(CASE WHEN verification_status='verified' THEN 1 ELSE 0 END),"
+            " SUM(CASE WHEN source_audit_status='reachable'"
+            "          OR source_audit_status='manually_verified' THEN 1 ELSE 0 END),"
+            " SUM(CASE WHEN source_audit_status='manually_verified' THEN 1 ELSE 0 END),"
+            " SUM(CASE WHEN editorial_status='approved' THEN 1 ELSE 0 END)"
+            " FROM contents GROUP BY content_type"
+        ).fetchall()
+        for r in rows:
+            ctype = r[0]
+            out[ctype] = {
+                "total_items": int(r[1] or 0),
+                "structurally_valid": int(r[2] or 0),
+                "verification_declared": int(r[3] or 0),
+                "source_reachable": int(r[4] or 0),
+                "fact_checked": int(r[5] or 0),
+                "editorially_approved": int(r[6] or 0),
+            }
+            out[ctype]["production_ready"] = int(self.conn.execute(
+                "SELECT COUNT(*) FROM contents WHERE content_type=? "
+                f"AND status='approved_for_publication' {self._PRODUCTION_READY_SQL}",
+                (ctype,),
+            ).fetchone()[0])
+        return out
 
     def sequence_indexes(self, content_type: str,
                          status: str | None = None) -> list[int]:

@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 
 from .enums import Mode
 from .errors import ConfigError
+from .meta_api import DEFAULT_GRAPH_API_VERSION, valid_version
 from .paths import Paths
 
 
@@ -57,7 +58,7 @@ class RenderingSettings(BaseModel):
 
 
 class VideoSettings(BaseModel):
-    reel_duration_seconds: float = 8.0    # main content (Meta allows 3–90 s)
+    reel_duration_seconds: float = 8.0    # main content (Meta documents 3 s – 15 min)
     story_duration_seconds: float = 8.0
     feed_duration_seconds: float = 8.0    # legacy 4:5 (hosted_url only)
     fps: int = 30
@@ -80,7 +81,8 @@ class MusicSettings(BaseModel):
 
 
 class PublishingSettings(BaseModel):
-    graph_api_version: str = "v23.0"     # Meta docs currently show v25.0; configurable
+    # Single source of truth: src/core/meta_api.py (see docs/META_RESUMABLE_UPLOAD.md).
+    graph_api_version: str = DEFAULT_GRAPH_API_VERSION
     api_flavor: str = "instagram_login"  # instagram_login | facebook_login
     # Direct upload is the DEFAULT and needs no public hosting.
     upload_method: str = "resumable"     # resumable | hosted_url
@@ -98,6 +100,22 @@ class PublishingSettings(BaseModel):
     max_retries: int = 5
     backoff_base_seconds: float = 30.0
     backoff_max_seconds: float = 1800.0
+
+
+class ContentGateSettings(BaseModel):
+    """How strict the editorial gate is (see src/content/editorial.py).
+
+    ``development_dataset`` lets the whole pipeline run on content that has not
+    been reviewed yet — previews, renders, dry-runs. It never enables real
+    publication: :meth:`Settings.require_production_ready` forces the gate on
+    whenever the run mode is ``production``, whatever this says.
+
+    ``production_dataset`` applies the gate everywhere, which is what a
+    pre-production rehearsal should use to see exactly how many days are
+    genuinely publishable today.
+    """
+
+    dataset_mode: str = "development_dataset"  # development_dataset | production_dataset
 
 
 class QualitySettings(BaseModel):
@@ -131,6 +149,7 @@ class Settings(BaseModel):
     video: VideoSettings = Field(default_factory=VideoSettings)
     music: MusicSettings = Field(default_factory=MusicSettings)
     publishing: PublishingSettings = Field(default_factory=PublishingSettings)
+    content: ContentGateSettings = Field(default_factory=ContentGateSettings)
     quality: QualitySettings = Field(default_factory=QualitySettings)
     database: DatabaseSettings = Field(default_factory=DatabaseSettings)
     logging: LoggingSettings = Field(default_factory=LoggingSettings)
@@ -150,6 +169,16 @@ class Settings(BaseModel):
     def db_path(self) -> Path:
         p = Path(self.database.path)
         return p if p.is_absolute() else self.paths.root / p
+
+    def require_production_ready(self) -> bool:
+        """Whether only reviewed content may be selected.
+
+        Always true in production: no configuration file can let un-reviewed
+        content reach a real account.
+        """
+        if self.mode == Mode.PRODUCTION:
+            return True
+        return self.content.dataset_mode == "production_dataset"
 
     def comfyui_fallback_allowed(self) -> bool:
         """Whether the deterministic background fallback is allowed in the current mode."""
@@ -189,11 +218,26 @@ def _apply_env_overrides(data: dict) -> dict:
     if env.get("ICE_FFMPEG_PATH"):
         video["ffmpeg_path"] = env["ICE_FFMPEG_PATH"]
 
+    content = data.setdefault("content", {})
+    if env.get("ICE_DATASET_MODE"):
+        wanted = env["ICE_DATASET_MODE"].strip()
+        if wanted not in ("development_dataset", "production_dataset"):
+            raise ConfigError(
+                f"ICE_DATASET_MODE={wanted!r} non valido "
+                f"(atteso development_dataset o production_dataset)")
+        content["dataset_mode"] = wanted
+
     pub = data.setdefault("publishing", {})
     if env.get("ICE_PUBLIC_MEDIA_BASE_URL"):
         pub["public_media_base_url"] = env["ICE_PUBLIC_MEDIA_BASE_URL"]
     if env.get("META_GRAPH_API_VERSION"):
-        pub["graph_api_version"] = env["META_GRAPH_API_VERSION"]
+        version = env["META_GRAPH_API_VERSION"].strip()
+        if not valid_version(version):
+            raise ConfigError(
+                f"META_GRAPH_API_VERSION={version!r} non è una versione Graph API "
+                f"valida (atteso il formato 'vNN.N', per esempio "
+                f"{DEFAULT_GRAPH_API_VERSION!r})")
+        pub["graph_api_version"] = version
 
     dash = data.setdefault("dashboard", {})
     if env.get("ICE_DASHBOARD_HOST"):

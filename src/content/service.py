@@ -27,13 +27,18 @@ __all__ = [
 
 
 def select_content_for_date(db: Database, page: PageConfig,
-                            local_date: str | date_cls) -> Selection:
+                            local_date: str | date_cls,
+                            *, require_production_ready: bool = False) -> Selection:
     """Resolve the content this page must publish on ``local_date``.
 
     Deterministic: same page + same date ⇒ same content, regardless of
     restarts, SQL ordering, later imports, randomness or retry counts.
+
+    ``require_production_ready`` is set by the worker in production mode; it can
+    only block a date, never move it to a different item.
     """
-    return select_for_date(db, page, local_date)
+    return select_for_date(db, page, local_date,
+                           require_production_ready=require_production_ready)
 
 
 def select_content_for_page(db: Database, page: PageConfig) -> dict | None:

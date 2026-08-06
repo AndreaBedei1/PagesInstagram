@@ -31,6 +31,8 @@ from pathlib import Path
 from .dedup import SimilarityIndex
 from .importer import (CALENDAR_TYPES, CYCLIC_TYPES, FACT_CHECKED_TYPES,
                        ORIGINAL_TYPES, valid_calendar_key, valid_url)
+from .language_check import ERROR as LANG_ERROR
+from .language_check import check_item
 from .normalize import content_hash, normalize_text
 from .quality import LENGTH_PROFILES, score_content
 
@@ -64,6 +66,9 @@ class DatasetReport:
     caption_stats: dict[str, float] = field(default_factory=dict)
     quality_stats: dict[str, float] = field(default_factory=dict)
     sources: dict[str, int] = field(default_factory=dict)
+    language_issues: list[dict] = field(default_factory=list)
+    language_counts: dict[str, int] = field(default_factory=dict)
+    source_audit: dict[str, int] = field(default_factory=dict)
 
     @property
     def ok(self) -> bool:
@@ -87,6 +92,9 @@ class DatasetReport:
             "caption_length": self.caption_stats,
             "quality": self.quality_stats,
             "sources": self.sources,
+            "language_issues": self.language_issues,
+            "language_counts": self.language_counts,
+            "source_audit": self.source_audit,
         }
 
 
@@ -204,6 +212,50 @@ def _check_originality(items: list[dict], content_type: str,
             rep.errors.append(f"item #{i}: la domanda non termina con '?'")
 
 
+def _check_history(items: list[dict], rep: DatasetReport) -> None:
+    """Date/year/title consistency (see :mod:`src.content.history_check`)."""
+    from .history_check import ERROR as H_ERROR
+    from .history_check import check_dataset as check_history
+
+    errors: list[str] = []
+    warnings: Counter = Counter()
+    for idx, issues in check_history(items).items():
+        for issue in issues:
+            label = f"item #{idx} [{issue.rule}] {issue.message}"
+            if issue.severity == H_ERROR:
+                errors.append(label)
+            else:
+                warnings[issue.rule] += 1
+    if errors:
+        rep.errors.append(f"{len(errors)} incoerenze di data/anno: "
+                          + "; ".join(errors[:5]))
+        rep.language_issues.extend({"rule": "history", "severity": "error",
+                                    "field": "metadata", "message": e,
+                                    "excerpt": ""} for e in errors)
+    for rule, n in warnings.most_common():
+        rep.warnings.append(f"{n} eventi da rivedere: {rule}")
+
+
+def _check_words(items: list[dict], rep: DatasetReport) -> None:
+    """Lemma/part-of-speech/source consistency (see :mod:`src.content.word_check`)."""
+    from .word_check import ERROR as W_ERROR
+    from .word_check import check_dataset as check_words
+
+    errors: list[str] = []
+    warnings: Counter = Counter()
+    for idx, issues in check_words(items).items():
+        for issue in issues:
+            if issue.severity == W_ERROR:
+                errors.append(f"item #{idx} [{issue.rule}] {issue.message}")
+            else:
+                warnings[issue.rule] += 1
+    if errors:
+        rep.errors.append(f"{len(errors)} incoerenze sui lemmi: "
+                          + "; ".join(errors[:5]))
+    for rule, n in warnings.most_common():
+        rep.warnings.append(f"{n} lemmi da rivedere: {rule}")
+
+
 def validate_dataset(path: str | Path, *, expected_items: int = DEFAULT_EXPECTED_ITEMS,
                      fuzzy_threshold: float = 0.88,
                      semantic_threshold: float = 0.82,
@@ -235,6 +287,9 @@ def validate_dataset(path: str | Path, *, expected_items: int = DEFAULT_EXPECTED
     moods: Counter = Counter()
     lo, hi, hard_max = LENGTH_PROFILES.get(content_type,
                                            LENGTH_PROFILES["motivational"])
+
+    lang_counts: Counter = Counter()
+    audit_counts: Counter = Counter()
 
     index = SimilarityIndex(fuzzy_threshold=fuzzy_threshold,
                             semantic_threshold=semantic_threshold)
@@ -294,6 +349,17 @@ def validate_dataset(path: str | Path, *, expected_items: int = DEFAULT_EXPECTED
 
         categories[item.get("category") or "—"] += 1
         moods[item.get("mood") or "—"] += 1
+        audit_counts[item.get("source_audit_status") or "not_checked"] += 1
+
+        # -- language: the checks that catch what a proof-reader misses on the
+        # thousandth item (see src/content/language_check.py).
+        for issue in check_item(item, content_type=content_type):
+            lang_counts[issue.rule] += 1
+            record = {"item": i, **issue.as_dict()}
+            if issue.severity == LANG_ERROR:
+                rep.language_issues.append(record)
+            elif len(rep.language_issues) < 400:
+                rep.language_issues.append(record)
 
         if check_quality:
             qualities.append(score_content(text, content_type=content_type,
@@ -315,6 +381,60 @@ def validate_dataset(path: str | Path, *, expected_items: int = DEFAULT_EXPECTED
         _check_verification(items, content_type, rep)
     if content_type in ORIGINAL_TYPES:
         _check_originality(items, content_type, rep)
+    if content_type == "today_in_history":
+        _check_history(items, rep)
+    if content_type == "word_of_the_day":
+        _check_words(items, rep)
+
+    # A language error is blocking: it is certainly wrong and it renders into
+    # the image. Warnings (an absolute claim, a lowercase opening) are reported
+    # for the editorial review and never fail the build.
+    lang_errors = sum(1 for r in rep.language_issues if r["severity"] == LANG_ERROR)
+    if lang_errors:
+        by_rule = Counter(r["rule"] for r in rep.language_issues
+                          if r["severity"] == LANG_ERROR)
+        rep.errors.append(
+            f"{lang_errors} errori di lingua: " +
+            ", ".join(f"{k}×{v}" for k, v in by_rule.most_common()))
+    lang_warnings = len(rep.language_issues) - lang_errors
+    if lang_warnings:
+        rep.warnings.append(
+            f"{lang_warnings} segnalazioni linguistiche non bloccanti "
+            f"(vedi 'language_issues' nel report)")
+
+    rep.language_counts = dict(lang_counts.most_common())
+    rep.source_audit = dict(audit_counts.most_common())
+    if content_type in FACT_CHECKED_TYPES:
+        # A dead source is a defect, but a *known* dead source that is already
+        # blocked from production is a defect being managed, not a build break.
+        # What must never happen is an item that is publishable **and** has a
+        # source nobody can open — that is the invariant worth failing on.
+        from .editorial import is_production_ready
+
+        leaking = [
+            i for i, item in enumerate(items)
+            if (item.get("source_audit_status") or "") in
+               ("broken_source", "unsupported", "not_checked")
+            and is_production_ready(
+                content_type, status=item.get("status") or "",
+                verification_status=item.get("verification_status"),
+                source_audit_status=item.get("source_audit_status"),
+                editorial_status=item.get("editorial_status"))[0]
+        ]
+        if leaking:
+            rep.errors.append(
+                f"{len(leaking)} elementi pubblicabili con fonte non "
+                f"verificata (primi: {leaking[:5]})")
+        broken = audit_counts.get("broken_source", 0)
+        if broken:
+            rep.warnings.append(
+                f"{broken} elementi con fonte non raggiungibile: bloccati alla "
+                f"pubblicazione, da correggere o sostituire")
+        unchecked = audit_counts.get("not_checked", 0)
+        if unchecked:
+            rep.warnings.append(
+                f"{unchecked} elementi con fonte mai controllata: esegui "
+                f"'python -m src.cli audit-sources'")
 
     rep.by_category = dict(categories.most_common())
     rep.by_mood = dict(moods.most_common())

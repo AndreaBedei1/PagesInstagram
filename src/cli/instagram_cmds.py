@@ -15,7 +15,7 @@ from rich.table import Table
 from ..accounts import load_pages
 from ..core.enums import JobStatus, MediaType, Mode, UploadStatus
 from ..core.errors import PublishError
-from ..core.logging_setup import setup_logging
+from ..core.logging_setup import get_logger, setup_logging
 from ..core.paths import Paths
 from ..core.settings import load_settings
 from ..core.timeutils import utcnow_iso
@@ -25,6 +25,29 @@ from ..publishing import Publisher, build_publish_target
 app = typer.Typer(help="Meta account, token and direct resumable-upload commands",
                   no_args_is_help=True)
 console = Console()
+log = get_logger("cli.instagram")
+
+
+def upload_would_publish(mode: Mode, *, publish: bool,
+                         confirm: bool) -> tuple[bool, str]:
+    """Decide whether ``upload-test`` may call ``media_publish``.
+
+    One function, so there is exactly one place a refactor could get this wrong
+    and exactly one place the tests have to watch. It answers ``False`` unless
+    the caller asked to publish **and**, outside dry-run, confirmed it.
+
+    In ``dry_run`` the answer is always ``False``: that mode exists precisely so
+    that nothing reaches a real account, and a flag on a command must not be
+    able to override the mode.
+    """
+    if not publish:
+        return False, "richiesto --publish per pubblicare"
+    if mode == Mode.DRY_RUN:
+        return False, "ICE_MODE=dry_run: nessuna pubblicazione reale"
+    if not confirm:
+        return False, (f"ICE_MODE={mode}: serve anche --confirm per una "
+                       f"pubblicazione reale")
+    return True, "pubblicazione autorizzata esplicitamente"
 
 
 def _ctx(page_id: str):
@@ -213,14 +236,31 @@ def health_check(
 def upload_test(page: str = typer.Option(...), file: str = typer.Option(...),
                 media_type: str = typer.Option("REELS", help="REELS|STORIES"),
                 publish: bool = typer.Option(False, "--publish/--no-publish",
-                                             help="default: stop before publishing")):
+                                             help="default: stop before publishing"),
+                confirm: bool = typer.Option(
+                    False, "--confirm",
+                    help="richiesto quando ICE_MODE non è dry_run")):
     """Validate a file, create a resumable container, upload it, poll — WITHOUT
-    publishing (unless --publish is explicitly given)."""
+    publishing (unless --publish is explicitly given).
+
+    Two independent guards stand between this command and a real post:
+    ``--publish`` must be passed, and outside ``dry_run`` ``--confirm`` must be
+    passed too. Neither is a default, and ``upload_would_publish()`` — the single
+    function that decides — is covered by tests, so a refactor cannot quietly
+    turn the safe path into the publishing one.
+    """
     _, s, _, pcfg, db = _ctx(page)
     fpath = Path(file)
     if not fpath.exists():
         console.print(f"[red]File non trovato:[/] {file}")
         raise typer.Exit(1)
+
+    allowed, reason = upload_would_publish(s.mode, publish=publish, confirm=confirm)
+    if publish and not allowed:
+        console.print(f"[red]Rifiuto di pubblicare:[/] {reason}")
+        raise typer.Exit(2)
+    log.info("upload-test page=%s file=%s media_type=%s mode=%s publish=%s",
+             page, fpath.name, media_type, s.mode, allowed)
     target = build_publish_target(s, pcfg)
     if not target:
         console.print("[red]Credenziali mancanti[/].")
@@ -239,12 +279,12 @@ def upload_test(page: str = typer.Option(...), file: str = typer.Option(...),
         console.print("[green]upload:[/] ok")
         st = client.get_upload_status(cid)
         console.print("status:", st)
-        if publish:
-            console.print("[yellow]--publish passato: pubblico...[/]")
+        if allowed:
+            console.print("[yellow]--publish e --confirm passati: pubblico...[/]")
             mid = client.publish_container(target.ig_user_id, cid)
             console.print(f"[green]PUBLISHED media_id:[/] {mid}")
         else:
-            console.print("[bold]Stop prima della pubblicazione[/] (usa 'publish-job --confirm').")
+            console.print(f"[bold]Stop prima della pubblicazione[/]: {reason}")
     except PublishError as e:
         console.print(f"[red]Errore:[/] {e}")
         raise typer.Exit(1)

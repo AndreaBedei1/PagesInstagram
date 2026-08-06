@@ -2,32 +2,44 @@
 
 > Fonte primaria: **solo** documentazione ufficiale Meta. Nessun blog / nessuna
 > implementazione non ufficiale usata come fonte.
-> Prima verifica: 2026‑07‑22. **Riverificato il 2026‑08‑04.**
+> Prima verifica: 2026‑07‑22 · riverifica: 2026‑08‑04 · **riverifica dell'audit
+> di pre-produzione: 2026‑08‑05.**
 
-## Riferimenti ufficiali
-- Content Publishing: https://developers.facebook.com/docs/instagram-platform/content-publishing/
+## Riferimenti ufficiali consultati il 2026‑08‑05
+- Changelog Graph API: https://developers.facebook.com/docs/graph-api/changelog
+- Content Publishing: https://developers.facebook.com/docs/instagram-platform/content-publishing
 - **Resumable Uploads**: https://developers.facebook.com/docs/instagram-platform/content-publishing/resumable-uploads/
-- IG User `/media` reference (parametri): https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-user/media/
-- Overview / Login flavor: https://developers.facebook.com/docs/instagram-platform/overview/
+- IG User `/media` reference (parametri e specifiche video): https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-user/media/
+- Instagram Login — get started (token long-lived): https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login/get-started
 
-## Esito della riverifica del 2026‑08‑04
+## Esito della riverifica del 2026‑08‑05
 
 | Aspetto | Esito |
 |---|---|
 | Flusso resumable (container → upload binario → polling → publish) | **invariato** |
-| Host dell'upload binario | invariato: `rupload.facebook.com/ig-api-upload/<VER>/<CONTAINER_ID>` |
+| Host dell'upload binario | `rupload.facebook.com`. La pagina ufficiale mostra il path **senza** segmento di versione (`/ig-api-upload/<CONTAINER_ID>`); il progetto usa comunque l'URI restituito da Meta, quindi il punto è ininfluente |
 | Header obbligatori | invariati: `Authorization: OAuth <TOKEN>`, `offset`, `file_size` |
 | Parametro `upload_type=resumable` sulla creazione container | invariato |
-| `media_type` | invariato: `REELS` / `STORIES` / `VIDEO` |
+| `media_type` | il riferimento IG User `/media` elenca ora **`CAROUSEL`, `REELS`, `STORIES`** |
 | Ripresa di un upload interrotto (`bytes_transferred` → nuovo `offset`) | invariato |
-| Versione Graph API | gli esempi correnti di content publishing usano **v25.0**; alcune pagine mostrano ancora versioni precedenti. Resta configurabile con `META_GRAPH_API_VERSION` (default di progetto `v23.0`) |
-| `share_to_feed` | documentato nel riferimento IG User `/media` per i Reels; **non** compare nella pagina dedicata al resumable upload |
+| Versione Graph API | **aggiornata**: vedi sezione dedicata |
+| `share_to_feed` | confermato, boolean, «For Reels only. When true, indicates that the reel can appear in both the Feed and Reels tabs» |
+| Durata massima dei Reel | **corretta**: la documentazione precedente del progetto indicava 90 s, il riferimento ufficiale indica **15 minuti** (minimo 3 s) |
+| Limite di pubblicazione | confermato: «Instagram accounts are limited to 100 API-published posts within a 24-hour moving period», verificabile su `GET /<IG_ID>/content_publishing_limit` |
+| Token long-lived | confermato: 60 giorni |
 | Necessità di URL pubblici | **nessuna**: il file locale viaggia direttamente verso i server Meta |
 
-Nessuna modifica al client è risultata necessaria. In particolare **non** è stato
-reintrodotto alcun requisito di `ICE_PUBLIC_MEDIA_BASE_URL` per il provider
-resumable: quella variabile resta usata soltanto dal provider opzionale e
-inattivo `hosted_url`.
+Nessuna modifica funzionale al client è risultata necessaria. In particolare
+**non** è stato reintrodotto alcun requisito di `ICE_PUBLIC_MEDIA_BASE_URL` per
+il provider resumable: quella variabile resta usata soltanto dal provider
+opzionale e inattivo `hosted_url`.
+
+### Business e Creator
+La documentazione ufficiale distingue i tipi di account professionale
+(`Business` e `Media_Creator`) ma **non** pubblica, nelle pagine consultate, una
+tabella di differenze di capacità per il content publishing. Il progetto continua
+quindi a richiedere account **Business** come requisito prudenziale, senza
+affermare che i Creator non possano pubblicare.
 
 ### Rinnovo automatico del token
 
@@ -52,10 +64,38 @@ aperte, né storage esterno. È l'unico metodo ufficiale conforme al vincolo
   restituito nel campo `uri` della risposta di creazione container: usare quello).
 
 ## Versione Graph API
-Gli esempi ufficiali correnti usano **`v25.0`** (es. `graph.instagram.com/v25.0/.../media`).
-La versione è configurabile (`META_GRAPH_API_VERSION`, default nel progetto `v23.0`).
-Per l'upload si usa **l'URI restituito da Meta**, quindi la versione lì è sempre
-coerente con quanto deciso dal server.
+
+**Default del progetto: `v25.0`** (era `v23.0`).
+
+Dal changelog ufficiale, al 2026‑08‑05:
+
+| Versione | Rilascio | Disponibile fino a |
+|---|---|---|
+| v26.0 | 29 luglio 2026 | non ancora indicata |
+| **v25.0** | 18 febbraio 2026 | 29 luglio 2028 |
+| v24.0 | 8 ottobre 2025 | 18 febbraio 2028 |
+| v23.0 | 29 maggio 2025 | 8 ottobre 2027 |
+
+**Perché `v25.0` e non `v26.0`.** Alla data di verifica v26.0 era disponibile da
+una settimana e nessuna pagina di Instagram Content Publishing la usava negli
+esempi: le pagine su content publishing, sul riferimento IG User `/media` e su
+Instagram Login mostrano tutte `v25.0`. Allinearsi alla versione che Meta stessa
+usa negli esempi riduce il rischio di comportamenti non documentati, e v25.0
+resta disponibile fino al 29 luglio 2028: c'è ampio margine prima di un
+aggiornamento forzato.
+
+`v23.0` non era sbagliata — resta valida fino all'8 ottobre 2027 — ma era la
+versione con la scadenza più vicina fra quelle supportate, senza alcun vantaggio.
+
+La versione resta configurabile con `META_GRAPH_API_VERSION` (formato `vNN.N`,
+validato all'avvio: un valore malformato è un errore di configurazione, non un
+default silenzioso). Il valore predefinito è definito **in un unico punto**,
+`src/core/meta_api.py`, da cui lo leggono le impostazioni Python e il client; un
+test verifica che `config/settings.yaml`, `config/settings.example.yaml`,
+`.env.example` e questo documento non divergano.
+
+Per l'upload binario si usa **l'URI restituito da Meta**, quindi la versione lì
+è sempre coerente con quanto deciso dal server.
 
 ## Flusso (3 + 1 passi)
 
@@ -129,13 +169,33 @@ restano validi finché il container non scade (24 h) → **non ricreare** il con
 dopo un'interruzione: riprendere.
 
 ## Limiti (documentati / specifiche media)
-- **Reels**: 9:16, 1080×1920, MP4/MOV, **H.264 + AAC**, durata **3–90 s**.
+
+Dal riferimento IG User `/media`, verificato il 2026‑08‑05 (citazioni letterali):
+
+| Aspetto | Valore documentato |
+|---|---|
+| Durata Reel | «15 mins maximum, 3 seconds minimum» |
+| Proporzioni | «Required aspect ratio is between 0.01:1 and 10:1 but we recommend 9:16» |
+| Codec video | «HEVC or H264» |
+| Contenitore | «MOV or MP4 (MPEG-4 Part 14)» |
+| Frame rate | «23-60 FPS» |
+| Codec audio | «AAC, 48khz sample rate maximum» |
+
+> **Correzione rispetto alla versione precedente di questo documento**, che
+> indicava una durata massima di 90 s per i Reel: il riferimento ufficiale
+> indica **15 minuti**. Il progetto genera comunque clip di ~8 s, quindi
+> l'errore non ha mai influito sulla produzione, ma la tabella era sbagliata.
+
 - **Stories** (video): 9:16, 1080×1920, fino a **60 s** per clip.
-- Requisiti container video: `moov atom` all'inizio (`+faststart`), audio AAC 48 kHz,
-  1–2 canali; video progressivo, closed GOP, 23–60 FPS.
+- Requisiti container video: `moov atom` all'inizio (`+faststart`),
+  video progressivo, closed GOP.
 - **Rate limit pubblicazione: 100 post/24 h** (finestra mobile) — verificabile con
-  `GET /<IG_USER_ID>/content_publishing_limit`.
+  `GET /<IG_USER_ID>/content_publishing_limit`. Cinque post al giorno su cinque
+  account distinti restano ampiamente sotto la soglia, che è per account.
 - La doc non elenca un limite esplicito di dimensione file per il resumable.
+
+Questi valori sono replicati come costanti in `src/core/meta_api.py`, così che i
+controlli sul video li leggano dalla stessa fonte della documentazione.
 
 ## Errori e retry
 - Errore Graph standard: `{ "error": { "code", "message", ... } }`.

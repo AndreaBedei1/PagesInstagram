@@ -53,7 +53,8 @@ class Worker:
                  generate_ahead_days: int | None = None,
                  prepare_ahead_minutes: int | None = None,
                  try_comfyui: bool = True,
-                 cleanup_enabled: bool = True):
+                 cleanup_enabled: bool = True,
+                 plan_enabled: bool = True):
         self.s = settings
         self.db = db
         self.registry = registry
@@ -66,11 +67,16 @@ class Worker:
                               if prepare_ahead_minutes is not None else None)
         self.try_comfyui = try_comfyui
         self.cleanup_enabled = cleanup_enabled
+        #: The rolling buffer is the worker's job in production. A test that
+        #: plans its own single day needs it off, or the worker quietly adds
+        #: sixty more days and publishes whatever is already due among them.
+        self.plan_enabled = plan_enabled
 
     # -- tick --------------------------------------------------------------
     def run_once(self) -> TickStats:
         stats = TickStats()
-        self._plan(stats)
+        if self.plan_enabled:
+            self._plan(stats)
         self._prepare_media(stats)
         self._publish_due(stats)
         if self.cleanup_enabled:
@@ -173,7 +179,9 @@ class Worker:
                 return content, int(daily.get("cycle_number") or 0)
 
         try:
-            sel = select_content_for_date(self.db, page, local_date)
+            sel = select_content_for_date(
+                self.db, page, local_date,
+                require_production_ready=self.s.require_production_ready())
         except SelectionError as e:
             stats.messages.append(str(e))
             log.warning("selection failed: %s", e)

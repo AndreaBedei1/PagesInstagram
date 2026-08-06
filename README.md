@@ -42,17 +42,31 @@ non richiede di toccare il codice.
 
 ## I contenuti
 
-**5.000 elementi approvati**, 1.000 per pagina, versionati in `datasets/`:
+**5.000 elementi**, 1.000 per pagina, versionati in `datasets/`. Di questi,
+**482 sono pubblicabili in produzione**: gli altri sono strutturalmente validi
+ma non ancora letti da una persona, e il sistema tiene le due cose distinte.
 
 - pensieri e domande sono **originali** — nessuna attribuzione, nessuna falsa
   citazione;
-- parole, curiosità ed eventi storici sono **verificati** e portano nome della
-  fonte, URL e data di verifica; senza questi campi l'importer **non li approva**;
-- gli eventi storici coprono tutte le **366** date (29 febbraio incluso) con
-  almeno due eventi ciascuna.
+- parole, curiosità ed eventi storici portano nome della fonte, URL e data di
+  verifica; gli eventi storici coprono tutte le **366** date (29 febbraio
+  incluso) con almeno due eventi ciascuna;
+- **un URL formalmente valido non è una verifica.** Un contenuto fattuale
+  diventa pubblicabile solo quando la fonte è stata aperta e confrontata con
+  l'affermazione da una persona.
 
-Le fonti e i loro limiti sono documentati in
-[docs/DATASET_SOURCES.md](docs/DATASET_SOURCES.md).
+| Stadio | Che cosa garantisce | Quanti |
+|---|---|---|
+| `total_items` | esiste nel dataset | 5.000 |
+| `structurally_valid` | ben formato, non duplicato, renderizzabile | 5.000 |
+| `source_reachable` | il link citato risponde davvero | 2.788 URL su 2.820 |
+| `fact_checked` | qualcuno ha letto affermazione e fonte insieme | 282 |
+| `editorially_approved` | qualcuno ha letto il testo | 502 |
+| `production_ready` | pubblicabile su un account reale | **482** |
+
+Fonti, gerarchia di qualità, copertura effettiva dell'audit e limiti residui:
+[docs/DATASET_SOURCES.md](docs/DATASET_SOURCES.md). Come si approva un contenuto:
+[docs/EDITORIAL_REVIEW_WORKFLOW.md](docs/EDITORIAL_REVIEW_WORKFLOW.md).
 
 ---
 
@@ -74,7 +88,9 @@ Poi, quando vuoi pubblicare davvero: compila `.env`, esegui
 | [FIVE_PAGES_SETUP.md](docs/FIVE_PAGES_SETUP.md) | installazione, gestione, backup, ripristino, aggiornamenti |
 | [CONTENT_ROTATION.md](docs/CONTENT_ROTATION.md) | come viene scelto il contenuto del giorno |
 | [DATASET_SCHEMA.md](docs/DATASET_SCHEMA.md) | struttura dei dataset e regole di validazione |
-| [DATASET_SOURCES.md](docs/DATASET_SOURCES.md) | fonti, metodo di verifica, limiti noti |
+| [DATASET_SOURCES.md](docs/DATASET_SOURCES.md) | fonti, gerarchia di qualità, copertura reale dell'audit, limiti noti |
+| [EDITORIAL_REVIEW_WORKFLOW.md](docs/EDITORIAL_REVIEW_WORKFLOW.md) | stati editoriali, come approvare, primo test Meta |
+| [PREPRODUCTION_AUDIT.md](docs/PREPRODUCTION_AUDIT.md) | che cosa ha trovato l'audit di pre-produzione |
 | [LOCAL_MODEL_SETUP.md](docs/LOCAL_MODEL_SETUP.md) | ComfyUI, SDXL, licenza, profili di sfondo |
 | [META_RESUMABLE_UPLOAD.md](docs/META_RESUMABLE_UPLOAD.md) | API ufficiali Meta, upload diretto |
 | [PRODUCTION_CHECKLIST.md](docs/PRODUCTION_CHECKLIST.md) | tutto ciò che va verificato prima della produzione |
@@ -214,13 +230,30 @@ giorni, retention dei media, idempotenza per pagina e data, pubblicazione mock
 per ciascuna pagina, ripristino dopo crash, assenza di segreti, 5 job in un
 giorno e 35 in sette, nessuna Story pianificata, worker singolo.
 
+`tests/unit/test_editorial_quality.py` e `tests/integration/test_preproduction.py`
+aggiungono i controlli nati dall'audit di pre-produzione: coerenza della versione
+Graph API fra codice, YAML, `.env.example` e documentazione; errori di lingua
+sui 5.000 contenuti; soft 404 e redirect; nessun contenuto pubblicabile con
+fonte non verificata; verifica manuale dichiarata e minoritaria; CTA, hashtag,
+prompt, categorie e mood non ripetitivi su finestre di 7, 30, 90 e 365 giorni;
+campionamento riproducibile e distribuito; date storiche e convenzione di
+calendario; lemmi e URL lessicografici; smoke test delle cinque pagine con
+idempotenza; `--no-publish` che resta tale; redazione dei token; fallback vietato
+in produzione.
+
 ## Comandi CLI
 
 ```
 validate            Controlla ambiente (ffmpeg, ComfyUI, font, DB, pagine)
 init-db             Crea/aggiorna il database e registra le pagine
-validate-datasets   Valida i cinque dataset (exit != 0 se un requisito manca)
-security-check      Cerca segreti nei file tracciati da Git
+validate-datasets   Valida i cinque dataset (struttura, lingua, date, lemmi)
+audit-sources       Verifica che gli URL delle fonti esistano davvero
+editorial-sample    Campione stratificato riproducibile da rivedere a mano
+apply-review        Registra i verdetti umani (unico modo per approvare)
+editorial-stats     Misura quanto le pagine sembrano generate
+media-audit         Controlla i video contro le specifiche Meta (ffprobe)
+preproduction-smoke-test  Dry-run riproducibile delle cinque pagine
+security-check      Cerca segreti e artefatti runtime tracciati da Git
 import-content      Importa i dataset (dedup + qualità + controllo fonti)
 preview-pages       Anteprime reali per pagina + indice HTML comparativo
 sample-review       Campione HTML di contenuti per la revisione umana
@@ -244,6 +277,7 @@ instagram check-config        Configurazione publishing (offline)
 instagram token-status        Validità del token
 instagram account-status      Tipo account / limite di pubblicazione
 instagram upload-test         Container + upload di prova (non pubblica)
+                              --publish richiede anche --confirm fuori da dry_run
 instagram publish-job         Pubblica un job (richiede --confirm)
 ```
 

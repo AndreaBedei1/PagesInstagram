@@ -47,7 +47,41 @@ _RULES: list[tuple[str, re.Pattern[str], int]] = [
     # 32-hex app secret sitting on its own line.
     ("app_secret_hex", re.compile(
         r"(?i)\bapp[_-]?secret\b[^\n]{0,20}?\b([0-9a-f]{32})\b"), 1),
+    # A token in a URL query string. This is how credentials leak into logs,
+    # reports and bug trackers without anyone writing them down on purpose.
+    ("token_in_query_string", re.compile(
+        r"(?i)[?&](access_token|input_token|client_secret|app_secret)"
+        r"=([^\s&\"'#]{8,})"), 2),
+    # A serialised Authorization header — "Authorization: OAuth …" is exactly
+    # what the resumable upload sends, and exactly what a debug dump captures.
+    ("authorization_header", re.compile(
+        r"(?i)\bauthorization\b\s*[:=]\s*[\"']?\s*(?:OAuth|Bearer|Basic)\s+"
+        r"([^\s\"',;#]{8,})"), 1),
+    # A bare bearer/OAuth token anywhere else.
+    ("bearer_token", re.compile(
+        r"(?i)\b(?:Bearer|OAuth)\s+([A-Za-z0-9_\-\.]{24,})\b"), 1),
+    # Long-lived token exchange responses.
+    ("token_json_field", re.compile(
+        r"(?i)\"(access_token|refresh_token|client_secret)\"\s*:\s*\"([^\"]{8,})\""),
+     2),
 ]
+
+#: Paths that must never be tracked, whatever they contain. A committed runtime
+#: database or log is a credential leak waiting to happen even when today's copy
+#: is clean, and a committed checkpoint is gigabytes of licensed weights.
+FORBIDDEN_TRACKED_PATTERNS: tuple[tuple[str, str], ...] = (
+    (r"(^|/)\.env($|\.)(?!example)", "file .env"),
+    (r"(^|/)secrets/", "directory secrets/"),
+    (r"\.(safetensors|ckpt|pt|pth)$", "file di modello"),
+    (r"(^|/)database/.*\.(sqlite|db)($|-)", "database runtime"),
+    (r"(^|/)logs/.*\.(log|jsonl|json)$", "log runtime"),
+    (r"(^|/)reports/.*\.(json|html)$", "report runtime"),
+    (r"(^|/)\.cache/", "cache runtime"),
+)
+
+_FORBIDDEN_TRACKED_RE = tuple(
+    (re.compile(p, re.IGNORECASE), label)
+    for p, label in FORBIDDEN_TRACKED_PATTERNS)
 
 #: Names whose *value* is not secret even though the key looks sensitive.
 _SAFE_KEYS = {"ice_dashboard_token"}
@@ -72,11 +106,13 @@ class SecretScanResult:
     gitignore_ok: bool = True
     gitignore_issues: list[str] = field(default_factory=list)
     tracked_env_files: list[str] = field(default_factory=list)
+    forbidden_tracked: list[dict] = field(default_factory=list)
 
     @property
     def ok(self) -> bool:
         return (not self.findings and self.gitignore_ok
-                and not self.tracked_env_files)
+                and not self.tracked_env_files
+                and not self.forbidden_tracked)
 
     def as_dict(self) -> dict:
         return {
@@ -86,6 +122,7 @@ class SecretScanResult:
             "gitignore_ok": self.gitignore_ok,
             "gitignore_issues": self.gitignore_issues,
             "tracked_env_files": self.tracked_env_files,
+            "forbidden_tracked": self.forbidden_tracked,
         }
 
 
@@ -154,6 +191,7 @@ def _check_gitignore(root: Path, result: SecretScanResult) -> None:
         ".env": "il file .env deve essere escluso da Git",
         "secrets/": "la directory secrets/ deve essere esclusa da Git",
         "*.safetensors": "i checkpoint dei modelli non vanno committati",
+        ".cache/": "la cache dell'audit delle fonti non va committata",
     }
     for needle, message in required.items():
         if needle not in lines:
@@ -185,6 +223,13 @@ def scan_repository(root: str | Path, *, include_untracked: bool = False,
         name = Path(rel).name
         if name == ".env" or (name.startswith(".env.") and name != ".env.example"):
             result.tracked_env_files.append(rel)
+        # …and so is a tracked runtime artefact, whatever it happens to contain
+        # today: a database, a log, a report or a cache is a credential leak
+        # waiting for the next run, and a checkpoint is licensed weights.
+        for pattern, label in _FORBIDDEN_TRACKED_RE:
+            if pattern.search(rel):
+                result.forbidden_tracked.append({"path": rel, "reason": label})
+                break
         full = root / rel
         try:
             if not full.is_file() or full.stat().st_size > max_bytes:
