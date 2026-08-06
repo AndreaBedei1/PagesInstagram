@@ -1,0 +1,29 @@
+name: Meta API watch
+
+# Meta expires a Graph API version roughly two years after release. Nobody
+# notices until a call starts failing, so this asks the changelog once a week
+# and opens nothing, changes nothing, and merely fails loudly when the version
+# this project pins is approaching its end of support.
+#
+# It never updates production by itself: a version bump is a decision that needs
+# the resumable flow re-verified against the new documentation.
+on:
+  schedule:
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: pinned Graph API version still supported
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv venv .venv --python 3.13
+      - run: uv pip install --python .venv/bin/python -r requirements.txt
+      - name: Compare the pinned version with the official changelog
+        run: .venv/bin/python tools/check_meta_api_version.py --warn-days 180
