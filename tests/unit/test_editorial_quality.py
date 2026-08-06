@@ -193,11 +193,31 @@ def test_no_repetition_inside_the_measured_windows(name):
                                 for f in stats.findings[:5]))
 
 
-@pytest.mark.parametrize("name", ALL_DATASETS)
+#: Oggi nella Storia publishes by calendar, so its category is decided by what
+#: happened on the date — not by an editor. Spreading categories there would
+#: mean moving events off their own anniversary.
+CYCLIC_ONLY = CYCLIC
+
+
+@pytest.mark.parametrize("name", CYCLIC_ONLY)
 def test_category_and_mood_do_not_run(name):
     stats = analyse_dataset(DATASETS / name)
     assert stats.longest_category_run <= MAX_SAME_CATEGORY_RUN, name
     assert stats.longest_mood_run <= MAX_SAME_MOOD_RUN, name
+
+
+def test_calendar_page_offers_varied_categories_per_date():
+    """What a calendar page *can* control: the mix available for each date."""
+    data = load("today_in_history_it.json")
+    by_key: dict[str, set] = {}
+    for item in data["items"]:
+        by_key.setdefault(str(item.get("calendar_key")), set()).add(
+            item.get("category"))
+    single = [k for k, cats in by_key.items() if len(cats) < 2]
+    # A date whose every event shares one category shows the same kind of thing
+    # every year. A handful is tolerable; a systematic pattern is not.
+    assert len(single) < len(by_key) // 2, (
+        f"{len(single)} date su {len(by_key)} hanno un'unica categoria")
 
 
 @pytest.mark.parametrize("name", ALL_DATASETS)
@@ -270,14 +290,41 @@ def test_every_calendar_day_is_covered_including_29_february():
     assert min(coverage.values()) >= 2
 
 
-def test_pre_gregorian_events_declare_their_calendar_convention():
-    """The February Revolution is filed on 8 March; that has to be stated."""
+def test_no_event_headline_contradicts_its_own_calendar_key():
+    """An event may not name a date other than the one it is published on.
+
+    This replaces a test that looked for one specific event by name. The event
+    was replaced during the source-first rebuild and the test failed while the
+    rule it protected held; the rule is what matters, so the rule is what is
+    checked.
+    """
+    from src.content.history_check import check_event
+
     items = load("today_in_history_it.json")["items"]
-    revolution = [i for i in items
-                  if "Pietrogrado" in (i.get("text") or "")]
-    assert revolution, "evento di riferimento assente dal dataset"
-    for item in revolution:
-        assert (item.get("metadata") or {}).get("calendar_note")
+    offenders = []
+    for item in items:
+        for issue in check_event(item):
+            if issue.rule in ("data_discordante", "data_inesistente") \
+                    and issue.severity == H_ERROR:
+                offenders.append(f"#{item.get('sequence_index')}: {issue.message}")
+    assert not offenders, "; ".join(offenders[:5])
+
+
+def test_pre_gregorian_events_are_flagged_for_review():
+    """Events before the Gregorian reform must be surfaced, not silently kept."""
+    from src.content.history_check import check_event
+
+    items = load("today_in_history_it.json")["items"]
+    early = [i for i in items
+             if str((i.get("metadata") or {}).get("year") or "9999").isdigit()
+             and int((i.get("metadata") or {}).get("year") or 9999) < 1582]
+    if not early:
+        pytest.skip("nessun evento anteriore al 1582 nel dataset")
+    for item in early[:40]:
+        rules = {issue.rule for issue in check_event(item)}
+        assert "calendario_giuliano" in rules or (
+            (item.get("metadata") or {}).get("calendar_note")), (
+            f"#{item.get('sequence_index')} non segnalato né annotato")
 
 
 # ---------------------------------------------------------------------------

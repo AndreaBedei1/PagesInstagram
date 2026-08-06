@@ -177,12 +177,8 @@ def _blocked_hint(db, content_type: str, *, sequence_index: int | None = None,
         return ""
     if row is None:
         return ""
-    from .editorial import is_production_ready
-    _, reasons = is_production_ready(
-        content_type, status=row.get("status") or "",
-        verification_status=row.get("verification_status"),
-        source_audit_status=row.get("source_audit_status"),
-        editorial_status=row.get("editorial_status"))
+    from .verification import is_publishable
+    reasons = is_publishable(row, content_type=content_type).reasons
     if not reasons:
         return ""
     return (f" — il contenuto id={row.get('id')} esiste ma non è pubblicabile: "

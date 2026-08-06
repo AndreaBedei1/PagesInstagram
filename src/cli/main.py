@@ -1050,3 +1050,93 @@ def rebuild_unverified_corpus(
             console.print(f"  [dim]{o.dataset}: {note}[/]")
     console.print(f"Report: {out}")
     raise typer.Exit(code=1 if any(o.still_failing for o in outcomes) else 0)
+
+
+@app.command("corpus-final-gate")
+def corpus_final_gate(
+    report: str = typer.Option(None, help="percorso del report JSON"),
+):
+    """The single check that decides whether the corpus may go to production.
+
+    Twelve counters, all of which must be zero, plus exactly 1.000 items per
+    page. Recomputes the hashes and the duplicates rather than reading a stored
+    verdict, so an item edited after verification fails here.
+    """
+    from ..content.final_gate import run_final_gate, write_report
+
+    paths = Paths.create()
+    gate = run_final_gate(paths.datasets)
+    out = write_report(gate, Path(report) if report
+                       else paths.root / "reports" / "corpus_final_gate.json")
+
+    t = Table(title="Cancello finale del corpus")
+    for col in ("dataset", "elementi", "pronti", "fallimenti"):
+        t.add_column(col)
+    for g in gate.datasets:
+        t.add_row(g.dataset.replace("_it.json", ""), str(g.items),
+                  str(g.production_ready),
+                  "[green]0[/]" if g.failures == 0 else f"[red]{g.failures}[/]")
+    console.print(t)
+
+    counters = gate.counters()
+    for name, value in counters.items():
+        colour = "green" if value == 0 else "red"
+        console.print(f"  {name:24s} [{colour}]{value}[/]")
+    console.print(f"\nitems: [bold]{gate.items}[/]")
+    console.print(f"production_ready: [bold]{gate.production_ready}[/]")
+    console.print(f"failures: [bold]{gate.failures}[/]")
+    for g in gate.datasets:
+        for line in g.detail[:5]:
+            console.print(f"  [yellow]{g.dataset}[/]: {line}")
+    console.print(f"Report: {out}")
+    raise typer.Exit(code=0 if gate.ok else 1)
+
+
+@app.command("production-readiness")
+def production_readiness(
+    from_: str = typer.Option(..., "--from", help="prima data locale, YYYY-MM-DD"),
+    days: int = typer.Option(1000, help="giorni da simulare"),
+    all_pages: bool = typer.Option(True, "--all-pages/--enabled-only"),
+    report: str = typer.Option(None, help="percorso del report JSON"),
+):
+    """Simulate the whole cycle: every day, every page, through the real gate.
+
+    Builds a database from nothing, imports the real datasets, and resolves each
+    local date with the production gate on. Fails if a single day is uncovered,
+    unpublishable, duplicated or unresolvable in the page's timezone.
+    """
+    from ..scheduling.readiness import run_readiness, write_html, write_json
+
+    paths, settings, _registry, db = _ctx()
+    db.close()
+    console.print(f"[dim]simulo {days} giorni da {from_} …[/]")
+    result = run_readiness(settings, paths=paths, start=from_, days=days,
+                           progress=lambda m: console.print(f"  [dim]{m}[/]"))
+
+    out_json = write_json(result, Path(report) if report
+                          else paths.root / "reports" / "production_readiness.json")
+    out_html = write_html(result, paths.root / "reports" / "production_readiness.html")
+
+    t = Table(title=f"Production readiness — {days} giorni da {from_}")
+    for col in ("pagina", "giorni", "pubblicabili", "distinti", "scoperti",
+                "duplicati"):
+        t.add_column(col)
+    for p in result.pages:
+        t.add_row(p.page_id, str(p.days), str(p.publishable),
+                  str(p.distinct_contents),
+                  f"[red]{p.missing}[/]" if p.missing else "0",
+                  f"[red]{p.duplicates}[/]" if p.duplicates else "0")
+    console.print(t)
+    d = result.as_dict()
+    for key in ("days_checked", "pages_checked", "jobs_checked",
+                "production_ready", "needs_review", "blocked", "missing",
+                "duplicate_jobs", "date_errors"):
+        colour = "green" if (key in ("days_checked", "pages_checked",
+                                     "jobs_checked", "production_ready")
+                             or d[key] == 0) else "red"
+        console.print(f"  {key}: [{colour}]{d[key]}[/]")
+    for p in result.pages:
+        for problem in p.problems[:4]:
+            console.print(f"  [yellow]{p.page_id}[/]: {problem}")
+    console.print(f"Report: {out_json}\n        {out_html}")
+    raise typer.Exit(code=0 if result.ok else 1)

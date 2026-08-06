@@ -212,7 +212,11 @@ def analyse_dataset(path: str | Path) -> DatasetStats:
         st.warnings.append(
             f"{f['kind']}: «{f['value'][:60]}» compare {f['count']} volte in "
             f"{f['window']} giorni consecutivi (dall'indice {f['start_index']})")
-    if st.longest_category_run > MAX_SAME_CATEGORY_RUN:
+    # A calendar page's category is decided by what happened on the date, not
+    # by an editor: spreading it would mean publishing events away from their
+    # own anniversary, which is the one thing that page must never do.
+    if (st.content_type != "today_in_history"
+            and st.longest_category_run > MAX_SAME_CATEGORY_RUN):
         st.warnings.append(
             f"categoria ripetuta per {st.longest_category_run} giorni di fila "
             f"(massimo {MAX_SAME_CATEGORY_RUN})")

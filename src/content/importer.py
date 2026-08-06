@@ -332,6 +332,16 @@ def import_dataset(
             "verified_at": item.get("verified_at"),
             # 0004 columns
             **_editorial_columns(content_type, item),
+            # 0005 columns: the evidence itself. Without these the datasets
+            # carry a verification the database never sees, and every day of
+            # the cycle resolves to a content the production gate then blocks.
+            "verification_method": item.get("verification_method"),
+            "evidence_summary": item.get("evidence_summary"),
+            "source_title": item.get("source_title"),
+            "source_checked_at": item.get("source_checked_at"),
+            "source_strength": item.get("source_strength"),
+            "verified_content_hash": item.get("verified_content_hash"),
+            "verification_tool_version": item.get("verification_tool_version"),
         }
         new_id, inserted = db.insert_content(row)
         if not inserted:
