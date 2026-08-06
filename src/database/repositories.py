@@ -103,18 +103,40 @@ class Database:
         # 0004_editorial_states
         "source_audit_status", "source_audited_at", "source_audit_note",
         "editorial_status", "editorial_note", "source_tier",
+        # 0005_evidence_verification
+        "verification_method", "evidence_summary", "source_title",
+        "source_checked_at", "source_strength", "verified_content_hash",
+        "verification_tool_version",
     )
 
-    #: Extra SQL predicate that keeps un-reviewed content out of production.
-    #: Original types (thoughts, questions) need an editorial sign-off only;
-    #: fact-checked types additionally need a human verdict on the source.
+    #: Extra SQL predicate that keeps unverified content out of production.
+    #:
+    #: It checks **evidence**, not labels. A factual row needs a passage from
+    #: its source, a classified source, a check date and a content hash; the
+    #: hash is re-computed against the stored text by
+    #: :func:`src.content.verification.is_publishable`, so editing a claim after
+    #: verification silently un-publishes it rather than silently shipping it.
+    #: This predicate is the cheap SQL pre-filter; the hash comparison happens
+    #: in Python because SQLite cannot compute SHA-256.
     _PRODUCTION_READY_SQL = """
-        AND editorial_status = 'approved'
+        AND verification_method IS NOT NULL
+        AND verification_method <> ''
+        AND verified_content_hash IS NOT NULL
+        AND verified_content_hash <> ''
+        AND verification_tool_version IS NOT NULL
         AND (
             content_type NOT IN ('world_curiosity', 'word_of_the_day',
                                  'today_in_history')
             OR (verification_status = 'verified'
-                AND source_audit_status = 'manually_verified')
+                AND verification_method <> 'original_nonfactual'
+                AND evidence_summary IS NOT NULL
+                AND length(evidence_summary) >= 40
+                AND source_url LIKE 'https://%'
+                AND source_title IS NOT NULL AND source_title <> ''
+                AND source_checked_at IS NOT NULL AND source_checked_at <> ''
+                AND source_strength IN ('primary', 'institutional', 'academic',
+                                        'authoritative_reference',
+                                        'general_encyclopedia'))
         )
     """
 

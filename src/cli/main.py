@@ -898,3 +898,73 @@ def media_audit_cmd(
                   f"({box['usable_width']}×{box['usable_height']} px utilizzabili)")
     console.print(f"Report: {out}")
     raise typer.Exit(code=0 if all(c.ok for c in checks) else 1)
+
+
+@app.command("verify-corpus")
+def verify_corpus_cmd(
+    dataset: list[str] = typer.Option(None, "--dataset", help="limita a questi dataset"),
+    rate: float = typer.Option(4.0, help="richieste al secondo"),
+    report: str = typer.Option(None, help="percorso del report JSON"),
+):
+    """Read every cited source and attach the passage that supports each claim.
+
+    This is the only path that can make a factual item publishable, and it
+    cannot do so without evidence: a claim whose source does not contain its
+    key words and numbers comes back unverified, with the reason.
+    """
+    from ..content.verify_corpus import (DISPATCH, cache_for, verify_all,
+                                         verify_curiosities, verify_history,
+                                         verify_original, verify_words,
+                                         write_report)
+    from ..content.dataset_io import load_dataset
+    from ..content.evidence import build_session
+
+    paths = Paths.create()
+    cache_dir = paths.root / ".cache"
+
+    def progress(done, total):
+        console.print(f"    [dim]{done}/{total}[/]")
+
+    if dataset:
+        session = build_session()
+        outcomes = []
+        for name in dataset:
+            path = paths.datasets / name
+            ctype = load_dataset(path).get("content_type") or ""
+            kind = DISPATCH.get(ctype)
+            cache = cache_for(cache_dir, name)
+            console.print(f"[bold]{name}[/] ({ctype}) …")
+            if kind == "original":
+                outcomes.append(verify_original(path))
+            elif kind == "words":
+                outcomes.append(verify_words(path, cache=cache, session=session,
+                                             rate=3.0, progress=progress))
+            elif kind == "history":
+                outcomes.append(verify_history(path, cache=cache, session=session,
+                                               rate=rate, progress=progress))
+            elif kind == "curiosities":
+                outcomes.append(verify_curiosities(path, cache=cache,
+                                                   session=session, rate=rate,
+                                                   progress=progress))
+            cache.save()
+    else:
+        outcomes = verify_all(paths.datasets, cache_dir=cache_dir, rate=rate,
+                              progress=progress)
+
+    out = write_report(outcomes, Path(report) if report
+                       else paths.root / "reports" / "verification.json")
+    t = Table(title="Verifica del corpus")
+    for col in ("dataset", "totale", "verificati", "falliti", "metodi"):
+        t.add_column(col)
+    for o in outcomes:
+        t.add_row(o.dataset.replace("_it.json", ""), str(o.total),
+                  f"[green]{o.verified}[/]",
+                  f"[red]{o.failed}[/]" if o.failed else "0",
+                  ", ".join(f"{k.split('_')[0]}={v}" for k, v in o.by_method.items()))
+    console.print(t)
+    for o in outcomes:
+        for reason, n in list(o.by_reason.items())[:5]:
+            console.print(f"  [yellow]{o.dataset}[/]: {n} × {reason}")
+    total_failed = sum(o.failed for o in outcomes)
+    console.print(f"Report: {out}")
+    raise typer.Exit(code=1 if total_failed else 0)

@@ -900,7 +900,16 @@
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:39Z",
-   "source_audit_note": "ok HTTP 200"
+   "source_audit_note": "ok HTTP 200",
+   "verification_method": "structured_official_dataset",
+   "verification_tool_version": "2.0",
+   "content_hash": "04740f086734aefa4e93b8a23bb5911b1957d50a0fd4fe8badc24583698e6ba4",
+   "evidence_summary": "L'astrolabio è uno strumento astronomico tramite il quale è possibile localizzare o calcolare la posizione del Sole e le stelle, legata al giorno dell'anno e all'ora, per una data latitudine.",
+   "source_title": "Astrolabio",
+   "source_strength": "general_encyclopedia",
+   "source_checked_at": "2026-08-06",
+   "verification_note": "5/7 parole chiave presenti nella fonte",
+   "verified_content_hash": "04740f086734aefa4e93b8a23bb5911b1957d50a0fd4fe8badc24583698e6ba4"
   },
   {
    "id": "wc-0110-nubi-nottilucenti",
@@ -999,7 +1008,16 @@
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:39Z",
-   "source_audit_note": "ok HTTP 200"
+   "source_audit_note": "ok HTTP 200",
+   "verification_method": "structured_official_dataset",
+   "verification_tool_version": "2.0",
+   "content_hash": "fe46491313f632586c557bd5d1b748afdf6eaf70b94d4fed9f86dcc72102b9fa",
+   "evidence_summary": "== Storia == Il filosofo greco Alessandro di Afrodisia nel II-III secolo descrive il fenomeno che si verifica quando si hanno due archi di arcobaleno: la zona di cielo al di sotto dell'arco principale, l'inferiore, appare più luminosa di quella al di sopra.",
+   "source_title": "Arcobaleno",
+   "source_strength": "general_encyclopedia",
+   "source_checked_at": "2026-08-06",
+   "verification_note": "6/8 parole chiave presenti nella fonte",
+   "verified_content_hash": "fe46491313f632586c557bd5d1b748afdf6eaf70b94d4fed9f86dcc72102b9fa"
   },
   {
    "id": "wc-0130-anestesia",
@@ -8052,7 +8070,16 @@
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:39Z",
-   "source_audit_note": "ok HTTP 200"
+   "source_audit_note": "ok HTTP 200",
+   "verification_method": "structured_official_dataset",
+   "verification_tool_version": "2.0",
+   "content_hash": "2da3718a3df840f3ae1c2e44ab6b54e73aee620c00a0c53298b0f98e7312412f",
+   "evidence_summary": "L'abaco o abbaco è un antico strumento di calcolo, utilizzato come ausilio per effettuare operazioni matematiche; è il primo strumento usato per i calcoli sin dal XXI secolo a.C.",
+   "source_title": "Abaco",
+   "source_strength": "general_encyclopedia",
+   "source_checked_at": "2026-08-06",
+   "verification_note": "5/7 parole chiave presenti nella fonte",
+   "verified_content_hash": "2da3718a3df840f3ae1c2e44ab6b54e73aee620c00a0c53298b0f98e7312412f"
   },
   {
    "id": "wc-0573-sezione-aurea",
@@ -8219,7 +8246,16 @@
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:39Z",
-   "source_audit_note": "ok HTTP 200"
+   "source_audit_note": "ok HTTP 200",
+   "verification_method": "structured_official_dataset",
+   "verification_tool_version": "2.0",
+   "content_hash": "aeb32f58ce56886818bb847804788565fde0bbb9443ab194ac981f22c88f95a9",
+   "evidence_summary": "== Domesticazione del cane == Per domesticazione s'intende il processo attraverso cui una specie animale o vegetale viene resa domestica, ovvero dipendente dalla convivenza con l'uomo e dal controllo da parte di quest'ultimo.",
+   "source_title": "Addomesticamento del cane",
+   "source_strength": "general_encyclopedia",
+   "source_checked_at": "2026-08-06",
+   "verification_note": "3/6 parole chiave presenti nella fonte",
+   "verified_content_hash": "aeb32f58ce56886818bb847804788565fde0bbb9443ab194ac981f22c88f95a9"
   },
   {
    "id": "wc-0581-macchina-analitica",
@@ -9972,7 +10008,16 @@
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:39Z",
-   "source_audit_note": "ok HTTP 200"
+   "source_audit_note": "ok HTTP 200",
+   "verification_method": "structured_official_dataset",
+   "verification_tool_version": "2.0",
+   "content_hash": "e77ae90bfdfb79c3a872b548e06392ee3a97595580c5fa3f4e9e0502e39deaec",
+   "evidence_summary": "== Il mercato dell'acciaio == L'acciaio è quotato nelle maggiori borse del mondo.",
+   "source_title": "Acciaio",
+   "source_strength": "general_encyclopedia",
+   "source_checked_at": "2026-08-06",
+   "verification_note": "4/4 parole chiave presenti nella fonte",
+   "verified_content_hash": "e77ae90bfdfb79c3a872b548e06392ee3a97595580c5fa3f4e9e0502e39deaec"
   },
   {
    "id": "wc-0551-cursus-publicus",
@@ -10104,7 +10149,16 @@
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:39Z",
-   "source_audit_note": "ok HTTP 200"
+   "source_audit_note": "ok HTTP 200",
+   "verification_method": "structured_official_dataset",
+   "verification_tool_version": "2.0",
+   "content_hash": "a65048567ffa9d911cbe413232c19dc6ad2c7a288fb74d07b5a9e7edbd6e6f7f",
+   "evidence_summary": "L’anforologia è la disciplina che si occupa di studiare le anfore per migliorare le conoscenze archeologiche e storiche dei popoli antichi che le utilizzarono;",
+   "source_title": "Anfora",
+   "source_strength": "general_encyclopedia",
+   "source_checked_at": "2026-08-06",
+   "verification_note": "4/7 parole chiave presenti nella fonte",
+   "verified_content_hash": "a65048567ffa9d911cbe413232c19dc6ad2c7a288fb74d07b5a9e7edbd6e6f7f"
   },
   {
    "id": "wc-0605-trasformatore",
@@ -11036,7 +11090,16 @@
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:39Z",
-   "source_audit_note": "ok HTTP 200"
+   "source_audit_note": "ok HTTP 200",
+   "verification_method": "structured_official_dataset",
+   "verification_tool_version": "2.0",
+   "content_hash": "1b45567b696ff6eb126fda3b556a0a6f14f0cf0e07711c54f6c51c615a480019",
+   "evidence_summary": "Per gli acquedotti potabili, si preferisce il funzionamento in pressione, perché dà maggiori garanzie igieniche, anche se in Puglia è stato realizzato all'inizio del Novecento il Canale Principale dell'Acquedotto Pugliese, tuttora in esercizio, che funziona a pelo libero.",
+   "source_title": "Acquedotto",
+   "source_strength": "general_encyclopedia",
+   "source_checked_at": "2026-08-06",
+   "verification_note": "8/9 parole chiave presenti nella fonte",
+   "verified_content_hash": "1b45567b696ff6eb126fda3b556a0a6f14f0cf0e07711c54f6c51c615a480019"
   },
   {
    "id": "wc-0764-dna-antico",
@@ -13395,7 +13458,16 @@
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:40Z",
-   "source_audit_note": "ok HTTP 200"
+   "source_audit_note": "ok HTTP 200",
+   "verification_method": "structured_official_dataset",
+   "verification_tool_version": "2.0",
+   "content_hash": "1f25f6888d58e2510f3aea51f9f3c1131ed691d8afe0bb3aa02c0295c67c990c",
+   "evidence_summary": "La festa di primavera (春節T, 春节S, chūnjiéP) o capodanno lunisolare, o capodanno agricolo (農曆新年T, 农历新年S, nónglì xīnniánP), in Occidente generalmente noto come capodanno cinese, è una delle più importanti e maggiormente sentite festività tradizionali cinesi,",
+   "source_title": "Capodanno cinese",
+   "source_strength": "general_encyclopedia",
+   "source_checked_at": "2026-08-06",
+   "verification_note": "8/10 parole chiave presenti nella fonte",
+   "verified_content_hash": "1f25f6888d58e2510f3aea51f9f3c1131ed691d8afe0bb3aa02c0295c67c990c"
   },
   {
    "id": "wc-0037-pipistrello",
@@ -13661,7 +13733,16 @@
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:39Z",
-   "source_audit_note": "ok HTTP 200"
+   "source_audit_note": "ok HTTP 200",
+   "verification_method": "structured_official_dataset",
+   "verification_tool_version": "2.0",
+   "content_hash": "f93def3a665a0afbdc8ab410b98c8435d3b42833babedcc3518f4edd766e7f2d",
+   "evidence_summary": "Il genere Atta è noto soprattutto per le abitudini alimentari delle colonie, che, come in molte altre specie di Myrmicinae, ricorrono ad una forma avanzata di orticoltura, usano cioè coltivare il micelio di un fungo all'interno del nido, per produrre le risorse alimentari.",
+   "source_title": "Atta (zoologia)",
+   "source_strength": "general_encyclopedia",
+   "source_checked_at": "2026-08-06",
+   "verification_note": "6/7 parole chiave presenti nella fonte",
+   "verified_content_hash": "f93def3a665a0afbdc8ab410b98c8435d3b42833babedcc3518f4edd766e7f2d"
   },
   {
    "id": "wc-0164-lago-di-garda",
@@ -13927,7 +14008,16 @@
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:39Z",
-   "source_audit_note": "ok HTTP 200"
+   "source_audit_note": "ok HTTP 200",
+   "verification_method": "structured_official_dataset",
+   "verification_tool_version": "2.0",
+   "content_hash": "4b3adf94341c333cec21d19d121989fd491eb7ac71a44a72bad7494808202481",
+   "evidence_summary": "Lo stesso Petrarca mise in evidenza la caratteristica della catena appenninica di dividere l'Italia in due versanti, in un noto verso del suo Canzoniereː ...il bel paese / ch'Appennin parte e 'l mar circonda e l'Alpe Lungo tale linea corrono centinaia di chilometri di confini che separano una regione dall'altra.",
+   "source_title": "Appennini",
+   "source_strength": "general_encyclopedia",
+   "source_checked_at": "2026-08-06",
+   "verification_note": "3/5 parole chiave presenti nella fonte",
+   "verified_content_hash": "4b3adf94341c333cec21d19d121989fd491eb7ac71a44a72bad7494808202481"
   },
   {
    "id": "wc-0731-fuso-orario-di-internet",
@@ -14624,7 +14714,16 @@
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:39Z",
-   "source_audit_note": "ok HTTP 200"
+   "source_audit_note": "ok HTTP 200",
+   "verification_method": "structured_official_dataset",
+   "verification_tool_version": "2.0",
+   "content_hash": "c7b24afcda9d15954ccb3e15d3e64e4d2f461c918062d6d648f8d0d42bbdf31e",
+   "evidence_summary": "=== Il Novecento === Il secolo scorso è stato caratterizzato da un grande spopolamento delle zone territoriali di quello che oggi è in gran parte il Parco delle Alpi Apuane.",
+   "source_title": "Alpi Apuane",
+   "source_strength": "general_encyclopedia",
+   "source_checked_at": "2026-08-06",
+   "verification_note": "5/8 parole chiave presenti nella fonte",
+   "verified_content_hash": "c7b24afcda9d15954ccb3e15d3e64e4d2f461c918062d6d648f8d0d42bbdf31e"
   },
   {
    "id": "wc-0740-retrovisore",
@@ -15989,7 +16088,16 @@
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:39Z",
-   "source_audit_note": "ok HTTP 200"
+   "source_audit_note": "ok HTTP 200",
+   "verification_method": "structured_official_dataset",
+   "verification_tool_version": "2.0",
+   "content_hash": "37665cb62f852cf73db33d102771858c20483d4d77042fcfde9cf26f1c5ec1b5",
+   "evidence_summary": "=== Riproduzione === I pinguini imperatore presentano la particolarità di riprodursi in una delle regioni più inospitali del mondo, l'Antartide, durante l'inverno: le temperature possono scendere fino a -65 °C, con venti che soffiano a più di 200 km/h.",
+   "source_title": "Aptenodytes forsteri",
+   "source_strength": "general_encyclopedia",
+   "source_checked_at": "2026-08-06",
+   "verification_note": "5/7 parole chiave presenti nella fonte",
+   "verified_content_hash": "37665cb62f852cf73db33d102771858c20483d4d77042fcfde9cf26f1c5ec1b5"
   },
   {
    "id": "wc-0174-lago-titicaca",
@@ -16750,7 +16858,16 @@
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:39Z",
-   "source_audit_note": "ok HTTP 200"
+   "source_audit_note": "ok HTTP 200",
+   "verification_method": "structured_official_dataset",
+   "verification_tool_version": "2.0",
+   "content_hash": "bfce4838165578413ea4934428d6302608de12744441015bfbdf49e81dabb307",
+   "evidence_summary": "== Distribuzione e habitat == === Areale === L'anguilla occupa un vasto areale che comprende tutti i fiumi europei tributari dell'oceano Atlantico, del mar Mediterraneo, del mare del Nord e del mar Baltico.",
+   "source_title": "Anguilla anguilla",
+   "source_strength": "general_encyclopedia",
+   "source_checked_at": "2026-08-06",
+   "verification_note": "7/8 parole chiave presenti nella fonte",
+   "verified_content_hash": "bfce4838165578413ea4934428d6302608de12744441015bfbdf49e81dabb307"
   },
   {
    "id": "wc-0052-torre-di-pisa",
@@ -18707,7 +18824,16 @@
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:39Z",
-   "source_audit_note": "ok HTTP 200"
+   "source_audit_note": "ok HTTP 200",
+   "verification_method": "structured_official_dataset",
+   "verification_tool_version": "2.0",
+   "content_hash": "57970af9f6f2a3a47ab8c3b20ca561899ecbeef4014378d594518eebeb70f6b2",
+   "evidence_summary": "Aldo Pio Manuzio (in latino Aldus Pius Manutius; Bassiano, tra 1449 e 1452 – Venezia, 6 febbraio 1515) è stato un umanista, editore e tipografo italiano.",
+   "source_title": "Aldo Manuzio",
+   "source_strength": "general_encyclopedia",
+   "source_checked_at": "2026-08-06",
+   "verification_note": "6/8 parole chiave presenti nella fonte",
+   "verified_content_hash": "57970af9f6f2a3a47ab8c3b20ca561899ecbeef4014378d594518eebeb70f6b2"
   },
   {
    "id": "wc-0398-suolo",
@@ -20072,7 +20198,16 @@
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:39Z",
-   "source_audit_note": "ok HTTP 200"
+   "source_audit_note": "ok HTTP 200",
+   "verification_method": "structured_official_dataset",
+   "verification_tool_version": "2.0",
+   "content_hash": "2d462e126402c878779a9bee6e0b5456813791da40e2fee22493114868e67fca",
+   "evidence_summary": "== Descrizione == Sono alberi caducifogli con grandi tronchi, che raggiungono altezze tra i 5 e i 25 m (eccezionalmente 30 m); il diametro del tronco può raggiungere i 7 m (eccezionalmente 11 m).",
+   "source_title": "Adansonia",
+   "source_strength": "general_encyclopedia",
+   "source_checked_at": "2026-08-06",
+   "verification_note": "4/6 parole chiave presenti nella fonte",
+   "verified_content_hash": "2d462e126402c878779a9bee6e0b5456813791da40e2fee22493114868e67fca"
   },
   {
    "id": "wc-0815-intolleranza-al-lattosio",
@@ -20441,7 +20576,16 @@
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:39Z",
-   "source_audit_note": "ok HTTP 200"
+   "source_audit_note": "ok HTTP 200",
+   "verification_method": "structured_official_dataset",
+   "verification_tool_version": "2.0",
+   "content_hash": "dd19ea5e75f2e3b0c29272dbe66dc7c9e3c444116794f96df4e865a8c8bf1801",
+   "evidence_summary": "Ciò perché l'asse di rotazione di Saturno è inclinato rispetto al piano orbitale intorno al Sole (come per la Terra), per cui anche gli anelli risultano inclinati e sono osservabili dalla Terra (per la maggior parte del tempo).",
+   "source_title": "Anelli di Saturno",
+   "source_strength": "general_encyclopedia",
+   "source_checked_at": "2026-08-06",
+   "verification_note": "4/7 parole chiave presenti nella fonte",
+   "verified_content_hash": "dd19ea5e75f2e3b0c29272dbe66dc7c9e3c444116794f96df4e865a8c8bf1801"
   },
   {
    "id": "wc-0767-epigrafia",
@@ -21035,7 +21179,16 @@
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:39Z",
-   "source_audit_note": "ok HTTP 200"
+   "source_audit_note": "ok HTTP 200",
+   "verification_method": "structured_official_dataset",
+   "verification_tool_version": "2.0",
+   "content_hash": "2aea32ea46ab67a507507f517d0326e6e986e4c83ad6f859dc6c27cba3a4d503",
+   "evidence_summary": "L'anno luce (ly o al) è un'unità di misura della lunghezza, definita come la distanza percorsa dalla radiazione elettromagnetica (luce) nel vuoto nell'intervallo di un anno.",
+   "source_title": "Anno luce",
+   "source_strength": "general_encyclopedia",
+   "source_checked_at": "2026-08-06",
+   "verification_note": "5/5 parole chiave presenti nella fonte",
+   "verified_content_hash": "2aea32ea46ab67a507507f517d0326e6e986e4c83ad6f859dc6c27cba3a4d503"
   },
   {
    "id": "wc-0768-museo-pubblico",
@@ -21169,7 +21322,16 @@
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:39Z",
-   "source_audit_note": "ok HTTP 200"
+   "source_audit_note": "ok HTTP 200",
+   "verification_method": "structured_official_dataset",
+   "verification_tool_version": "2.0",
+   "content_hash": "358381825e3917ffa067c74b6156aaf8dbf494c0ac39f28592310adaafc7b301",
+   "evidence_summary": "Il tempio più conosciuto è il famoso Angkor Wat, considerato il più vasto edificio religioso del mondo, la cui effigie stilizzata compare nella bandiera cambogiana.",
+   "source_title": "Angkor",
+   "source_strength": "general_encyclopedia",
+   "source_checked_at": "2026-08-06",
+   "verification_note": "4/6 parole chiave presenti nella fonte",
+   "verified_content_hash": "358381825e3917ffa067c74b6156aaf8dbf494c0ac39f28592310adaafc7b301"
   },
   {
    "id": "wc-0430-geyser",
@@ -23967,7 +24129,16 @@
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:39Z",
-   "source_audit_note": "ok HTTP 200"
+   "source_audit_note": "ok HTTP 200",
+   "verification_method": "structured_official_dataset",
+   "verification_tool_version": "2.0",
+   "content_hash": "b6627a0de39437e6d1bdab6db2d96bd0f98dced5e8458b91352248d605520da8",
+   "evidence_summary": "L'Acquedotto carolino (noto anche come acquedotto di Vanvitelli) è l'acquedotto nato per alimentare il complesso di San Leucio e che fornisce anche l'apporto idrico alla Reggia di Caserta (o meglio alle \"reali delizie\" costituite dal parco, dal giardino inglese e dal bosco di san Silvestro),",
+   "source_title": "Acquedotto Carolino",
+   "source_strength": "general_encyclopedia",
+   "source_checked_at": "2026-08-06",
+   "verification_note": "6/8 parole chiave presenti nella fonte",
+   "verified_content_hash": "b6627a0de39437e6d1bdab6db2d96bd0f98dced5e8458b91352248d605520da8"
   },
   {
    "id": "wc-0444-atolli",
@@ -25429,7 +25600,16 @@
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:39Z",
-   "source_audit_note": "ok HTTP 200"
+   "source_audit_note": "ok HTTP 200",
+   "verification_method": "structured_official_dataset",
+   "verification_tool_version": "2.0",
+   "content_hash": "92f9bbba7cd700a6fb5e06ae152deabb4efa3cc03849e685418bb8a542388909",
+   "evidence_summary": "Le AMP sono in pratica delle zone dove è praticamente molto difficile se non impossibile costruire lungo i litorali nuovi edifici, nel caso possono e devono essere restaurati e resi fruibili per le normali attività degli enti e associazioni preposti alla tutela, valorizzazione e promozione di tali aree.",
+   "source_title": "Area marina protetta",
+   "source_strength": "general_encyclopedia",
+   "source_checked_at": "2026-08-06",
+   "verification_note": "5/8 parole chiave presenti nella fonte",
+   "verified_content_hash": "92f9bbba7cd700a6fb5e06ae152deabb4efa3cc03849e685418bb8a542388909"
   },
   {
    "id": "wc-0898-bioacustica",
@@ -25695,7 +25875,16 @@
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:39Z",
-   "source_audit_note": "ok HTTP 200"
+   "source_audit_note": "ok HTTP 200",
+   "verification_method": "structured_official_dataset",
+   "verification_tool_version": "2.0",
+   "content_hash": "9ee42355d816bdc72e20cdc32030507f8e5682f0cfaf9e399b03758eaf45b3c5",
+   "evidence_summary": "Alcune delle principali funzionalità che un programma di backup dovrebbe fornire, sono: Copia immagine di un'unità intera di archiviazione (HDD, SDD, NAS, ecc.) cioè la cosiddetta clonazione (replica esatta e ripristinabile);",
+   "source_title": "Backup",
+   "source_strength": "general_encyclopedia",
+   "source_checked_at": "2026-08-06",
+   "verification_note": "4/5 parole chiave presenti nella fonte",
+   "verified_content_hash": "9ee42355d816bdc72e20cdc32030507f8e5682f0cfaf9e399b03758eaf45b3c5"
   },
   {
    "id": "wc-0048-sanscrito",
@@ -26930,7 +27119,16 @@
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:39Z",
-   "source_audit_note": "ok HTTP 200"
+   "source_audit_note": "ok HTTP 200",
+   "verification_method": "structured_official_dataset",
+   "verification_tool_version": "2.0",
+   "content_hash": "45e0e9c3f7a43587710756300f9a58e54d94dfe5b0a3f0967c3278e40c66608f",
+   "evidence_summary": "== Specie simili == Essendo anch'essa molto comune in Europa, si può facilmente confondere la zanzara Culiseta annulata con la zanzara tigre, poiché entrambe hanno un disegno circolare bianco e nero sulle zampe.",
+   "source_title": "Aedes albopictus",
+   "source_strength": "general_encyclopedia",
+   "source_checked_at": "2026-08-06",
+   "verification_note": "6/8 parole chiave presenti nella fonte",
+   "verified_content_hash": "45e0e9c3f7a43587710756300f9a58e54d94dfe5b0a3f0967c3278e40c66608f"
   },
   {
    "id": "wc-0557-abu-simbel",
@@ -26963,7 +27161,16 @@
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:39Z",
-   "source_audit_note": "ok HTTP 200"
+   "source_audit_note": "ok HTTP 200",
+   "verification_method": "structured_official_dataset",
+   "verification_tool_version": "2.0",
+   "content_hash": "f4c0d3e649e51b242919d4ef7d4a14de076fc5f07db3fa03dad5d92976af790b",
+   "evidence_summary": "Il complesso archeologico del sito di Abu Simbel, in egizio Meha, è composto principalmente da due enormi templi in roccia, detti templi rupestri ricavati dal fianco della montagna dal faraone Ramses II nel XIII secolo a.C., eretti per intimidire i vicini Nubiani e per commemorare la vittoria nella battaglia di Qadeš.",
+   "source_title": "Abu Simbel",
+   "source_strength": "general_encyclopedia",
+   "source_checked_at": "2026-08-06",
+   "verification_note": "5/7 parole chiave presenti nella fonte",
+   "verified_content_hash": "f4c0d3e649e51b242919d4ef7d4a14de076fc5f07db3fa03dad5d92976af790b"
   },
   {
    "id": "wc-0703-confini-rettilinei",
@@ -27095,7 +27302,16 @@
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:39Z",
-   "source_audit_note": "ok HTTP 200"
+   "source_audit_note": "ok HTTP 200",
+   "verification_method": "structured_official_dataset",
+   "verification_tool_version": "2.0",
+   "content_hash": "6dc18994689fa28f5b5686800c787599683d3ef6bbe0cc8b759bb5dc061da995",
+   "evidence_summary": "== Usi == L'ailanto è stato diffuso fuori dalla Cina principalmente per tre motivi: per il suo valore come albero ornamentale, per la produzione di una seta ricavata dai suoi fitofagi Samia cynthia, Samia ricini e Attacus atlas,",
+   "source_title": "Ailanthus altissima",
+   "source_strength": "general_encyclopedia",
+   "source_checked_at": "2026-08-06",
+   "verification_note": "4/6 parole chiave presenti nella fonte",
+   "verified_content_hash": "6dc18994689fa28f5b5686800c787599683d3ef6bbe0cc8b759bb5dc061da995"
   },
   {
    "id": "wc-0929-previsioni-meteo",
@@ -27194,7 +27410,16 @@
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:40Z",
-   "source_audit_note": "ok HTTP 200"
+   "source_audit_note": "ok HTTP 200",
+   "verification_method": "structured_official_dataset",
+   "verification_tool_version": "2.0",
+   "content_hash": "e045f15034383f557ad946a444dbe30b6b0d0d50207fa5d3fc268faeaef0474f",
+   "evidence_summary": "La prima legislazione europea sul brevetto è contenuta in una parte del Senato veneziano del 19 marzo 1474 (Archivio di Stato di Venezia, Senato terra, registro 7, carta 32):3 Dopo l'Italia anche in Inghilterra, a seguito dello Statuto dei Monopoli del 1623-1624 sotto il regno di Giacomo I d'Inghilterra,",
+   "source_title": "Brevetto",
+   "source_strength": "general_encyclopedia",
+   "source_checked_at": "2026-08-06",
+   "verification_note": "5/7 parole chiave presenti nella fonte",
+   "verified_content_hash": "e045f15034383f557ad946a444dbe30b6b0d0d50207fa5d3fc268faeaef0474f"
   },
   {
    "id": "wc-0694-campane-e-ore",
@@ -27623,7 +27848,16 @@
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:39Z",
-   "source_audit_note": "ok HTTP 200"
+   "source_audit_note": "ok HTTP 200",
+   "verification_method": "structured_official_dataset",
+   "verification_tool_version": "2.0",
+   "content_hash": "8ad0c0dd834871c27a4b208de00724eda23a271054bd1c1885ccfb92a8351e6d",
+   "evidence_summary": "L'affresco è una tecnica di pittura murale eseguita sull'intonaco fresco di una parete: il colore ne è chimicamente incorporato e conservato per un tempo illimitato.",
+   "source_title": "Affresco",
+   "source_strength": "general_encyclopedia",
+   "source_checked_at": "2026-08-06",
+   "verification_note": "3/5 parole chiave presenti nella fonte",
+   "verified_content_hash": "8ad0c0dd834871c27a4b208de00724eda23a271054bd1c1885ccfb92a8351e6d"
   },
   {
    "id": "wc-0705-citta-piu-alte",
@@ -29893,7 +30127,16 @@
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:39Z",
-   "source_audit_note": "ok HTTP 200"
+   "source_audit_note": "ok HTTP 200",
+   "verification_method": "structured_official_dataset",
+   "verification_tool_version": "2.0",
+   "content_hash": "c359dec1a67cab0f041ad2de45e9aa19d7ca6f348298d5891dd7eb5b7c22d2a5",
+   "evidence_summary": "Gli spostamenti sono spesso funzionali a variazioni di altitudine, e al procedere della stagione, cominciando dalle pianure e vallate precoci tra aprile e giugno, seguendo le fioriture più tardive di luglio e agosto, per finire con la raccolta delle melate d'abete, prima di tornare a svernare in pianura.",
+   "source_title": "Apicoltura",
+   "source_strength": "general_encyclopedia",
+   "source_checked_at": "2026-08-06",
+   "verification_note": "6/7 parole chiave presenti nella fonte",
+   "verified_content_hash": "c359dec1a67cab0f041ad2de45e9aa19d7ca6f348298d5891dd7eb5b7c22d2a5"
   },
   {
    "id": "wc-0662-cicogne",
@@ -32046,7 +32289,16 @@
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:39Z",
-   "source_audit_note": "ok HTTP 200"
+   "source_audit_note": "ok HTTP 200",
+   "verification_method": "structured_official_dataset",
+   "verification_tool_version": "2.0",
+   "content_hash": "beefb76a24eb618a599bc515039c30bdc11e96407d2ea15a33d03096e75fb661",
+   "evidence_summary": "L'alfabeto greco è un sistema di scrittura composto da 24 lettere (7 vocali e 17 consonanti) e risale al IX secolo a.C.; deriva dall'alfabeto fenicio, nel quale a ogni segno era associato un solo suono.",
+   "source_title": "Alfabeto greco",
+   "source_strength": "general_encyclopedia",
+   "source_checked_at": "2026-08-06",
+   "verification_note": "6/8 parole chiave presenti nella fonte",
+   "verified_content_hash": "beefb76a24eb618a599bc515039c30bdc11e96407d2ea15a33d03096e75fb661"
   },
   {
    "id": "wc-0975-simbiosi-azoto",
@@ -32580,7 +32832,16 @@
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:39Z",
-   "source_audit_note": "ok HTTP 200"
+   "source_audit_note": "ok HTTP 200",
+   "verification_method": "structured_official_dataset",
+   "verification_tool_version": "2.0",
+   "content_hash": "c0cbb52e095f8194fed32e2d9c103b89f55d1ea6fcdba24175f56cf10162070d",
+   "evidence_summary": "anguilla si trova nell'oceano Atlantico occidentale, a migliaia di chilometri dalle coste europee, sono state formulate numerose ipotesi alternative sulla riproduzione di questa specie.",
+   "source_title": "Anguilla anguilla",
+   "source_strength": "general_encyclopedia",
+   "source_checked_at": "2026-08-06",
+   "verification_note": "4/6 parole chiave presenti nella fonte",
+   "verified_content_hash": "c0cbb52e095f8194fed32e2d9c103b89f55d1ea6fcdba24175f56cf10162070d"
   },
   {
    "id": "wc-0981-case-a-graticcio",
@@ -32778,7 +33039,16 @@
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:39Z",
-   "source_audit_note": "ok HTTP 200"
+   "source_audit_note": "ok HTTP 200",
+   "verification_method": "structured_official_dataset",
+   "verification_tool_version": "2.0",
+   "content_hash": "c610f198a25dc948b98390ba551b5f666119e17e394459d1f264b0ee894170d5",
+   "evidence_summary": "Un altro utilizzo di questa proprietà si ha quando si butta il sale nella neve: il generarsi di cloruro di sodio acquoso (che ha un punto di fusione inferiore a quello dell'acqua pura) impedisce la formazione del ghiaccio anche a temperature inferiori a 0 °C.",
+   "source_title": "Abbassamento crioscopico",
+   "source_strength": "general_encyclopedia",
+   "source_checked_at": "2026-08-06",
+   "verification_note": "4/5 parole chiave presenti nella fonte",
+   "verified_content_hash": "c610f198a25dc948b98390ba551b5f666119e17e394459d1f264b0ee894170d5"
   },
   {
    "id": "wc-0931-satelliti-meteorologici",
