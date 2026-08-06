@@ -65,7 +65,18 @@ def _job(db: Database, s, key, media_type="reel", *, size=4000, make_file=True):
     return jid, cid
 
 
-def _pub(s, db, reg, mock, sleep=lambda _: None):
+def _pub(s, db, reg, mock, sleep=lambda _: None, *, armed=True):
+    """A publisher for a page that may actually publish.
+
+    Outside dry-run a page must be armed before anything reaches Meta, so a test
+    exercising the upload path has to arm it — which is the point of the switch:
+    forgetting it is how five accounts start posting at once.
+    """
+    from src.publishing.arming import set_armed
+
+    if armed:
+        for page in reg.all():
+            set_armed(db, page.page_id, True)
     return Publisher(s, db, reg, client_factory=lambda p: PublishTarget(mock, "ig"),
                      sleep=sleep)
 
@@ -245,6 +256,11 @@ def test_production_missing_credentials_fails(tmp_db, project_paths, monkeypatch
               "ICE_MOTIVATIONAL_IT_IG_USER_ID"):
         monkeypatch.delenv(k, raising=False)
     s, reg = _setup(project_paths, Mode.PRODUCTION)
+    # Arming comes first in the publisher, so a test about credentials has to
+    # get past it to reach the thing it is testing.
+    from src.publishing.arming import set_armed
+    for page in reg.all():
+        set_armed(tmp_db, page.page_id, True)
     jid, _ = _job(tmp_db, s, "prod1")
     out = Publisher(s, tmp_db, reg).publish_job(jid)
     assert out.status == JobStatus.FAILED and "credential" in out.message.lower()
@@ -260,3 +276,48 @@ def test_hosted_url_path(tmp_db, project_paths):
     out = _pub(s, tmp_db, reg, mock).publish_job(jid)
     assert out.status == JobStatus.PUBLISHED
     assert any(c[0] == "create" for c in mock.calls)   # hosted uses create_media_container
+
+
+# ---- arming: production mode alone must not publish ------------------------
+def test_unarmed_page_is_not_published(tmp_db, project_paths):
+    """The second switch. A page nobody armed goes to review, not to Meta."""
+    s, reg = _setup(project_paths, Mode.TEST)
+    mock = MockGraphClient()
+    jid, _ = _job(tmp_db, s, "arm-reel-1")
+    publisher = _pub(s, tmp_db, reg, mock, armed=False)
+
+    outcome = publisher.publish_job(jid)
+
+    assert outcome.status == JobStatus.NEEDS_REVIEW
+    assert "non è armata" in (outcome.message or "")
+    assert mock.containers == [] or not mock.containers, (
+        "nessun container deve essere creato per una pagina disarmata")
+
+
+def test_arming_survives_and_then_publishes(tmp_db, project_paths):
+    s, reg = _setup(project_paths, Mode.TEST)
+    from src.publishing.arming import is_armed, set_armed
+
+    for page in reg.all():
+        assert not is_armed(tmp_db, page.page_id), "una pagina nasce disarmata"
+        set_armed(tmp_db, page.page_id, True)
+        assert is_armed(tmp_db, page.page_id)
+
+    mock = MockGraphClient()
+    jid, _ = _job(tmp_db, s, "arm-reel-2")
+    outcome = _pub(s, tmp_db, reg, mock, armed=False).publish_job(jid)
+    assert outcome.status == JobStatus.PUBLISHED
+
+
+def test_dry_run_never_publishes_even_when_armed(tmp_db, project_paths):
+    s, reg = _setup(project_paths, Mode.DRY_RUN)
+    from src.publishing.arming import set_armed
+
+    for page in reg.all():
+        set_armed(tmp_db, page.page_id, True)
+    mock = MockGraphClient()
+    jid, _ = _job(tmp_db, s, "arm-reel-3")
+    outcome = _pub(s, tmp_db, reg, mock, armed=False).publish_job(jid)
+
+    assert outcome.mode == Mode.DRY_RUN
+    assert str(outcome.remote_media_id or "").startswith("DRYRUN-")
