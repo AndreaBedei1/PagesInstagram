@@ -580,10 +580,11 @@ MAX_PER_ARTICLE = 2
 MAX_PER_TOPIC = 150
 
 #: A sentence must read as a plain statement of fact to become a claim.
+#: A sentence must read as a statement about the world. Wikipedia's list
+#: pages open by describing their own table, and those descriptions render
+#: perfectly while saying nothing.
 _BAD_SENTENCE = re.compile(
-    r"(?i)\b(vedi|cfr|secondo alcuni|si dice|si ritiene|forse|probabilmente|"
-    r"sembra che|potrebbe|alcuni autori|la leggenda|questa voce|template|"
-    r"disambigua|nota bene)\b")
+    "(?i)\\b(vedi|cfr|secondo alcuni|si dice|si ritiene|forse|probabilmente|sembra che|potrebbe|alcuni autori|la leggenda|questa voce|template|disambigua|nota bene|è riportat\\w*|sono riportat\\w*|questa lista|questa pagina|questa tabella|questa classificazione|l'elenco|la lista|la tabella|sono elencat\\w*|vengono elencat\\w*|segue l'elenco|di seguito|la seguente|il seguente|per ogni nazione|per ogni paese|per ogni stato|in questa lista|su it\\.wiki|in ordine alfabetico)\\b")
 _HAS_VERB = re.compile(
     r"(?i)\b(è|sono|era|erano|ha|hanno|aveva|avevano|viene|vengono|venne|"
     r"si trova|si trovano|contiene|contengono|misura|misurano|raggiunge|"

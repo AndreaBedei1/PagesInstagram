@@ -86,3 +86,6 @@ Thumbs.db
 
 # ---- Source-audit cache (runtime, regenerable, host-dependent) ----
 .cache/
+
+# ---- Buffer media index (rigenerabile da prepare-buffer) ----
+reports/buffer_index/
