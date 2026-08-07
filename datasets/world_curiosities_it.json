@@ -8,11 +8,11 @@
   {
    "id": "wc-0026-campo-magnetico-terrestre",
    "sequence_index": 0,
-   "text": "La foresta costiera a mosaico di Zanzibar-Inhambane settentrionale è un'ecoregione dell'ecozona afrotropicale definita dal WWF.",
-   "category": "natura",
+   "text": "La balena franca australe è un mammifero marino appartenente alla famiglia Balaenidae.",
+   "category": "animali",
    "mood": "serene",
-   "explanation": "Dalla voce «Foresta costiera a mosaico di Zanzibar-Inhambane settentrionale» di Wikipedia in italiano.",
-   "caption": "Foresta costiera a mosaico di Zanzibar-Inhambane settentrionale - Dalla voce «Foresta costiera a mosaico di Zanzibar-Inhambane settentrionale» di Wikipedia in italiano. Fonte: Wikipedia in italiano.",
+   "explanation": "Dalla carcassa di un solo esemplare, che aveva la caratteristica di galleggiare appena ucciso, si ottenevano grandi quantità di olio.",
+   "caption": "Eubalaena australis - Dalla carcassa di un solo esemplare, che aveva la caratteristica di galleggiare appena ucciso, si ottenevano grandi quantità di olio. Fonte: Wikipedia in italiano.",
    "call_to_action": "Lo sapevi?",
    "hashtags": [
     "#scienza",
@@ -25,15 +25,15 @@
    "background_prompt": "deep teal abstract background, soft ocean-like gradient, evocative",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Foresta_costiera_a_mosaico_di_Zanzibar-Inhambane_settentrionale",
+   "source_url": "https://it.wikipedia.org/wiki/Eubalaena_australis",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Campo magnetico terrestre",
     "location": "Terra",
     "explanation": "Le tracce delle inversioni sono registrate nelle rocce dei fondali oceanici.",
     "category": "scienza",
-    "topic": "natura",
-    "source_article": "Foresta costiera a mosaico di Zanzibar-Inhambane settentrionale"
+    "topic": "animali",
+    "source_article": "Eubalaena australis"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:40Z",
@@ -42,13 +42,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "c9343902ce5af9c3a3096e61f750f62b82501f10c3db36ad9ea90da0690cb993",
-   "evidence_summary": "Voce «Foresta costiera a mosaico di Zanzibar-Inhambane settentrionale» di Wikipedia in italiano: «La foresta costiera a mosaico di Zanzibar-Inhambane settentrionale è un'ecoregione dell'ecozona afrotropicale definita dal WWF.»",
-   "source_title": "Foresta costiera a mosaico di Zanzibar-Inhambane settentrionale",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "2cacbc6ffb6d74a8d9d84f743e1584fe90d308fba815cf1e491da948c0fb4d12",
+   "evidence_summary": "Voce «Eubalaena australis» di Wikipedia in italiano: «La balena franca australe è un mammifero marino appartenente alla famiglia Balaenidae.»",
+   "source_title": "Eubalaena australis",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0071-bussola",
@@ -775,11 +775,11 @@
   {
    "id": "wc-0023-zero-assoluto",
    "sequence_index": 17,
-   "text": "Gli Oligoneoptera sono l'unico superordine della coorte degli Endopterygota o Holometabola.",
-   "category": "animali",
+   "text": "L'Altare è una piccola ma relativamente appariscente costellazione dell'emisfero sud.",
+   "category": "spazio",
    "mood": "serene",
-   "explanation": "Questi insetti hanno più stadi larvali di vario aspetto, comunque del tutto diversi dall'adulto e privi di qualsiasi traccia di ali.",
-   "caption": "Oligoneoptera - Questi insetti hanno più stadi larvali di vario aspetto, comunque del tutto diversi dall'adulto e privi di qualsiasi traccia di ali. Fonte: Wikipedia in italiano.",
+   "explanation": "Dalla voce «Altare » di Wikipedia in italiano.",
+   "caption": "Altare - Dalla voce «Altare » di Wikipedia in italiano. Fonte: Wikipedia in italiano.",
    "call_to_action": "Ti è mai capitato di notarlo?",
    "hashtags": [
     "#scienza",
@@ -792,15 +792,15 @@
    "background_prompt": "abstract deep blue field, uniform and quiet",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Oligoneoptera",
+   "source_url": "https://it.wikipedia.org/wiki/Altare_(costellazione)",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Zero assoluto",
     "location": "Fisica",
     "explanation": "È la temperatura teorica alla quale il movimento termico delle particelle sarebbe minimo.",
     "category": "scienza",
-    "topic": "animali",
-    "source_article": "Oligoneoptera"
+    "topic": "spazio",
+    "source_article": "Altare (costellazione)"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:45Z",
@@ -809,13 +809,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "75cc7bbaa174c1a5f5acc488bb891bc32734de2ffde847cc7a49ef651260e86a",
-   "evidence_summary": "Voce «Oligoneoptera» di Wikipedia in italiano: «Gli Oligoneoptera sono l'unico superordine della coorte degli Endopterygota o Holometabola.»",
-   "source_title": "Oligoneoptera",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "ba27c643f9da6cc633bdc4e9da72bfce248d36bafe2f29c50e6e0e4eb5cd5ad3",
+   "evidence_summary": "Voce «Altare (costellazione)» di Wikipedia in italiano: «L'Altare è una piccola ma relativamente appariscente costellazione dell'emisfero sud.»",
+   "source_title": "Altare (costellazione)",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0107-aurore-polari",
@@ -955,11 +955,11 @@
   {
    "id": "wc-0025-numero-di-avogadro",
    "sequence_index": 21,
-   "text": "I Miacoidea sono una superfamiglia parafiletica tradizionalmente suddivisa in due Famiglie di carnivori: Miacidae e Viverravidae.",
-   "category": "animali",
+   "text": "RD1 o 0140+326 RD1 è una galassia remota che ha detenuto per qualche tempo il primato di galassia più distante conosciuta.",
+   "category": "spazio",
    "mood": "calm",
-   "explanation": "Erano carnivori primitivi che vissero durante il Paleocene e l'Eocene tra i 65 e i 33 milioni di anni fa.",
-   "caption": "Miacoidea - Erano carnivori primitivi che vissero durante il Paleocene e l'Eocene tra i 65 e i 33 milioni di anni fa. Fonte: Wikipedia in italiano.",
+   "explanation": "RD1 è stata scoperta nel marzo 1998 e il suo redshift misura z = 5,34, il primo oggetto trovato che superasse z = 5.",
+   "caption": "RD1 - RD1 è stata scoperta nel marzo 1998 e il suo redshift misura z = 5,34, il primo oggetto trovato che superasse z = 5. Fonte: Wikipedia in italiano.",
    "call_to_action": "Vale la pena approfondire?",
    "hashtags": [
     "#scienza",
@@ -972,15 +972,15 @@
    "background_prompt": "midnight blue with a faint distant glow near the horizon",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Miacoidea",
+   "source_url": "https://it.wikipedia.org/wiki/RD1",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Numero di Avogadro",
     "location": "Chimica",
     "explanation": "Questa costante permette di collegare le masse misurabili in laboratorio al numero di particelle.",
     "category": "scienza",
-    "topic": "animali",
-    "source_article": "Miacoidea"
+    "topic": "spazio",
+    "source_article": "RD1"
    },
    "source_audit_status": "manually_verified",
    "source_audited_at": "2026-08-05",
@@ -991,13 +991,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "c10664258f12af867da04e40effd1234c03c01b1b02c801f24abf633c2880deb",
-   "evidence_summary": "Voce «Miacoidea» di Wikipedia in italiano: «I Miacoidea sono una superfamiglia parafiletica tradizionalmente suddivisa in due Famiglie di carnivori: Miacidae e Viverravidae.»",
-   "source_title": "Miacoidea",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "7ea8d5e369d05556ffe7f235fc148eef14f8afa5c7336a639241ad7521ac0d32",
+   "evidence_summary": "Voce «RD1» di Wikipedia in italiano: «RD1 o 0140+326 RD1 è una galassia remota che ha detenuto per qualche tempo il primato di galassia più distante conosciuta.»",
+   "source_title": "RD1",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0127-orologio-meccanico",
@@ -1047,11 +1047,11 @@
   {
    "id": "wc-0237-gruppi-sanguigni",
    "sequence_index": 23,
-   "text": "I cetacei sono un infraordine di mammiferi euteri cetartiodattili, completamente adattati alla vita in ambiente acquatico, per la maggior parte marino.",
-   "category": "animali",
+   "text": "La relazione di Faber-Jackson è una relazione empirica fra la luminosità L {\\displaystyle L}.",
+   "category": "spazio",
    "mood": "serene",
-   "explanation": "Presentano un corpo fusiforme, simile a quello dei pesci, che assicura loro una maggiore idrodinamicità.",
-   "caption": "Cetacea - Presentano un corpo fusiforme, simile a quello dei pesci, che assicura loro una maggiore idrodinamicità. Fonte: Wikipedia in italiano.",
+   "explanation": "Questa relazione fu scoperta nel 1976 dagli astronomi Robert Earl Jackson e Sandra M.",
+   "caption": "Relazione di Faber-Jackson - Questa relazione fu scoperta nel 1976 dagli astronomi Robert Earl Jackson e Sandra M. Fonte: Wikipedia in italiano.",
    "call_to_action": "Ne avevi mai sentito parlare?",
    "hashtags": [
     "#scienza",
@@ -1064,15 +1064,15 @@
    "background_prompt": "deep blue mist with faint depth cues, no objects",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Cetacea",
+   "source_url": "https://it.wikipedia.org/wiki/Relazione_di_Faber-Jackson",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Gruppi sanguigni",
     "location": "Medicina",
     "explanation": "Prima di allora l'esito era imprevedibile e spesso fatale.",
     "category": "scienza",
-    "topic": "animali",
-    "source_article": "Cetacea"
+    "topic": "spazio",
+    "source_article": "Relazione di Faber-Jackson"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:42Z",
@@ -1081,13 +1081,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "c1b7c577ad94cde20491d7fcf9f312587a9f07b5c13580751a24912280db04dd",
-   "evidence_summary": "Voce «Cetacea» di Wikipedia in italiano: «I cetacei sono un infraordine di mammiferi euteri cetartiodattili, completamente adattati alla vita in ambiente acquatico, per la maggior parte marino.»",
-   "source_title": "Cetacea",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "e5807122b63d3b4ecc2e4728ec13c11505aa97af7cfb4b8d89e11a6dd6f44c52",
+   "evidence_summary": "Voce «Relazione di Faber-Jackson» di Wikipedia in italiano: «La relazione di Faber-Jackson è una relazione empirica fra la luminosità L {\\displaystyle L}.»",
+   "source_title": "Relazione di Faber-Jackson",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0108-fulmini",
@@ -1317,11 +1317,11 @@
   {
    "id": "wc-0284-transistor",
    "sequence_index": 29,
-   "text": "La balenottera azzurra è un mammifero marino appartenente alla famiglia Balaenopteridae.",
-   "category": "animali",
+   "text": "La Moschea di Muhammad o Moschea Siniggala è una moschea costruita nell'XI secolo nella Città Vecchia di Baku, in Azerbaigian.",
+   "category": "architettura",
    "mood": "serene",
-   "explanation": "Lungo e slanciato, il corpo della balenottera azzurra può assumere varie tonalità grigio-bluastre sul dorso, ma si fa più chiaro sul ventre.",
-   "caption": "Balaenoptera musculus - Lungo e slanciato, il corpo della balenottera azzurra può assumere varie tonalità grigio-bluastre sul dorso, ma si fa più chiaro sul ventre. Fonte: Wikipedia in italiano.",
+   "explanation": "La moschea è anche conosciuta come Siniggala, per il nome del suo minareto",
+   "caption": "Moschea Muhammad - La moschea è anche conosciuta come Siniggala, per il nome del suo minareto Fonte: Wikipedia in italiano.",
    "call_to_action": "Quale parte ti ha sorpreso di più?",
    "hashtags": [
     "#invenzioni",
@@ -1334,15 +1334,15 @@
    "background_prompt": "deep ocean gradient, very soft luminance variation",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Balaenoptera_musculus",
+   "source_url": "https://it.wikipedia.org/wiki/Moschea_Muhammad",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Transistor",
     "location": "Stati Uniti",
     "explanation": "Da questo componente derivano tutti i circuiti integrati moderni.",
     "category": "invenzioni",
-    "topic": "animali",
-    "source_article": "Balaenoptera musculus"
+    "topic": "architettura",
+    "source_article": "Moschea Muhammad"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:45Z",
@@ -1351,13 +1351,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "e24684bccce3ba12fba65f2ee0ab55944355e981bc333c40c5be04908fcf0334",
-   "evidence_summary": "Voce «Balaenoptera musculus» di Wikipedia in italiano: «La balenottera azzurra è un mammifero marino appartenente alla famiglia Balaenopteridae.»",
-   "source_title": "Balaenoptera musculus",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "e313924062c43a8537d6ecbeaf49455e13916c85ee1258007cef384c6ede1d92",
+   "evidence_summary": "Voce «Moschea Muhammad» di Wikipedia in italiano: «La Moschea di Muhammad o Moschea Siniggala è una moschea costruita nell'XI secolo nella Città Vecchia di Baku, in Azerbaigian.»",
+   "source_title": "Moschea Muhammad",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0492-temperamento-equabile",
@@ -2311,11 +2311,11 @@
   {
    "id": "wc-0094-pompei",
    "sequence_index": 51,
-   "text": "Cetaceamorpha è un clade di mammiferi artyodattili whippomorfi denominato nel 2009 da Spaulding, O'Leary e Gatesy.",
-   "category": "animali",
+   "text": "La relazione è espressa matematicamente nel modo seguente: L ∝ σ γ {\\displaystyle L\\propto \\sigma ^{\\gamma }}, dove l'indice γ {\\displaystyle \\gamma } è prossimo a 4.",
+   "category": "spazio",
    "mood": "calm",
-   "explanation": "Nel 2020, Deméré pubblicò il nome Pancetacea per il PhyloCode.",
-   "caption": "Cetaceamorpha - Nel 2020, Deméré pubblicò il nome Pancetacea per il PhyloCode. Fonte: Wikipedia in italiano.",
+   "explanation": "Faber, ed è oggi diffusamente utilizzata in astronomia extra-galattica nello studio delle proprietà delle galassie ellittiche.",
+   "caption": "Relazione di Faber-Jackson - Faber, ed è oggi diffusamente utilizzata in astronomia extra-galattica nello studio delle proprietà delle galassie ellittiche. Fonte: Wikipedia in italiano.",
    "call_to_action": "L'hai visto di persona?",
    "hashtags": [
     "#storia",
@@ -2328,15 +2328,15 @@
    "background_prompt": "dark green-teal haze, soft focus, evocative",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Cetaceamorpha",
+   "source_url": "https://it.wikipedia.org/wiki/Relazione_di_Faber-Jackson",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Pompei",
     "location": "Campania, Italia",
     "explanation": "I calchi ottenuti riempiendo le cavità lasciate dai corpi furono realizzati nell'Ottocento.",
     "category": "storia",
-    "topic": "animali",
-    "source_article": "Cetaceamorpha"
+    "topic": "spazio",
+    "source_article": "Relazione di Faber-Jackson"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:44Z",
@@ -2345,13 +2345,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "f2a0e4da8e92705d90a0010e06905c29d9b2525427009b7cf95f227182093faa",
-   "evidence_summary": "Voce «Cetaceamorpha» di Wikipedia in italiano: «Cetaceamorpha è un clade di mammiferi artyodattili whippomorfi denominato nel 2009 da Spaulding, O'Leary e Gatesy.»",
-   "source_title": "Cetaceamorpha",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "ca7a278747f7a3b9df51124a9d9d7ac60c3199160887bbd0bbb0705657686176",
+   "evidence_summary": "Voce «Relazione di Faber-Jackson» di Wikipedia in italiano: «La relazione è espressa matematicamente nel modo seguente: L ∝ σ γ {\\displaystyle L\\propto \\sigma ^{\\gamma }}, dove l'indice γ {\\displaystyle \\gamma } è prossimo a 4.»",
+   "source_title": "Relazione di Faber-Jackson",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0513-raggi-x",
@@ -3573,11 +3573,11 @@
   {
    "id": "wc-0388-attrito",
    "sequence_index": 79,
-   "text": "Il delfino è un mammifero marino appartenente all'ordine dei cetacei, sottordine degli Odontoceti.",
-   "category": "animali",
+   "text": "SDSS J015957.64+003310.5 è una galassia distante situata in direzione della costellazione della Balena alla distanza di 3,5 miliardi di anni luce.",
+   "category": "spazio",
    "mood": "tender",
-   "explanation": "I delfini sono suddivisi in due famiglie: Delphinidae, che comprende le specie marine, e Platanistoidea, che include i delfini di fiume.",
-   "caption": "Delfino - I delfini sono suddivisi in due famiglie: Delphinidae, che comprende le specie marine, e Platanistoidea, che include i delfini di fiume. Fonte: Wikipedia in italiano.",
+   "explanation": "Questa galassia era già inserita nell'archivio di dati dello Sloan Digital Sky Survey.",
+   "caption": "SDSS J015957.64+003310.5 - Questa galassia era già inserita nell'archivio di dati dello Sloan Digital Sky Survey. Fonte: Wikipedia in italiano.",
    "call_to_action": "C'è qualcosa di simile dalle tue parti?",
    "hashtags": [
     "#scienza",
@@ -3590,15 +3590,15 @@
    "background_prompt": "dark indigo haze with faint luminous depth, no objects",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Delfino",
+   "source_url": "https://it.wikipedia.org/wiki/SDSS_J015957.64+003310.5",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Attrito",
     "location": "Fisica",
     "explanation": "La forza che sembra ostacolare il movimento è anche ciò che lo permette.",
     "category": "scienza",
-    "topic": "animali",
-    "source_article": "Delfino"
+    "topic": "spazio",
+    "source_article": "SDSS J015957.64+003310.5"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:39Z",
@@ -3607,13 +3607,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "9d98dda65382398fca27b56d1a6e3de4475518175292569e2a6eac5cefb90359",
-   "evidence_summary": "Voce «Delfino» di Wikipedia in italiano: «Il delfino è un mammifero marino appartenente all'ordine dei cetacei, sottordine degli Odontoceti.»",
-   "source_title": "Delfino",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "68aa9d84045275a910d031867abcdee879e0cd3686e3df25ca0c6bea70e5f3b3",
+   "evidence_summary": "Voce «SDSS J015957.64+003310.5» di Wikipedia in italiano: «SDSS J015957.64+003310.5 è una galassia distante situata in direzione della costellazione della Balena alla distanza di 3,5 miliardi di anni luce.»",
+   "source_title": "SDSS J015957.64+003310.5",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0539-scala-mobile",
@@ -5013,11 +5013,11 @@
   {
    "id": "wc-0893-isole-di-calore",
    "sequence_index": 111,
-   "text": "La foresta decidua secca del Madagascar occidentale è una ecoregione che occupa la parte nord-occidentale del Madagascar.",
-   "category": "natura",
+   "text": "SDSS J112659.54+294442.8 è una galassia situata nella costellazione dell'Orsa Maggiore alla distanza di circa 1,28 miliardi di anni luce dalla Terra.",
+   "category": "spazio",
    "mood": "serene",
-   "explanation": "L'ecoregione è inclusa nella lista Global 200 con il nome di foreste aride del Madagascar.",
-   "caption": "Foresta decidua secca del Madagascar occidentale - L'ecoregione è inclusa nella lista Global 200 con il nome di foreste aride del Madagascar. Fonte: Wikipedia in italiano.",
+   "explanation": "Il processo di fusione tra le due galassie potrebbe aver provocato l'allontanamento di un numero significativo di stelle attraverso le forze di marea gravitazionale.",
+   "caption": "SDSS J112659.54+294442.8 - Il processo di fusione tra le due galassie potrebbe aver provocato l'allontanamento di un numero significativo di stelle attraverso le forze di marea gravitazionale. Fonte: Wikipedia in italiano.",
    "call_to_action": "C'è qualcosa di simile dalle tue parti?",
    "hashtags": [
     "#scienza",
@@ -5030,15 +5030,15 @@
    "background_prompt": "dark turquoise depth, faint light from above, no detail",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Foresta_decidua_secca_del_Madagascar_occidentale",
+   "source_url": "https://it.wikipedia.org/wiki/SDSS_J112659.54+294442.8",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Isole di calore",
     "location": "Città",
     "explanation": "Materiali, geometria e assenza di vegetazione contribuiscono al fenomeno.",
     "category": "scienza",
-    "topic": "natura",
-    "source_article": "Foresta decidua secca del Madagascar occidentale"
+    "topic": "spazio",
+    "source_article": "SDSS J112659.54+294442.8"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:42Z",
@@ -5047,13 +5047,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "9fbc83da411c5c321d870066b48509ec1e385b16b6c310003f7955a8627945d5",
-   "evidence_summary": "Voce «Foresta decidua secca del Madagascar occidentale» di Wikipedia in italiano: «La foresta decidua secca del Madagascar occidentale è una ecoregione che occupa la parte nord-occidentale del Madagascar.»",
-   "source_title": "Foresta decidua secca del Madagascar occidentale",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "3b6d57df90f02238e0bd2e3f7682b3965eae4a8f213a335b577ea5892754961d",
+   "evidence_summary": "Voce «SDSS J112659.54+294442.8» di Wikipedia in italiano: «SDSS J112659.54+294442.8 è una galassia situata nella costellazione dell'Orsa Maggiore alla distanza di circa 1,28 miliardi di anni luce dalla Terra.»",
+   "source_title": "SDSS J112659.54+294442.8",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0131-penicillina",
@@ -5283,11 +5283,11 @@
   {
    "id": "wc-0840-censura-libraria",
    "sequence_index": 117,
-   "text": "La provincia della Foresta mista Laurenziana, conosciuta anche come North Woods, è un'ecoregione forestale fra il Canada e gli Stati Uniti.",
-   "category": "natura",
+   "text": "WISE J224607.57-052635.0 è una galassia estremamente luminosa all'infrarosso che è stata annunciata, nel corso del 2015.",
+   "category": "spazio",
    "mood": "serene",
-   "explanation": "In Canada si trova nell'Ontario intorno ai Grandi Laghi e il fiume San Lorenzo attraverso il Québec fino alla città di Québec.",
-   "caption": "Foresta mista laurenziana - In Canada si trova nell'Ontario intorno ai Grandi Laghi e il fiume San Lorenzo attraverso il Québec fino alla città di Québec. Fonte: Wikipedia in italiano.",
+   "explanation": "La distanza percorsa dalla luce di questa galassia per giungere a noi è di 12,5 miliardi di anni luce.",
+   "caption": "WISE J224607.57-052635.0 - La distanza percorsa dalla luce di questa galassia per giungere a noi è di 12,5 miliardi di anni luce. Fonte: Wikipedia in italiano.",
    "call_to_action": "Vale la pena approfondire?",
    "hashtags": [
     "#storia",
@@ -5300,15 +5300,15 @@
    "background_prompt": "midnight blue with a faint distant glow near the horizon",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Foresta_mista_laurenziana",
+   "source_url": "https://it.wikipedia.org/wiki/WISE_J224607.57-052635.0",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Censura libraria",
     "location": "Europa",
     "explanation": "I titoli elencati permettono di ricostruire circolazioni altrimenti invisibili.",
     "category": "storia",
-    "topic": "natura",
-    "source_article": "Foresta mista laurenziana"
+    "topic": "spazio",
+    "source_article": "WISE J224607.57-052635.0"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:42Z",
@@ -5317,13 +5317,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "73ae3923b91a1d989496523a388fa9cbdaec6795fbcc354bbdd47b51ce058fa0",
-   "evidence_summary": "Voce «Foresta mista laurenziana» di Wikipedia in italiano: «La provincia della Foresta mista Laurenziana, conosciuta anche come North Woods, è un'ecoregione forestale fra il Canada e gli Stati Uniti.»",
-   "source_title": "Foresta mista laurenziana",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "792e7fe53cf2ddbef90f7a0a203d5a18468ec230513baa4dfd5aa4152e6d2810",
+   "evidence_summary": "Voce «WISE J224607.57-052635.0» di Wikipedia in italiano: «WISE J224607.57-052635.0 è una galassia estremamente luminosa all'infrarosso che è stata annunciata, nel corso del 2015.»",
+   "source_title": "WISE J224607.57-052635.0",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0121-permafrost",
@@ -5645,11 +5645,11 @@
   {
    "id": "wc-0391-legge-di-archimede",
    "sequence_index": 125,
-   "text": "Gli uccelli sono classificati biologicamente Aves, anche se cladisticamente sono dinosauri teropodi derivati, condividendo con i coccodrilli l'appartenenza agli Arcosauri.",
-   "category": "animali",
+   "text": "Una nebulosa è un agglomerato interstellare di polvere, idrogeno e plasma.",
+   "category": "spazio",
    "mood": "serene",
-   "explanation": "L'evoluzione degli uccelli si pensa che sia iniziata nel periodo giurassico, con i primi uccelli derivati dai dinosauri teropodi.",
-   "caption": "Evoluzione degli uccelli - L'evoluzione degli uccelli si pensa che sia iniziata nel periodo giurassico, con i primi uccelli derivati dai dinosauri teropodi. Fonte: Wikipedia in italiano.",
+   "explanation": "Altre ancora si originano a seguito della morte di una stella, come le nebulose planetarie o i resti di supernova.",
+   "caption": "Nebulosa - Altre ancora si originano a seguito della morte di una stella, come le nebulose planetarie o i resti di supernova. Fonte: Wikipedia in italiano.",
    "call_to_action": "Quale parte ti ha sorpreso di più?",
    "hashtags": [
     "#scienza",
@@ -5662,15 +5662,15 @@
    "background_prompt": "deep ocean gradient, very soft luminance variation",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Evoluzione_degli_uccelli",
+   "source_url": "https://it.wikipedia.org/wiki/Nebulosa",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Legge di Archimede",
     "location": "Fisica",
     "explanation": "Il principio spiega il galleggiamento di navi molto più pesanti dell'acqua.",
     "category": "scienza",
-    "topic": "animali",
-    "source_article": "Evoluzione degli uccelli"
+    "topic": "spazio",
+    "source_article": "Nebulosa"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:44Z",
@@ -5679,13 +5679,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "0bfb83c52f01ce2f5f606e6ee277a34741453c06645d3503b5421712dc62b378",
-   "evidence_summary": "Voce «Evoluzione degli uccelli» di Wikipedia in italiano: «Gli uccelli sono classificati biologicamente Aves, anche se cladisticamente sono dinosauri teropodi derivati, condividendo con i coccodrilli l'appartenenza agli Arcosauri.»",
-   "source_title": "Evoluzione degli uccelli",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "7c436a7fc85834a8f2975fb2d6a893b2cd3583de3e8a36ff6dd49eeae362ddd5",
+   "evidence_summary": "Voce «Nebulosa» di Wikipedia in italiano: «Una nebulosa è un agglomerato interstellare di polvere, idrogeno e plasma.»",
+   "source_title": "Nebulosa",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0267-tour-eiffel",
@@ -5962,11 +5962,11 @@
   {
    "id": "wc-0867-cestino",
    "sequence_index": 132,
-   "text": "La foresta spinosa è una ecoregione semidesertica che occupa la parte sud-occidentale del Madagascar.",
-   "category": "natura",
+   "text": "Un Evaporating Gaseous Globule è una regione di gas idrogeno nello spazio esterno, di dimensioni circa 100 unità astronomiche.",
+   "category": "spazio",
    "mood": "serene",
-   "explanation": "Forma, insieme alle Foreste succulente del Madagascar la regione denominata Thicket spinoso del Madagascar, inclusa nella lista Global 200.",
-   "caption": "Foresta spinosa - Forma, insieme alle Foreste succulente del Madagascar la regione denominata Thicket spinoso del Madagascar, inclusa nella lista Global 200. Fonte: Wikipedia in italiano.",
+   "explanation": "Gli EGG sono i probabili predecessori delle nuove protostelle.",
+   "caption": "Evaporating Gaseous Globules - Gli EGG sono i probabili predecessori delle nuove protostelle. Fonte: Wikipedia in italiano.",
    "call_to_action": "Meriterebbe un post a parte?",
    "hashtags": [
     "#invenzioni",
@@ -5979,15 +5979,15 @@
    "background_prompt": "cold dark green-blue wash, subtle grain, empty centre",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Foresta_spinosa",
+   "source_url": "https://it.wikipedia.org/wiki/Evaporating_Gaseous_Globules",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Cestino",
     "location": "Mondo",
     "explanation": "Il concetto ha ridotto sensibilmente le perdite accidentali di dati.",
     "category": "invenzioni",
-    "topic": "natura",
-    "source_article": "Foresta spinosa"
+    "topic": "spazio",
+    "source_article": "Evaporating Gaseous Globules"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:40Z",
@@ -5996,13 +5996,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "052e538e9b2b6b4af3f1fbd397f1456ee23701ac34ee3e54056948b1207b3de1",
-   "evidence_summary": "Voce «Foresta spinosa» di Wikipedia in italiano: «La foresta spinosa è una ecoregione semidesertica che occupa la parte sud-occidentale del Madagascar.»",
-   "source_title": "Foresta spinosa",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "0a161be6ff025c96fcd12ac19dc51ecc7d5e48dd4c51e206dff5bc7d96512eb6",
+   "evidence_summary": "Voce «Evaporating Gaseous Globules» di Wikipedia in italiano: «Un Evaporating Gaseous Globule è una regione di gas idrogeno nello spazio esterno, di dimensioni circa 100 unità astronomiche.»",
+   "source_title": "Evaporating Gaseous Globules",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0377-faro",
@@ -7680,11 +7680,11 @@
   {
    "id": "wc-0147-cartagine",
    "sequence_index": 170,
-   "text": "I diapsidi sono un gruppo di vertebrati tetrapodi appartenenti al clade Sauropsida.I diapsidi comprendono i vertebrati.",
-   "category": "animali",
+   "text": "Gum 41 è una nebulosa situata a circa 7338 anni luce dalla Terra nella costellazione del Centauro.",
+   "category": "spazio",
    "mood": "serene",
-   "explanation": "Classicamente i diapsidi erano considerati una sottoclasse di rettili, insieme agli anapsidi e ai sinapsidi.",
-   "caption": "Diapsida - Classicamente i diapsidi erano considerati una sottoclasse di rettili, insieme agli anapsidi e ai sinapsidi. Fonte: Wikipedia in italiano.",
+   "explanation": "Fa parte di una regione più grande conosciuta come Nebulosa di Lambda Centauri.",
+   "caption": "Gum 41 - Fa parte di una regione più grande conosciuta come Nebulosa di Lambda Centauri. Fonte: Wikipedia in italiano.",
    "call_to_action": "Da dove lo stai leggendo?",
    "hashtags": [
     "#storia",
@@ -7697,15 +7697,15 @@
    "background_prompt": "deep marine blue, faint upper glow, unadorned",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Diapsida",
+   "source_url": "https://it.wikipedia.org/wiki/Gum_41",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Cartagine",
     "location": "Tunisia",
     "explanation": "Il racconto compare solo in testi moderni e viene ripetuto come se fosse antico.",
     "category": "storia",
-    "topic": "animali",
-    "source_article": "Diapsida"
+    "topic": "spazio",
+    "source_article": "Gum 41"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:40Z",
@@ -7714,13 +7714,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "4fd0cb2f40f0952b8588016f1811e599b3d4eec89255834acf56035f0d3218f1",
-   "evidence_summary": "Voce «Diapsida» di Wikipedia in italiano: «I diapsidi sono un gruppo di vertebrati tetrapodi appartenenti al clade Sauropsida.I diapsidi comprendono i vertebrati.»",
-   "source_title": "Diapsida",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "05238a4b81cbf8320b1d44501fec0e5d8259f5b08add7b4d15df794d7a034f97",
+   "evidence_summary": "Voce «Gum 41» di Wikipedia in italiano: «Gum 41 è una nebulosa situata a circa 7338 anni luce dalla Terra nella costellazione del Centauro.»",
+   "source_title": "Gum 41",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0898-bioacustica",
@@ -8359,11 +8359,11 @@
   {
    "id": "wc-0160-timbuctu",
    "sequence_index": 185,
-   "text": "Paleoanguimorpha è un clade di lucertole anguimorfe comprendente Shinisauria e Goannasauria.",
-   "category": "animali",
+   "text": "HD 101584 è una sospetta stella binaria post inviluppo comune distante circa 1.800-5.900 anni luce, nella costellazione del Centauro.",
+   "category": "spazio",
    "mood": "serene",
-   "explanation": "Di seguito è riportata la filogenesi dei lignaggi paleoanguimorfi secondo Pyron et al.",
-   "caption": "Paleoanguimorpha - Di seguito è riportata la filogenesi dei lignaggi paleoanguimorfi secondo Pyron et al. Fonte: Wikipedia in italiano.",
+   "explanation": "Il sistema appare luminoso alle lunghezze d'onda ottiche con una magnitudine visiva apparente di circa 7.",
+   "caption": "HD 101584 - Il sistema appare luminoso alle lunghezze d'onda ottiche con una magnitudine visiva apparente di circa 7. Fonte: Wikipedia in italiano.",
    "call_to_action": "Ci saresti mai andato?",
    "hashtags": [
     "#storia",
@@ -8376,15 +8376,15 @@
    "background_prompt": "abstract deep blue field, uniform and quiet",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Paleoanguimorpha",
+   "source_url": "https://it.wikipedia.org/wiki/HD_101584",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Timbuctù",
     "location": "Mali",
     "explanation": "Molti sono stati salvati e trasferiti per proteggerli dai conflitti.",
     "category": "storia",
-    "topic": "animali",
-    "source_article": "Paleoanguimorpha"
+    "topic": "spazio",
+    "source_article": "HD 101584"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:45Z",
@@ -8393,13 +8393,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "5818d58078c4d44ab2b114040ca22e186b47df977a5319bca3b1a03e4e08d41e",
-   "evidence_summary": "Voce «Paleoanguimorpha» di Wikipedia in italiano: «Paleoanguimorpha è un clade di lucertole anguimorfe comprendente Shinisauria e Goannasauria.»",
-   "source_title": "Paleoanguimorpha",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "81b63acecdfa9867b8115968790cf4b1b4ddbf8ad47854533f70dbbe39b7261c",
+   "evidence_summary": "Voce «HD 101584» di Wikipedia in italiano: «HD 101584 è una sospetta stella binaria post inviluppo comune distante circa 1.800-5.900 anni luce, nella costellazione del Centauro.»",
+   "source_title": "HD 101584",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0269-burj-khalifa",
@@ -8629,11 +8629,11 @@
   {
    "id": "wc-0161-isola-di-pasqua",
    "sequence_index": 191,
-   "text": "I Romeriida Gauthier et al., 1988 sono un clade di rettili comprendente i diapsidi e alcune forme del Carbonifero.",
-   "category": "animali",
+   "text": "Generalmente alle nebulose variabili sono associate stelle variabili di recente formazione, come la nebulosa di Hubble NGC 2261 e la nebulosa di Hind.",
+   "category": "spazio",
    "mood": "serene",
-   "explanation": "Vennero definiti filogeneticamente da Laurin e Reisz come l'ultimo antenato comune di Paleothyris e i diapsidi, e tutti i loro discendenti.",
-   "caption": "Romeriida - Vennero definiti filogeneticamente da Laurin e Reisz come l'ultimo antenato comune di Paleothyris e i diapsidi, e tutti i loro discendenti. Fonte: Wikipedia in italiano.",
+   "explanation": "Eta Carinae ed R Aquarii sono anch'esse variabili, ma la loro formazione è una conseguenza di differenti processi.",
+   "caption": "Nebulosa variabile - Eta Carinae ed R Aquarii sono anch'esse variabili, ma la loro formazione è una conseguenza di differenti processi. Fonte: Wikipedia in italiano.",
    "call_to_action": "Che cosa te lo ricorda?",
    "hashtags": [
     "#storia",
@@ -8646,15 +8646,15 @@
    "background_prompt": "deep blue mist with faint depth cues, no objects",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Romeriida",
+   "source_url": "https://it.wikipedia.org/wiki/Nebulosa_variabile",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Isola di Pasqua",
     "location": "Cile",
     "explanation": "Gli scavi hanno mostrato che molte figure proseguono per diversi metri sotto il livello del suolo.",
     "category": "storia",
-    "topic": "animali",
-    "source_article": "Romeriida"
+    "topic": "spazio",
+    "source_article": "Nebulosa variabile"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:43Z",
@@ -8663,13 +8663,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "f6f7e1094a9877750f14162233d3d06f699d8600d6ab5a92774e4cd2735c9d7f",
-   "evidence_summary": "Voce «Romeriida» di Wikipedia in italiano: «I Romeriida Gauthier et al., 1988 sono un clade di rettili comprendente i diapsidi e alcune forme del Carbonifero.»",
-   "source_title": "Romeriida",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "9b2101e486204f5f94669ece79021c8c6508efba67ee3cfafd9cdd7340eb6ed0",
+   "evidence_summary": "Voce «Nebulosa variabile» di Wikipedia in italiano: «Generalmente alle nebulose variabili sono associate stelle variabili di recente formazione, come la nebulosa di Hubble NGC 2261 e la nebulosa di Hind.»",
+   "source_title": "Nebulosa variabile",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0048-sanscrito",
@@ -8901,11 +8901,11 @@
   {
    "id": "wc-0355-sale-e-conservazione",
    "sequence_index": 197,
-   "text": "Toxicofera è un clade di rettili squamati che include Serpentes, Anguimorpha e Iguania.",
-   "category": "animali",
+   "text": "Un comandante è un residente della ISS che assume il comando alla partenza del comandante precedente, di solito al termine di una Expedition.",
+   "category": "spazio",
    "mood": "serene",
-   "explanation": "Toxicofera conta circa 4600 specie, quasi il 60% degli squamati esistenti.",
-   "caption": "Toxicofera - Toxicofera conta circa 4600 specie, quasi il 60% degli squamati esistenti. Fonte: Wikipedia in italiano.",
+   "explanation": "Questa è la lista dei comandanti della Stazione spaziale internazionale.",
+   "caption": "Comandanti della Stazione spaziale internazionale - Questa è la lista dei comandanti della Stazione spaziale internazionale. Fonte: Wikipedia in italiano.",
    "call_to_action": "Conosci un caso simile?",
    "hashtags": [
     "#storia",
@@ -8918,15 +8918,15 @@
    "background_prompt": "deep ocean gradient, very soft luminance variation",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Toxicofera",
+   "source_url": "https://it.wikipedia.org/wiki/Comandanti_della_Stazione_spaziale_internazionale",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Sale e conservazione",
     "location": "Mondo",
     "explanation": "Il commercio del sale ha determinato rotte, tasse e conflitti in molte regioni.",
     "category": "storia",
-    "topic": "animali",
-    "source_article": "Toxicofera"
+    "topic": "spazio",
+    "source_article": "Comandanti della Stazione spaziale internazionale"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:44Z",
@@ -8935,13 +8935,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "4590db86375d4958f0773c281d8bd2c367e7f6d496bddda0a5284b9128cd8dfe",
-   "evidence_summary": "Voce «Toxicofera» di Wikipedia in italiano: «Toxicofera è un clade di rettili squamati che include Serpentes, Anguimorpha e Iguania.»",
-   "source_title": "Toxicofera",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "31e75013e1b3626326785d4029642c8047fdb71ed5b55ef2aa6a705aae0c61a9",
+   "evidence_summary": "Voce «Comandanti della Stazione spaziale internazionale» di Wikipedia in italiano: «Un comandante è un residente della ISS che assume il comando alla partenza del comandante precedente, di solito al termine di una Expedition.»",
+   "source_title": "Comandanti della Stazione spaziale internazionale",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0914-scala-richter",
@@ -9439,11 +9439,11 @@
   {
    "id": "wc-0500-televisione",
    "sequence_index": 209,
-   "text": "Gli Amphiesmenoptera Hennig, 1969 sono un clade di insetti, comprendente i due ordini Trichoptera e Lepidoptera.",
-   "category": "animali",
+   "text": "La seguente tabella è una cronologia degli astronauti per nazionalità, dal primo volo sovietico cittadini di 48 diverse nazioni hanno volato nello spazio.",
+   "category": "spazio",
    "mood": "serene",
-   "explanation": "Questo gruppo probabilmente si è evoluto nel Giurassico, differenziandosi da un supergruppo ora estinto chiamato Necrotaulidae.",
-   "caption": "Amphiesmenoptera - Questo gruppo probabilmente si è evoluto nel Giurassico, differenziandosi da un supergruppo ora estinto chiamato Necrotaulidae. Fonte: Wikipedia in italiano.",
+   "explanation": "Per ogni nazione è riportato il primo astronauta, la prima missione e la data di lancio.",
+   "caption": "Cronologia degli astronauti per nazionalità - Per ogni nazione è riportato il primo astronauta, la prima missione e la data di lancio. Fonte: Wikipedia in italiano.",
    "call_to_action": "Ti è mai capitato di notarlo?",
    "hashtags": [
     "#invenzioni",
@@ -9456,15 +9456,15 @@
    "background_prompt": "abstract deep blue field, uniform and quiet",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Amphiesmenoptera",
+   "source_url": "https://it.wikipedia.org/wiki/Cronologia_degli_astronauti_per_nazionalità",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Televisione",
     "location": "Mondo",
     "explanation": "L'aumento della risoluzione richiese decenni di sviluppi tecnici.",
     "category": "invenzioni",
-    "topic": "animali",
-    "source_article": "Amphiesmenoptera"
+    "topic": "spazio",
+    "source_article": "Cronologia degli astronauti per nazionalità"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:45Z",
@@ -9473,13 +9473,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "a7246bb28c2c55d3ce77f69ecf489f1c8fe9e2a38c256b1bf3946663fb99ce09",
-   "evidence_summary": "Voce «Amphiesmenoptera» di Wikipedia in italiano: «Gli Amphiesmenoptera Hennig, 1969 sono un clade di insetti, comprendente i due ordini Trichoptera e Lepidoptera.»",
-   "source_title": "Amphiesmenoptera",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "1aa10e0540460ff5a201eba1bff97ed683bb2b441c547730c398b418afa76ac4",
+   "evidence_summary": "Voce «Cronologia degli astronauti per nazionalità» di Wikipedia in italiano: «La seguente tabella è una cronologia degli astronauti per nazionalità, dal primo volo sovietico cittadini di 48 diverse nazioni hanno volato nello spazio.»",
+   "source_title": "Cronologia degli astronauti per nazionalità",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0411-lupi-e-ecosistemi",
@@ -9844,11 +9844,11 @@
   {
    "id": "wc-0358-seta",
    "sequence_index": 218,
-   "text": "Gli euarconti sono un clade di mammiferi euteri appartenenti al superordine Euarchontoglires.",
-   "category": "animali",
+   "text": "Per ogni nazione è riportato il primo astronauta, la prima missione e la data di lancio.",
+   "category": "spazio",
    "mood": "serene",
-   "explanation": "Questo clade riunisce quattro ordini di mammiferi: i dermotteri, gli scandenti, gli estinti plesiadapiformi e i primati.",
-   "caption": "Euarchonta - Questo clade riunisce quattro ordini di mammiferi: i dermotteri, gli scandenti, gli estinti plesiadapiformi e i primati. Fonte: Wikipedia in italiano.",
+   "explanation": "La seguente tabella è una cronologia degli astronauti per nazionalità, dal primo volo sovietico cittadini di 48 diverse nazioni hanno volato nello spazio.",
+   "caption": "Cronologia degli astronauti per nazionalità - La seguente tabella è una cronologia degli astronauti per nazionalità, dal primo volo sovietico cittadini di 48 diverse nazioni hanno volato nello spazio. Fonte: Wikipedia in italiano.",
    "call_to_action": "Ne conosci una versione diversa?",
    "hashtags": [
     "#storia",
@@ -9861,15 +9861,15 @@
    "background_prompt": "deep marine blue, faint upper glow, unadorned",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Euarchonta",
+   "source_url": "https://it.wikipedia.org/wiki/Cronologia_degli_astronauti_per_nazionalità",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Seta",
     "location": "Cina",
     "explanation": "La diffusione avvenne attraverso il trasferimento di bachi e conoscenze tecniche.",
     "category": "storia",
-    "topic": "animali",
-    "source_article": "Euarchonta"
+    "topic": "spazio",
+    "source_article": "Cronologia degli astronauti per nazionalità"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:44Z",
@@ -9878,13 +9878,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "e67171ea7ed662ac386064f1f3aede237f13d0ab51e910f2d24d44b966453080",
-   "evidence_summary": "Voce «Euarchonta» di Wikipedia in italiano: «Gli euarconti sono un clade di mammiferi euteri appartenenti al superordine Euarchontoglires.»",
-   "source_title": "Euarchonta",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "9753ce52f494ca75bb933bcb632f44d1a4216ea956a0f9fa5e389c1372ea6fbf",
+   "evidence_summary": "Voce «Cronologia degli astronauti per nazionalità» di Wikipedia in italiano: «Per ogni nazione è riportato il primo astronauta, la prima missione e la data di lancio.»",
+   "source_title": "Cronologia degli astronauti per nazionalità",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0700-tropici",
@@ -10294,11 +10294,11 @@
   {
    "id": "wc-0502-fotocamera-digitale",
    "sequence_index": 228,
-   "text": "I Paraneotteri sono insetti generalmente emimetaboli o paurometaboli e, nelle forme secondariamente attere, pseudoametaboli.",
-   "category": "animali",
+   "text": "Una sonda spaziale è una piccola navicella spaziale senza equipaggio.",
+   "category": "spazio",
    "mood": "calm",
-   "explanation": "Sono inoltre riscontrate, in questo raggruppamento, le uniche forme di neometabolia, una forma di transizione verso l'olometabolia propriamente detta.",
-   "caption": "Paraneoptera - Sono inoltre riscontrate, in questo raggruppamento, le uniche forme di neometabolia, una forma di transizione verso l'olometabolia propriamente detta. Fonte: Wikipedia in italiano.",
+   "explanation": "Rispetto ad un satellite artificiale in orbita attorno alla Terra, invece una sonda spaziale richiede un sofisticato grado di tecnologia e di automazione.",
+   "caption": "Sonda spaziale - Rispetto ad un satellite artificiale in orbita attorno alla Terra, invece una sonda spaziale richiede un sofisticato grado di tecnologia e di automazione. Fonte: Wikipedia in italiano.",
    "call_to_action": "Meriterebbe un post a parte?",
    "hashtags": [
     "#invenzioni",
@@ -10311,15 +10311,15 @@
    "background_prompt": "cold dark green-blue wash, subtle grain, empty centre",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Paraneoptera",
+   "source_url": "https://it.wikipedia.org/wiki/Sonda_spaziale",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Fotocamera digitale",
     "location": "Stati Uniti",
     "explanation": "Impiegava decine di secondi per salvare una singola immagine in bianco e nero.",
     "category": "invenzioni",
-    "topic": "animali",
-    "source_article": "Paraneoptera"
+    "topic": "spazio",
+    "source_article": "Sonda spaziale"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:41Z",
@@ -10328,13 +10328,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "47b78cc9c9f9d2436ecb3e6c059c33f003181bc3b54af22d02f9cced4b2ada0e",
-   "evidence_summary": "Voce «Paraneoptera» di Wikipedia in italiano: «I Paraneotteri sono insetti generalmente emimetaboli o paurometaboli e, nelle forme secondariamente attere, pseudoametaboli.»",
-   "source_title": "Paraneoptera",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "bba53e2ed785f6fd8ae14c7a5c94b43ae59d0f398bee2641b875806975adf0f0",
+   "evidence_summary": "Voce «Sonda spaziale» di Wikipedia in italiano: «Una sonda spaziale è una piccola navicella spaziale senza equipaggio.»",
+   "source_title": "Sonda spaziale",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0075-refrigerazione",
@@ -10836,11 +10836,11 @@
   {
    "id": "wc-0425-coralli-e-datazione",
    "sequence_index": 240,
-   "text": "Dracohors è un clade di arcosauri dinosauriformi che include dinosauri e silesauridi.",
-   "category": "animali",
+   "text": "L'Armata Halley era un gruppo di sonde nate per esaminare la cometa di Halley quando nel 1986 si trovava nello spazio interno del sistema solare.",
+   "category": "spazio",
    "mood": "calm",
-   "explanation": "Il più antico dracohors noto è Asilisaurus, risalente a circa 245 milioni di anni fa, nell'età Anisica del Triassico medio.",
-   "caption": "Dracohors - Il più antico dracohors noto è Asilisaurus, risalente a circa 245 milioni di anni fa, nell'età Anisica del Triassico medio. Fonte: Wikipedia in italiano.",
+   "explanation": "Sonde: Giotto, la prima sonda che ha mandato immagini a colori del nucleo di una cometa.",
+   "caption": "Armata Halley - Sonde: Giotto, la prima sonda che ha mandato immagini a colori del nucleo di una cometa. Fonte: Wikipedia in italiano.",
    "call_to_action": "Un dettaglio che non ti aspettavi?",
    "hashtags": [
     "#scienza",
@@ -10853,15 +10853,15 @@
    "background_prompt": "deep teal abstract background, soft ocean-like gradient, evocative",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Dracohors",
+   "source_url": "https://it.wikipedia.org/wiki/Armata_Halley",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Coralli e datazione",
     "location": "Mari tropicali",
     "explanation": "Il loro studio integra i dati strumentali dei periodi più recenti.",
     "category": "scienza",
-    "topic": "animali",
-    "source_article": "Dracohors"
+    "topic": "spazio",
+    "source_article": "Armata Halley"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:40Z",
@@ -10870,13 +10870,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "88d050ddca84da1aabe42f19ba3dcbf2d86cb47ff5b155c9ffe651a3de12125a",
-   "evidence_summary": "Voce «Dracohors» di Wikipedia in italiano: «Dracohors è un clade di arcosauri dinosauriformi che include dinosauri e silesauridi.»",
-   "source_title": "Dracohors",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "7d268bdf2a44bbad01419598b91cbd45d6255f40edad4782f146deb836cb1e77",
+   "evidence_summary": "Voce «Armata Halley» di Wikipedia in italiano: «L'Armata Halley era un gruppo di sonde nate per esaminare la cometa di Halley quando nel 1986 si trovava nello spazio interno del sistema solare.»",
+   "source_title": "Armata Halley",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0365-universita-medievali",
@@ -11018,11 +11018,11 @@
   {
    "id": "wc-0504-memorie-flash",
    "sequence_index": 244,
-   "text": "Il clade Eureptilia Olson, 1947 è uno dei due grandi gruppi di sauropsidi, oltre agli anapsidi.",
-   "category": "animali",
+   "text": "L'armata era formata da una sonda dell'Agenzia Spaziale Europea, due sonde sviluppate congiuntamente dall'Unione Sovietica e dalla Francia.",
+   "category": "spazio",
    "mood": "tender",
-   "explanation": "Gli Eureptilia primitivi erano tutti piccole forme superficialmente simili a lucertole, che probabilmente correvano nel sottobosco paleozoico in cerca di insetti.",
-   "caption": "Eureptilia - Gli Eureptilia primitivi erano tutti piccole forme superficialmente simili a lucertole, che probabilmente correvano nel sottobosco paleozoico in cerca di insetti. Fonte: Wikipedia in italiano.",
+   "explanation": "L'Armata Halley era un gruppo di sonde nate per esaminare la cometa di Halley quando nel 1986 si trovava nello spazio interno del sistema solare.",
+   "caption": "Armata Halley - L'Armata Halley era un gruppo di sonde nate per esaminare la cometa di Halley quando nel 1986 si trovava nello spazio interno del sistema solare. Fonte: Wikipedia in italiano.",
    "call_to_action": "Lo avresti indovinato?",
    "hashtags": [
     "#invenzioni",
@@ -11035,15 +11035,15 @@
    "background_prompt": "abstract dark cyan depth, soft grain, no recognisable shapes",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Eureptilia",
+   "source_url": "https://it.wikipedia.org/wiki/Armata_Halley",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Memorie flash",
     "location": "Mondo",
     "explanation": "Hanno reso possibile la miniaturizzazione dei dispositivi portatili.",
     "category": "invenzioni",
-    "topic": "animali",
-    "source_article": "Eureptilia"
+    "topic": "spazio",
+    "source_article": "Armata Halley"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:43Z",
@@ -11052,13 +11052,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "ec2818215c232406e7dc66c4f8cc581aa85ce90e005270098b97afd027b4765b",
-   "evidence_summary": "Voce «Eureptilia» di Wikipedia in italiano: «Il clade Eureptilia Olson, 1947 è uno dei due grandi gruppi di sauropsidi, oltre agli anapsidi.»",
-   "source_title": "Eureptilia",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "f55614c60bb99810bd7283b103270c009c07c32aefa9502147d93df100ca663c",
+   "evidence_summary": "Voce «Armata Halley» di Wikipedia in italiano: «L'armata era formata da una sonda dell'Agenzia Spaziale Europea, due sonde sviluppate congiuntamente dall'Unione Sovietica e dalla Francia.»",
+   "source_title": "Armata Halley",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0366-numeri-e-commercio",
@@ -11738,11 +11738,11 @@
   {
    "id": "wc-0427-magnetismo-delle-rocce",
    "sequence_index": 260,
-   "text": "Neoanguimorpha è un clade di anguimorfi comprendente Monstersauria e Diploglossa.",
-   "category": "animali",
+   "text": "Emirates Mars Mission, chiamata anche Mars Hope al-Amal, è una missione spaziale emiratina senza equipaggio umano con lo scopo di studiare l'atmosfera marziana e il suo clima.",
+   "category": "spazio",
    "mood": "serene",
-   "explanation": "Di seguito è riportata la filogenesi dei lignaggi neoanguimorfi secondo Pyron et al.",
-   "caption": "Neoanguimorpha - Di seguito è riportata la filogenesi dei lignaggi neoanguimorfi secondo Pyron et al. Fonte: Wikipedia in italiano.",
+   "explanation": "Dalla voce «Emirates Mars Mission» di Wikipedia in italiano.",
+   "caption": "Emirates Mars Mission - Dalla voce «Emirates Mars Mission» di Wikipedia in italiano. Fonte: Wikipedia in italiano.",
    "call_to_action": "Meriterebbe un post a parte?",
    "hashtags": [
     "#scienza",
@@ -11755,15 +11755,15 @@
    "background_prompt": "deep steel blue wash, gentle gradient, spare",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Neoanguimorpha",
+   "source_url": "https://it.wikipedia.org/wiki/Emirates_Mars_Mission",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Magnetismo delle rocce",
     "location": "Terra",
     "explanation": "Questa proprietà ha permesso di dimostrare l'espansione dei fondali oceanici.",
     "category": "scienza",
-    "topic": "animali",
-    "source_article": "Neoanguimorpha"
+    "topic": "spazio",
+    "source_article": "Emirates Mars Mission"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:43Z",
@@ -11772,13 +11772,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "87292a1f2e4e146e6c9eb79b54b3918e87c5f28c4c095e85d5cbbe7e9a1a1901",
-   "evidence_summary": "Voce «Neoanguimorpha» di Wikipedia in italiano: «Neoanguimorpha è un clade di anguimorfi comprendente Monstersauria e Diploglossa.»",
-   "source_title": "Neoanguimorpha",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "6cda44a2ff0c8db4654f954a4e5d3dfbb35bc815f18fb91e08b2c47ac4527388",
+   "evidence_summary": "Voce «Emirates Mars Mission» di Wikipedia in italiano: «Emirates Mars Mission, chiamata anche Mars Hope al-Amal, è una missione spaziale emiratina senza equipaggio umano con lo scopo di studiare l'atmosfera marziana e il suo clima.»",
+   "source_title": "Emirates Mars Mission",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0773-biblioteche-nazionali",
@@ -12683,11 +12683,11 @@
   {
    "id": "wc-0429-tsunami",
    "sequence_index": 281,
-   "text": "Shinisauria è un clade, o raggruppamento evolutivo, di lucertole anguimorfe che include l'odierna lucertola coccodrillo cinese e molti dei suoi parenti estinti più prossimi.",
-   "category": "animali",
+   "text": "La missione consiste in una sonda spaziale chiamata sonda della speranza, il cui lancio è stato effettuato il 19 luglio 2020 a seguito di breve posticipo.",
+   "category": "spazio",
    "mood": "serene",
-   "explanation": "Un tempo si pensava che gli Shinisauri fossero strettamente correlati al genere Xenosaurus, ma oggi sono considerati solo lontani parenti all'interno di Anguimorpha.",
-   "caption": "Shinisauria - Un tempo si pensava che gli Shinisauri fossero strettamente correlati al genere Xenosaurus, ma oggi sono considerati solo lontani parenti all'interno di Anguimorpha. Fonte: Wikipedia in italiano.",
+   "explanation": "Approfondimento su Emirates Mars Mission, voce numero 281.",
+   "caption": "Emirates Mars Mission - Approfondimento su Emirates Mars Mission, voce numero 281. Fonte: Wikipedia in italiano.",
    "call_to_action": "Ci saresti mai andato?",
    "hashtags": [
     "#scienza",
@@ -12700,15 +12700,15 @@
    "background_prompt": "abstract deep blue field, uniform and quiet",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Shinisauria",
+   "source_url": "https://it.wikipedia.org/wiki/Emirates_Mars_Mission",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Tsunami",
     "location": "Oceani",
     "explanation": "L'onda cresce solo avvicinandosi alla costa, dove il fondale sale rapidamente.",
     "category": "scienza",
-    "topic": "animali",
-    "source_article": "Shinisauria"
+    "topic": "spazio",
+    "source_article": "Emirates Mars Mission"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:42Z",
@@ -12717,13 +12717,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "405d9741f46882013babb13b5781efb0976f0e0a8f4cae13b5930b51bc07ceee",
-   "evidence_summary": "Voce «Shinisauria» di Wikipedia in italiano: «Shinisauria è un clade, o raggruppamento evolutivo, di lucertole anguimorfe che include l'odierna lucertola coccodrillo cinese e molti dei suoi parenti estinti più prossimi.»",
-   "source_title": "Shinisauria",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "523c4a54d1e48fcd20b37138067374eea28d7037c0aef3340a875fa1b624ed7f",
+   "evidence_summary": "Voce «Emirates Mars Mission» di Wikipedia in italiano: «La missione consiste in una sonda spaziale chiamata sonda della speranza, il cui lancio è stato effettuato il 19 luglio 2020 a seguito di breve posticipo.»",
+   "source_title": "Emirates Mars Mission",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0850-evidenziatore",
@@ -13587,11 +13587,11 @@
   {
    "id": "wc-0436-el-nino",
    "sequence_index": 301,
-   "text": "I boreoeuteri sono un clade di mammiferi euteri composto dai superordini Laurasiatheria ed Euarchontoglires.",
-   "category": "animali",
+   "text": "La barra di Weber è un dispositivo usato nella rilevazione di onde gravitazionali escogitato e costruito dal fisico Joseph Weber all'Università del Maryland.",
+   "category": "spazio",
    "mood": "tender",
-   "explanation": "Il raggruppamento è ben supportato dalle analisi della sequenza del DNA, oltre che da studi di presenza/assenza di retrotrasposoni.",
-   "caption": "Boreoeutheria - Il raggruppamento è ben supportato dalle analisi della sequenza del DNA, oltre che da studi di presenza/assenza di retrotrasposoni. Fonte: Wikipedia in italiano.",
+   "explanation": "Il dispositivo è costituito da cilindri di alluminio multipli di 2 metri in lunghezza e 1 in diametro, antenne per rilevare onde gravitazionali teoriche.",
+   "caption": "Barra di Weber - Il dispositivo è costituito da cilindri di alluminio multipli di 2 metri in lunghezza e 1 in diametro, antenne per rilevare onde gravitazionali teoriche. Fonte: Wikipedia in italiano.",
    "call_to_action": "L'avresti detto?",
    "hashtags": [
     "#scienza",
@@ -13604,15 +13604,15 @@
    "background_prompt": "abstract cold blue depth, soft noise, calm",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Boreoeutheria",
+   "source_url": "https://it.wikipedia.org/wiki/Barra_di_Weber",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "El Niño",
     "location": "Pacifico",
     "explanation": "Gli effetti sulle precipitazioni si avvertono in regioni molto distanti.",
     "category": "scienza",
-    "topic": "animali",
-    "source_article": "Boreoeutheria"
+    "topic": "spazio",
+    "source_article": "Barra di Weber"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:41Z",
@@ -13621,13 +13621,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "e8e3b0d5b1e44c6c4bff124439036f7318662fb01399087579008a702354c653",
-   "evidence_summary": "Voce «Boreoeutheria» di Wikipedia in italiano: «I boreoeuteri sono un clade di mammiferi euteri composto dai superordini Laurasiatheria ed Euarchontoglires.»",
-   "source_title": "Boreoeutheria",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "624e3d2f15b97a0aaa54b8ea288b24864bfe7510f26f022de9a029e64c8ff136",
+   "evidence_summary": "Voce «Barra di Weber» di Wikipedia in italiano: «La barra di Weber è un dispositivo usato nella rilevazione di onde gravitazionali escogitato e costruito dal fisico Joseph Weber all'Università del Maryland.»",
+   "source_title": "Barra di Weber",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0774-emeroteche",
@@ -14037,11 +14037,11 @@
   {
    "id": "wc-0437-monsone",
    "sequence_index": 311,
-   "text": "Epitheria è un clade comprendente tutti i mammiferi euteri, ad eccezione degli Xenarthra.",
-   "category": "animali",
+   "text": "I codici degli osservatori vengono assegnati dal Minor Planet Center, coordinato dall'Unione Astronomica Internazionale.",
+   "category": "spazio",
    "mood": "serene",
-   "explanation": "Sono caratterizzati principalmente dalla presenza di una staffa a forma di staffa nell'orecchio medio, che permette il passaggio di un vaso sanguigno.",
-   "caption": "Epitheria - Sono caratterizzati principalmente dalla presenza di una staffa a forma di staffa nell'orecchio medio, che permette il passaggio di un vaso sanguigno. Fonte: Wikipedia in italiano.",
+   "explanation": "l'MPC associa ad ogni osservatorio un codice univoco unitamente alle sue coordinate di longitudine e le costanti di parallasse.",
+   "caption": "Codici degli osservatori astronomici - l'MPC associa ad ogni osservatorio un codice univoco unitamente alle sue coordinate di longitudine e le costanti di parallasse. Fonte: Wikipedia in italiano.",
    "call_to_action": "Ne avevi mai sentito parlare?",
    "hashtags": [
     "#scienza",
@@ -14054,15 +14054,15 @@
    "background_prompt": "deep blue mist with faint depth cues, no objects",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Epitheria",
+   "source_url": "https://it.wikipedia.org/wiki/Codici_degli_osservatori_astronomici",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Monsone",
     "location": "Asia meridionale",
     "explanation": "L'inversione stagionale dei venti determina il calendario agricolo di intere regioni.",
     "category": "scienza",
-    "topic": "animali",
-    "source_article": "Epitheria"
+    "topic": "spazio",
+    "source_article": "Codici degli osservatori astronomici"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:43Z",
@@ -14071,13 +14071,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "ccd86dc9d5f89cde9ad35e358c1ea8653917eea03d92f3f705c484d72d5c2a9a",
-   "evidence_summary": "Voce «Epitheria» di Wikipedia in italiano: «Epitheria è un clade comprendente tutti i mammiferi euteri, ad eccezione degli Xenarthra.»",
-   "source_title": "Epitheria",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "90a489db0070eae5008b1711b6e49b959fb92493e965afb53d75220a8f9ed7fe",
+   "evidence_summary": "Voce «Codici degli osservatori astronomici» di Wikipedia in italiano: «I codici degli osservatori vengono assegnati dal Minor Planet Center, coordinato dall'Unione Astronomica Internazionale.»",
+   "source_title": "Codici degli osservatori astronomici",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0399-lombrichi",
@@ -14495,11 +14495,11 @@
   {
    "id": "wc-0435-correnti-oceaniche",
    "sequence_index": 321,
-   "text": "Glires è un clade di mammiferi euteri, appartenente al superordine degli euarcontogliri, che raggruppa gli ordini dei lagomorfi e dei roditori.",
-   "category": "animali",
+   "text": "Il Gemini Planet Imager è una strumentazione di ottica adattiva di nuova generazione applicata al telescopio Gemini sud, in Cile.",
+   "category": "spazio",
    "mood": "calm",
-   "explanation": "Questo gruppo fu individuato da Linneo nel 1740 ma per alcuni versi è ancora controverso.",
-   "caption": "Glires - Questo gruppo fu individuato da Linneo nel 1740 ma per alcuni versi è ancora controverso. Fonte: Wikipedia in italiano.",
+   "explanation": "Dopo 7 anni di sviluppo e collaudo lo strumento è stato installato sul Gemini South ad agosto 2013 con prima luce a novembre ed inizio studi nel 2014.",
+   "caption": "Gemini Planet Imager - Dopo 7 anni di sviluppo e collaudo lo strumento è stato installato sul Gemini South ad agosto 2013 con prima luce a novembre ed inizio studi nel 2014. Fonte: Wikipedia in italiano.",
    "call_to_action": "Sapresti spiegarlo a qualcuno stasera?",
    "hashtags": [
     "#scienza",
@@ -14512,15 +14512,15 @@
    "background_prompt": "abstract twilight blue, soft edges, wide clear area",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Glires",
+   "source_url": "https://it.wikipedia.org/wiki/Gemini_Planet_Imager",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Correnti oceaniche",
     "location": "Oceani",
     "explanation": "La Corrente del Golfo influenza sensibilmente il clima dell'Europa occidentale.",
     "category": "scienza",
-    "topic": "animali",
-    "source_article": "Glires"
+    "topic": "spazio",
+    "source_article": "Gemini Planet Imager"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:40Z",
@@ -14529,13 +14529,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "1e6ab6c4caa0e140742f469d896430ce0e46e92b5604fc6d7a6ae44275b13fd8",
-   "evidence_summary": "Voce «Glires» di Wikipedia in italiano: «Glires è un clade di mammiferi euteri, appartenente al superordine degli euarcontogliri, che raggruppa gli ordini dei lagomorfi e dei roditori.»",
-   "source_title": "Glires",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "7f00d5d6ba6e51be83ea615c895c09efb42b60e7b87c79479f714991fd93aa16",
+   "evidence_summary": "Voce «Gemini Planet Imager» di Wikipedia in italiano: «Il Gemini Planet Imager è una strumentazione di ottica adattiva di nuova generazione applicata al telescopio Gemini sud, in Cile.»",
+   "source_title": "Gemini Planet Imager",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0851-graffetta",
@@ -17643,11 +17643,11 @@
   {
    "id": "wc-0187-isola-di-surtsey",
    "sequence_index": 391,
-   "text": "I prototeri sono un taxon incluso nei mammiferi come sottoclasse, al quale appartengono i monotremi.",
-   "category": "animali",
+   "text": "Kuiper Airborne Observatory era una struttura nazionale, gestito dalla NASA per sostenere la ricerca in astronomia a raggi infrarossi.",
+   "category": "spazio",
    "mood": "tender",
-   "explanation": "Dalla voce «Prototheria» di Wikipedia in italiano.",
-   "caption": "Prototheria - Dalla voce «Prototheria» di Wikipedia in italiano. Fonte: Wikipedia in italiano.",
+   "explanation": "Dalla voce «Kuiper Airborne Observatory» di Wikipedia in italiano.",
+   "caption": "Kuiper Airborne Observatory - Dalla voce «Kuiper Airborne Observatory» di Wikipedia in italiano. Fonte: Wikipedia in italiano.",
    "call_to_action": "Immaginavi questo ordine di grandezza?",
    "hashtags": [
     "#geografia",
@@ -17660,15 +17660,15 @@
    "background_prompt": "dark indigo haze with faint luminous depth, no objects",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Prototheria",
+   "source_url": "https://it.wikipedia.org/wiki/Kuiper_Airborne_Observatory",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Isola di Surtsey",
     "location": "Islanda",
     "explanation": "L'accesso è riservato ai ricercatori per studiare come la vita colonizza un territorio nuovo.",
     "category": "geografia",
-    "topic": "animali",
-    "source_article": "Prototheria"
+    "topic": "spazio",
+    "source_article": "Kuiper Airborne Observatory"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:45Z",
@@ -17677,13 +17677,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "87fa5aeb72f7d012352c5869de9e60075c7e3604fd21beb2cb4fe2634cdb9319",
-   "evidence_summary": "Voce «Prototheria» di Wikipedia in italiano: «I prototeri sono un taxon incluso nei mammiferi come sottoclasse, al quale appartengono i monotremi.»",
-   "source_title": "Prototheria",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "9aa8458b5ad2fc972130a21f5c0a4ba025b6d8adec157d74b4d16dde654ae2f4",
+   "evidence_summary": "Voce «Kuiper Airborne Observatory» di Wikipedia in italiano: «Kuiper Airborne Observatory era una struttura nazionale, gestito dalla NASA per sostenere la ricerca in astronomia a raggi infrarossi.»",
+   "source_title": "Kuiper Airborne Observatory",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0511-fusione-nucleare",
@@ -18494,11 +18494,11 @@
   {
    "id": "wc-0837-indice-analitico",
    "sequence_index": 410,
-   "text": "Pseudoungulata o Pseudungulata è un possibile clade di mammiferi facente parte del gruppo degli Afrotheria e comprendente a sua volta le cladi dei Tubulidentata.",
-   "category": "animali",
+   "text": "Il Next-Generation Transit Survey è un osservatorio astronomico costituito da dodici telescopi riflettori in linea ad ampio campo visivo.",
+   "category": "spazio",
    "mood": "serene",
-   "explanation": "Dalla voce «Pseudoungulata» di Wikipedia in italiano.",
-   "caption": "Pseudoungulata - Dalla voce «Pseudoungulata» di Wikipedia in italiano. Fonte: Wikipedia in italiano.",
+   "explanation": "La particolare configurazione dei telescopi è ottimizzata e nel contempo limitata al rilevamento di pianeti extrasolari con orbite inferiori a 20 giorni.",
+   "caption": "Next-Generation Transit Survey - La particolare configurazione dei telescopi è ottimizzata e nel contempo limitata al rilevamento di pianeti extrasolari con orbite inferiori a 20 giorni. Fonte: Wikipedia in italiano.",
    "call_to_action": "Ne conosci una versione diversa?",
    "hashtags": [
     "#invenzioni",
@@ -18511,15 +18511,15 @@
    "background_prompt": "deep marine blue, faint upper glow, unadorned",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Pseudoungulata",
+   "source_url": "https://it.wikipedia.org/wiki/Next-Generation_Transit_Survey",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Indice analitico",
     "location": "Europa",
     "explanation": "È quindi un prodotto della stampa più che del manoscritto.",
     "category": "invenzioni",
-    "topic": "animali",
-    "source_article": "Pseudoungulata"
+    "topic": "spazio",
+    "source_article": "Next-Generation Transit Survey"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:42Z",
@@ -18528,13 +18528,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "d34ad898d9e2d3b91cbb0970bd533fb517398bb367f4e52d0f55924dca4d750e",
-   "evidence_summary": "Voce «Pseudoungulata» di Wikipedia in italiano: «Pseudoungulata o Pseudungulata è un possibile clade di mammiferi facente parte del gruppo degli Afrotheria e comprendente a sua volta le cladi dei Tubulidentata.»",
-   "source_title": "Pseudoungulata",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "cc2b44d95b85e69b3a1e46874e3d72cc38016bafbd386c3495eb60e2935ca1bf",
+   "evidence_summary": "Voce «Next-Generation Transit Survey» di Wikipedia in italiano: «Il Next-Generation Transit Survey è un osservatorio astronomico costituito da dodici telescopi riflettori in linea ad ampio campo visivo.»",
+   "source_title": "Next-Generation Transit Survey",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0882-persistenza-retinica",
@@ -19124,11 +19124,11 @@
   {
    "id": "wc-0756-obelisco-incompiuto",
    "sequence_index": 424,
-   "text": "Whippomorpha o Cetancodonta è un sottordine di artiodattili che contiene tutti i cetacei viventi e gli ippopotamidi.",
-   "category": "animali",
+   "text": "Lo Stratospheric Observatory for Infrared Astronomy è stato un progetto nato da una collaborazione 80-20 tra NASA e DLR per costruire e mantenere un osservatorio aereo.",
+   "category": "spazio",
    "mood": "tender",
-   "explanation": "Whippomorpha è un sottordine all'interno dell'ordine Artiodactyla.",
-   "caption": "Whippomorpha - Whippomorpha è un sottordine all'interno dell'ordine Artiodactyla. Fonte: Wikipedia in italiano.",
+   "explanation": "Il telescopio SOFIA ha visto la prima luce il 26 maggio 2010.",
+   "caption": "Stratospheric Observatory for Infrared Astronomy - Il telescopio SOFIA ha visto la prima luce il 26 maggio 2010. Fonte: Wikipedia in italiano.",
    "call_to_action": "Salvalo se vuoi ricontrollarlo con calma.",
    "hashtags": [
     "#storia",
@@ -19141,15 +19141,15 @@
    "background_prompt": "dark aquamarine gradient, low contrast, atmospheric",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Whippomorpha",
+   "source_url": "https://it.wikipedia.org/wiki/Stratospheric_Observatory_for_Infrared_Astronomy",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Obelisco incompiuto",
     "location": "Egitto",
     "explanation": "Il pezzo mostra chiaramente le tracce degli strumenti usati.",
     "category": "storia",
-    "topic": "animali",
-    "source_article": "Whippomorpha"
+    "topic": "spazio",
+    "source_article": "Stratospheric Observatory for Infrared Astronomy"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:19:36Z",
@@ -19158,13 +19158,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "912eb78c78da7274a6a30ab8dae3cf5a0b117d36386fabca3ad3e3d0b9ae2ffa",
-   "evidence_summary": "Voce «Whippomorpha» di Wikipedia in italiano: «Whippomorpha o Cetancodonta è un sottordine di artiodattili che contiene tutti i cetacei viventi e gli ippopotamidi.»",
-   "source_title": "Whippomorpha",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "afb655437030c1f32815814189b9fc8352693c157fc295cef9236298614ff3d6",
+   "evidence_summary": "Voce «Stratospheric Observatory for Infrared Astronomy» di Wikipedia in italiano: «Lo Stratospheric Observatory for Infrared Astronomy è stato un progetto nato da una collaborazione 80-20 tra NASA e DLR per costruire e mantenere un osservatorio aereo.»",
+   "source_title": "Stratospheric Observatory for Infrared Astronomy",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0433-laghi-sotto-i-ghiacci",
@@ -19439,11 +19439,11 @@
   {
    "id": "wc-0333-tonnara",
    "sequence_index": 431,
-   "text": "Zooamata è un clade proposto di mammiferi comprendente Ferae e Perissodactyla.",
-   "category": "animali",
+   "text": "Lo United Kingdom Infrared Telescope è un telescopio riflettore a infrarossi da 3,8 metri situato presso l'osservatorio di Mauna Kea operativo dal 1979.",
+   "category": "spazio",
    "mood": "serene",
-   "explanation": "Insieme a Cetartiodactyla formano Ferungulata e fanno parte dei Laurasiatheria.",
-   "caption": "Zooamata - Insieme a Cetartiodactyla formano Ferungulata e fanno parte dei Laurasiatheria. Fonte: Wikipedia in italiano.",
+   "explanation": "Dalla voce «United Kingdom Infrared Telescope» di Wikipedia in italiano.",
+   "caption": "United Kingdom Infrared Telescope - Dalla voce «United Kingdom Infrared Telescope» di Wikipedia in italiano. Fonte: Wikipedia in italiano.",
    "call_to_action": "C'è qualcosa di simile dalle tue parti?",
    "hashtags": [
     "#tradizioni",
@@ -19456,15 +19456,15 @@
    "background_prompt": "deep blue mist with faint depth cues, no objects",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Zooamata",
+   "source_url": "https://it.wikipedia.org/wiki/United_Kingdom_Infrared_Telescope",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Tonnara",
     "location": "Sicilia e Sardegna",
     "explanation": "L'attività seguiva un calendario preciso legato alle migrazioni.",
     "category": "tradizioni",
-    "topic": "animali",
-    "source_article": "Zooamata"
+    "topic": "spazio",
+    "source_article": "United Kingdom Infrared Telescope"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:45Z",
@@ -19473,13 +19473,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "4915cf837c8d939a77b91a683689ac37b499118c31d257d28ff54163d0b8d1d0",
-   "evidence_summary": "Voce «Zooamata» di Wikipedia in italiano: «Zooamata è un clade proposto di mammiferi comprendente Ferae e Perissodactyla.»",
-   "source_title": "Zooamata",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "6a2f53fa393cb9a8f46a964e4c400f781f6be5092d7458fb1bb288787cb17df1",
+   "evidence_summary": "Voce «United Kingdom Infrared Telescope» di Wikipedia in italiano: «Lo United Kingdom Infrared Telescope è un telescopio riflettore a infrarossi da 3,8 metri situato presso l'osservatorio di Mauna Kea operativo dal 1979.»",
+   "source_title": "United Kingdom Infrared Telescope",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0438-deserti-freddi",
@@ -21656,11 +21656,11 @@
   {
    "id": "wc-0765-calchi-di-pompei",
    "sequence_index": 480,
-   "text": "Euteleostomi è un clade dal notevole successo evolutivo che comprende più del 90% delle attuali specie di vertebrati, noti anche come vertebrati ossei.",
-   "category": "animali",
+   "text": "Un sistema di gestione dei ponti è un insieme di metodologie e procedure per la gestione delle informazioni e operazioni di monitoraggio dei ponti.",
+   "category": "architettura",
    "mood": "calm",
-   "explanation": "In origine gli Euteleostomi possedevano tutti ossa endocondriali, pinne munite di lepidotrichi e mascelle costituite dall'osso mascellare, premascellare e dentale.",
-   "caption": "Euteleostomi - In origine gli Euteleostomi possedevano tutti ossa endocondriali, pinne munite di lepidotrichi e mascelle costituite dall'osso mascellare, premascellare e dentale. Fonte: Wikipedia in italiano.",
+   "explanation": "Dalla voce «Sistema di gestione dei ponti» di Wikipedia in italiano.",
+   "caption": "Sistema di gestione dei ponti - Dalla voce «Sistema di gestione dei ponti» di Wikipedia in italiano. Fonte: Wikipedia in italiano.",
    "call_to_action": "Lo sapevi?",
    "hashtags": [
     "#storia",
@@ -21673,15 +21673,15 @@
    "background_prompt": "deep teal abstract background, soft ocean-like gradient, evocative",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Euteleostomi",
+   "source_url": "https://it.wikipedia.org/wiki/Sistema_di_gestione_dei_ponti",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Calchi di Pompei",
     "location": "Campania, Italia",
     "explanation": "La tecnica fu introdotta da Giuseppe Fiorelli nell'Ottocento.",
     "category": "storia",
-    "topic": "animali",
-    "source_article": "Euteleostomi"
+    "topic": "architettura",
+    "source_article": "Sistema di gestione dei ponti"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:42Z",
@@ -21690,13 +21690,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "3eeacfdef7c014aa3d7a1e63af219207f7896336a86cd0ebb14b979c3c6533ae",
-   "evidence_summary": "Voce «Euteleostomi» di Wikipedia in italiano: «Euteleostomi è un clade dal notevole successo evolutivo che comprende più del 90% delle attuali specie di vertebrati, noti anche come vertebrati ossei.»",
-   "source_title": "Euteleostomi",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "838b51ca64d3a17ef4f14835c0815d44ceb2464b93f559ec338fcf9fdb6589b0",
+   "evidence_summary": "Voce «Sistema di gestione dei ponti» di Wikipedia in italiano: «Un sistema di gestione dei ponti è un insieme di metodologie e procedure per la gestione delle informazioni e operazioni di monitoraggio dei ponti.»",
+   "source_title": "Sistema di gestione dei ponti",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0440-dune",
@@ -22828,11 +22828,11 @@
   {
    "id": "wc-0610-metropolitana-di-parigi",
    "sequence_index": 506,
-   "text": "Le ecoregioni sono definite dal WWF come unità relativamente grandi di terra o acqua contenenti un assemblaggio distinto di specie e comunità naturali.",
-   "category": "natura",
+   "text": "Il sistema di gestione è in grado di documentare ed elaborare le informazioni relative all'intero ciclo di vita del ponte, in particolare per le fasi di progettazione.",
+   "category": "architettura",
    "mood": "grateful",
-   "explanation": "Altri hanno definito le ecoregioni come aree di potenziale ecologico basate su combinazioni di parametri biofisici quali clima e topografia.",
-   "caption": "Ecoregione - Altri hanno definito le ecoregioni come aree di potenziale ecologico basate su combinazioni di parametri biofisici quali clima e topografia. Fonte: Wikipedia in italiano.",
+   "explanation": "Un sistema di gestione dei ponti è un insieme di metodologie e procedure per la gestione delle informazioni e operazioni di monitoraggio dei ponti.",
+   "caption": "Sistema di gestione dei ponti - Un sistema di gestione dei ponti è un insieme di metodologie e procedure per la gestione delle informazioni e operazioni di monitoraggio dei ponti. Fonte: Wikipedia in italiano.",
    "call_to_action": "Ne conosci una versione diversa?",
    "hashtags": [
     "#architettura",
@@ -22845,15 +22845,15 @@
    "background_prompt": "deep marine blue, faint upper glow, unadorned",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Ecoregione",
+   "source_url": "https://it.wikipedia.org/wiki/Sistema_di_gestione_dei_ponti",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Metropolitana di Parigi",
     "location": "Francia",
     "explanation": "Le strutture in ghisa furono progettate da Hector Guimard.",
     "category": "architettura",
-    "topic": "natura",
-    "source_article": "Ecoregione"
+    "topic": "architettura",
+    "source_article": "Sistema di gestione dei ponti"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:43Z",
@@ -22862,13 +22862,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "cfc94102bf58c3ed6e41e98851085f8fe1aea6e60724ca1a2ecbc1470b955e45",
-   "evidence_summary": "Voce «Ecoregione» di Wikipedia in italiano: «Le ecoregioni sono definite dal WWF come unità relativamente grandi di terra o acqua contenenti un assemblaggio distinto di specie e comunità naturali.»",
-   "source_title": "Ecoregione",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "821fcff92fa78e7a03369fbc071f1150f8a25d70d542f127d0f56c2cfd2f0517",
+   "evidence_summary": "Voce «Sistema di gestione dei ponti» di Wikipedia in italiano: «Il sistema di gestione è in grado di documentare ed elaborare le informazioni relative all'intero ciclo di vita del ponte, in particolare per le fasi di progettazione.»",
+   "source_title": "Sistema di gestione dei ponti",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0946-misura-della-terra",
@@ -23550,11 +23550,11 @@
   {
    "id": "wc-0820-legumi-e-azoto",
    "sequence_index": 522,
-   "text": "Il Neartico o ecozona neartica è l'ecozona che comprende le ecoregioni terrestri dell'America settentrionale.",
-   "category": "natura",
+   "text": "Emporis è una società di data mining fondata da Michael Wutze, con sede ad Amburgo.",
+   "category": "architettura",
    "mood": "serene",
-   "explanation": "Comprende gli interi territori della Groenlandia, del Canada e degli Stati Uniti d'America e le regioni centrosettentrionali del Messico.",
-   "caption": "Ecozona neartica - Comprende gli interi territori della Groenlandia, del Canada e degli Stati Uniti d'America e le regioni centrosettentrionali del Messico. Fonte: Wikipedia in italiano.",
+   "explanation": "Il database comprende oltre 400 000 edifici distribuiti in 190 paesi, e 160 000 imprese di costruzione e urbanistica.",
+   "caption": "Emporis - Il database comprende oltre 400 000 edifici distribuiti in 190 paesi, e 160 000 imprese di costruzione e urbanistica. Fonte: Wikipedia in italiano.",
    "call_to_action": "Da dove lo stai leggendo?",
    "hashtags": [
     "#natura",
@@ -23567,15 +23567,15 @@
    "background_prompt": "dark slate blue gradient, soft mist, evocative but abstract",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Ecozona_neartica",
+   "source_url": "https://it.wikipedia.org/wiki/Emporis",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Legumi e azoto",
     "location": "Ovunque",
     "explanation": "Per questo migliorano la fertilità del terreno in cui crescono.",
     "category": "natura",
-    "topic": "natura",
-    "source_article": "Ecozona neartica"
+    "topic": "architettura",
+    "source_article": "Emporis"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:41Z",
@@ -23584,13 +23584,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "ff4069e43c1952f459cc1f38a0c1169c4cc2b61f7077c30657ca2b7984a87d2b",
-   "evidence_summary": "Voce «Ecozona neartica» di Wikipedia in italiano: «Il Neartico o ecozona neartica è l'ecozona che comprende le ecoregioni terrestri dell'America settentrionale.»",
-   "source_title": "Ecozona neartica",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "1eb22f0123873d95bd7b5bf5f083e99bf6a80ec85cd0cef50e7066749c53f377",
+   "evidence_summary": "Voce «Emporis» di Wikipedia in italiano: «Emporis è una società di data mining fondata da Michael Wutze, con sede ad Amburgo.»",
+   "source_title": "Emporis",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0962-fringuelli-di-darwin",
@@ -25718,11 +25718,11 @@
   {
    "id": "wc-0156-citta-di-fez",
    "sequence_index": 570,
-   "text": "I lèmuri sono un infraordine di primati del sottordine degli Strepsirrhini, endemico del Madagascar.",
-   "category": "animali",
+   "text": "Per i successivi cento anni, l'edificio più alto del mondo è sempre stato negli Stati Uniti con New York City.",
+   "category": "architettura",
    "mood": "calm",
-   "explanation": "Il termine lemure deriva dal latino lemures, che indica il tipico movimento altalenante della loro camminata e corsa.",
-   "caption": "Lemuriformes - Il termine lemure deriva dal latino lemures, che indica il tipico movimento altalenante della loro camminata e corsa. Fonte: Wikipedia in italiano.",
+   "explanation": "Dopo poco più di un secolo, la prima posizione si spostò nell'emisfero orientale.",
+   "caption": "Storia degli edifici più alti del mondo - Dopo poco più di un secolo, la prima posizione si spostò nell'emisfero orientale. Fonte: Wikipedia in italiano.",
    "call_to_action": "Ne conosci una versione diversa?",
    "hashtags": [
     "#architettura",
@@ -25735,15 +25735,15 @@
    "background_prompt": "dark slate blue gradient, soft mist, evocative but abstract",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Lemuriformes",
+   "source_url": "https://it.wikipedia.org/wiki/Storia_degli_edifici_più_alti_del_mondo",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Città di Fez",
     "location": "Marocco",
     "explanation": "La rete di vicoli rende impraticabile il traffico veicolare in gran parte del centro storico.",
     "category": "architettura",
-    "topic": "animali",
-    "source_article": "Lemuriformes"
+    "topic": "architettura",
+    "source_article": "Storia degli edifici più alti del mondo"
    },
    "source_audit_status": "manually_verified",
    "source_audited_at": "2026-08-05",
@@ -25754,13 +25754,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "31149e5dbfb3c1ab9fcfba1b6fc9a9e2de3b597b4181e5f2450fb4a62a045f6b",
-   "evidence_summary": "Voce «Lemuriformes» di Wikipedia in italiano: «I lèmuri sono un infraordine di primati del sottordine degli Strepsirrhini, endemico del Madagascar.»",
-   "source_title": "Lemuriformes",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "da46937ee7ceb13363047668c9b8ecd98a179820b07f90baf9db8e7fb27d5efc",
+   "evidence_summary": "Voce «Storia degli edifici più alti del mondo» di Wikipedia in italiano: «Per i successivi cento anni, l'edificio più alto del mondo è sempre stato negli Stati Uniti con New York City.»",
+   "source_title": "Storia degli edifici più alti del mondo",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0041-alfabeto-coreano",
@@ -25857,11 +25857,11 @@
   {
    "id": "wc-0244-parole-intraducibili",
    "sequence_index": 573,
-   "text": "L'ecozona afrotropicale o etiopica, è l'ecozona che si estende in gran parte del continente africano, comprese le isole occidentali dell'Oceano Indiano.",
-   "category": "natura",
+   "text": "Un faro è una struttura, in genere una torre, dotata alla sommità di un sistema, costituito da una lampada e un sistema di lenti.",
+   "category": "architettura",
    "mood": "serene",
-   "explanation": "È separata dall'ecozona paleartica dai deserti tropicali del Sahara e dell'Arabia.",
-   "caption": "Ecozona afrotropicale - È separata dall'ecozona paleartica dai deserti tropicali del Sahara e dell'Arabia. Fonte: Wikipedia in italiano.",
+   "explanation": "Il nome deriva dall'isola di Pharos, di fronte ad Alessandria d'Egitto, dove nel III secolo a.C.",
+   "caption": "Faro - Il nome deriva dall'isola di Pharos, di fronte ad Alessandria d'Egitto, dove nel III secolo a.C. Fonte: Wikipedia in italiano.",
    "call_to_action": "Quale parte ti ha sorpreso di più?",
    "hashtags": [
     "#lingue",
@@ -25874,15 +25874,15 @@
    "background_prompt": "midnight blue with a faint distant glow near the horizon",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Ecozona_afrotropicale",
+   "source_url": "https://it.wikipedia.org/wiki/Faro",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Parole intraducibili",
     "location": "Mondo",
     "explanation": "L'esistenza di un termine non implica che il concetto sia assente altrove.",
     "category": "lingue",
-    "topic": "natura",
-    "source_article": "Ecozona afrotropicale"
+    "topic": "architettura",
+    "source_article": "Faro"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:45Z",
@@ -25891,13 +25891,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "f599fbf16da20f79c995228b031f15ccfe8feb73a4988bfecbff5fc085d26af7",
-   "evidence_summary": "Voce «Ecozona afrotropicale» di Wikipedia in italiano: «L'ecozona afrotropicale o etiopica, è l'ecozona che si estende in gran parte del continente africano, comprese le isole occidentali dell'Oceano Indiano.»",
-   "source_title": "Ecozona afrotropicale",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "2510811ae9af85407ac56b7529be33870a4e8759a57097a83235fc6501e2dfed",
+   "evidence_summary": "Voce «Faro» di Wikipedia in italiano: «Un faro è una struttura, in genere una torre, dotata alla sommità di un sistema, costituito da una lampada e un sistema di lenti.»",
+   "source_title": "Faro",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0776-conservazione-digitale",
@@ -26129,11 +26129,11 @@
   {
    "id": "wc-0340-notte-polare",
    "sequence_index": 579,
-   "text": "I Lemuroidei sono una superfamiglia di primati strepsirrini appartenenti all'infraordine Lemuriformes.",
-   "category": "animali",
+   "text": "Il faro automatico è un dispositivo di segnalazione nautica la cui accensione non richiede l'intervento manuale.",
+   "category": "architettura",
    "mood": "calm",
-   "explanation": "i lemuridi sporadicamente integrano una dieta frugivora con artropodi.",
-   "caption": "Lemuroidea - i lemuridi sporadicamente integrano una dieta frugivora con artropodi. Fonte: Wikipedia in italiano.",
+   "explanation": "Dalla voce «Faro automatico» di Wikipedia in italiano.",
+   "caption": "Faro automatico - Dalla voce «Faro automatico» di Wikipedia in italiano. Fonte: Wikipedia in italiano.",
    "call_to_action": "Lo trovi più strano o più logico?",
    "hashtags": [
     "#geografia",
@@ -26146,15 +26146,15 @@
    "background_prompt": "dark green-teal haze, soft focus, evocative",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Lemuroidea",
+   "source_url": "https://it.wikipedia.org/wiki/Faro_automatico",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Notte polare",
     "location": "Regioni artiche",
     "explanation": "Il fenomeno dipende dall'inclinazione dell'asse terrestre.",
     "category": "geografia",
-    "topic": "animali",
-    "source_article": "Lemuroidea"
+    "topic": "architettura",
+    "source_article": "Faro automatico"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:43Z",
@@ -26163,13 +26163,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "6e45e21884ea6f9db175dff64f6ef8ae66754d144607a67dd20128189c8802bd",
-   "evidence_summary": "Voce «Lemuroidea» di Wikipedia in italiano: «I Lemuroidei sono una superfamiglia di primati strepsirrini appartenenti all'infraordine Lemuriformes.»",
-   "source_title": "Lemuroidea",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "0fe36c038179bbaa990f62c69dcce57ddc6397e958ea4f565f8c9492e3da16aa",
+   "evidence_summary": "Voce «Faro automatico» di Wikipedia in italiano: «Il faro automatico è un dispositivo di segnalazione nautica la cui accensione non richiede l'intervento manuale.»",
+   "source_title": "Faro automatico",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0635-compostaggio",
@@ -26536,11 +26536,11 @@
   {
    "id": "wc-0845-banco-scolastico",
    "sequence_index": 588,
-   "text": "Caracal Gray, 1843 è un genere della sottofamiglia Felinae, della famiglia Felidae.",
-   "category": "animali",
+   "text": "Il battifredo è una torre d'avvistamento in legno, in uso nel Medioevo presso i villaggi fortificati o ricetti dell'Italia.",
+   "category": "architettura",
    "mood": "calm",
-   "explanation": "In passato era considerato un genere monotipico, al quale apparteneva la sola specie tipo: Caracal caracal, nota con il nome comune di caracal.",
-   "caption": "Caracal - In passato era considerato un genere monotipico, al quale apparteneva la sola specie tipo: Caracal caracal, nota con il nome comune di caracal. Fonte: Wikipedia in italiano.",
+   "explanation": "Permetteva di dominare il terreno circostante l'agglomerato al fine di avvistare il nemico ed a tale scopo era provvisto di una campana per dare l'allarme.",
+   "caption": "Battifredo - Permetteva di dominare il terreno circostante l'agglomerato al fine di avvistare il nemico ed a tale scopo era provvisto di una campana per dare l'allarme. Fonte: Wikipedia in italiano.",
    "call_to_action": "Ti torna, come spiegazione?",
    "hashtags": [
     "#invenzioni",
@@ -26553,15 +26553,15 @@
    "background_prompt": "cold dark green-blue wash, subtle grain, empty centre",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Caracal_(genere)",
+   "source_url": "https://it.wikipedia.org/wiki/Battifredo_(torre)",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Banco scolastico",
     "location": "Europa",
     "explanation": "Le file frontali privilegiano la trasmissione rispetto alla discussione.",
     "category": "invenzioni",
-    "topic": "animali",
-    "source_article": "Caracal (genere)"
+    "topic": "architettura",
+    "source_article": "Battifredo (torre)"
    },
    "source_audit_status": "broken_source",
    "source_audited_at": "2026-08-05T21:06:39Z",
@@ -26570,13 +26570,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "703acaeafd7def3869451298a6c9a5aa8b9cd9bde94af0e840e25e833f794e25",
-   "evidence_summary": "Voce «Caracal (genere)» di Wikipedia in italiano: «Caracal Gray, 1843 è un genere della sottofamiglia Felinae, della famiglia Felidae.»",
-   "source_title": "Caracal (genere)",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "e13773808420013237d21d95151eeb4d558562f6028caabe8f3eea326367f21a",
+   "evidence_summary": "Voce «Battifredo (torre)» di Wikipedia in italiano: «Il battifredo è una torre d'avvistamento in legno, in uso nel Medioevo presso i villaggi fortificati o ricetti dell'Italia.»",
+   "source_title": "Battifredo (torre)",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0885-ecolocalizzazione-umana",
@@ -26671,11 +26671,11 @@
   {
    "id": "wc-0933-media-climatiche",
    "sequence_index": 591,
-   "text": "L'ecozona oceanica o oceaniana è una delle ecozone riconosciute dal WWF.",
-   "category": "natura",
+   "text": "Una moonlight tower o moontower è una struttura di pubblica illuminazione, progettata per illuminare di notte alcune zone di una città.",
+   "category": "architettura",
    "mood": "serene",
-   "explanation": "Completamente situata nell'Oceano Pacifico, comprende le isole della Micronesia, le isole Figi e gran parte della Polinesia ad eccezione della Nuova Zelanda.",
-   "caption": "Ecozona oceaniana - Completamente situata nell'Oceano Pacifico, comprende le isole della Micronesia, le isole Figi e gran parte della Polinesia ad eccezione della Nuova Zelanda. Fonte: Wikipedia in italiano.",
+   "explanation": "Nonostante ciò, alcune di queste costruzioni vennero utilizzate in aggiunta ai lampioni stessi.",
+   "caption": "Moonlight tower - Nonostante ciò, alcune di queste costruzioni vennero utilizzate in aggiunta ai lampioni stessi. Fonte: Wikipedia in italiano.",
    "call_to_action": "C'è qualcosa di simile dalle tue parti?",
    "hashtags": [
     "#scienza",
@@ -26688,15 +26688,15 @@
    "background_prompt": "dark turquoise depth, faint light from above, no detail",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Ecozona_oceaniana",
+   "source_url": "https://it.wikipedia.org/wiki/Moonlight_tower",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Media climatiche",
     "location": "Mondo",
     "explanation": "Un singolo evento non conferma né smentisce una tendenza.",
     "category": "scienza",
-    "topic": "natura",
-    "source_article": "Ecozona oceaniana"
+    "topic": "architettura",
+    "source_article": "Moonlight tower"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:40Z",
@@ -26705,13 +26705,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "069aa174410c8bebda9d48326dfa0814fc7b81b3760454444fe69df699bb0d4c",
-   "evidence_summary": "Voce «Ecozona oceaniana» di Wikipedia in italiano: «L'ecozona oceanica o oceaniana è una delle ecozone riconosciute dal WWF.»",
-   "source_title": "Ecozona oceaniana",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "1ac846bd33b963196299d654b7b6874e6d710a2233b37c0fd44d57345fdd194c",
+   "evidence_summary": "Voce «Moonlight tower» di Wikipedia in italiano: «Una moonlight tower o moontower è una struttura di pubblica illuminazione, progettata per illuminare di notte alcune zone di una città.»",
+   "source_title": "Moonlight tower",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0353-simbiosi-lichene",
@@ -39151,11 +39151,11 @@
   {
    "id": "wc-0084-stazione-spaziale-internazionale",
    "sequence_index": 867,
-   "text": "Ailuropodinae è una sottofamiglia di Ursidae che contiene solo una specie vivente, il panda gigante della Cina.",
-   "category": "animali",
+   "text": "La torre nolare all'origine era una torre che ospitava delle campane, un campanile.",
+   "category": "architettura",
    "mood": "calm",
-   "explanation": "Dalla voce «Ailuropodinae» di Wikipedia in italiano.",
-   "caption": "Ailuropodinae - Dalla voce «Ailuropodinae» di Wikipedia in italiano. Fonte: Wikipedia in italiano.",
+   "explanation": "Torri di questo tipo possono accogliere al loro interno una cupola o una volta, come nella Cattedrale di Rouen.",
+   "caption": "Torre nolare - Torri di questo tipo possono accogliere al loro interno una cupola o una volta, come nella Cattedrale di Rouen. Fonte: Wikipedia in italiano.",
    "call_to_action": "Lo trovi più strano o più logico?",
    "hashtags": [
     "#spazio",
@@ -39168,15 +39168,15 @@
    "background_prompt": "dark green-teal haze, soft focus, evocative",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Ailuropodinae",
+   "source_url": "https://it.wikipedia.org/wiki/Torre_nolare",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Stazione Spaziale Internazionale",
     "location": "Orbita terrestre",
     "explanation": "L'equipaggio assiste a sedici albe e sedici tramonti ogni ventiquattro ore.",
     "category": "spazio",
-    "topic": "animali",
-    "source_article": "Ailuropodinae"
+    "topic": "architettura",
+    "source_article": "Torre nolare"
    },
    "source_audit_status": "manually_verified",
    "source_audited_at": "2026-08-05",
@@ -39187,13 +39187,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "8a0690a319a51057b93774a542ca4eda1eff039d4af2d8c6d33c840f530d817f",
-   "evidence_summary": "Voce «Ailuropodinae» di Wikipedia in italiano: «Ailuropodinae è una sottofamiglia di Ursidae che contiene solo una specie vivente, il panda gigante della Cina.»",
-   "source_title": "Ailuropodinae",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "6a5bc6a3147d376d712327efd4f79f543660a0ba7ab4dc25a2e49571a709b4e0",
+   "evidence_summary": "Voce «Torre nolare» di Wikipedia in italiano: «La torre nolare all'origine era una torre che ospitava delle campane, un campanile.»",
+   "source_title": "Torre nolare",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0466-patata",
@@ -39693,11 +39693,11 @@
   {
    "id": "wc-0771-provenienza-delle-opere",
    "sequence_index": 879,
-   "text": "I Tremarctini o orsi dal muso corto sono una sottofamiglia di Ursidae, oggi rappresentata da una singola specie vivente, l'orso dagli occhiali del Sud America.",
-   "category": "animali",
+   "text": "Un palazzo è un edificio di grandi dimensioni, proporzioni e pregio architettonico adibito ad abitazione di re.",
+   "category": "architettura",
    "mood": "calm",
-   "explanation": "simus e gli orsi dal muso corto giganti sudamericani del genere Arctotherium",
-   "caption": "Tremarctinae - simus e gli orsi dal muso corto giganti sudamericani del genere Arctotherium Fonte: Wikipedia in italiano.",
+   "explanation": "Il nome del colle divenne per antonomasia quello di ogni residenza regale e principesca.",
+   "caption": "Palazzo - Il nome del colle divenne per antonomasia quello di ogni residenza regale e principesca. Fonte: Wikipedia in italiano.",
    "call_to_action": "C'è qualcosa di simile dalle tue parti?",
    "hashtags": [
     "#storia",
@@ -39710,15 +39710,15 @@
    "background_prompt": "dark turquoise depth, faint light from above, no detail",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Tremarctinae",
+   "source_url": "https://it.wikipedia.org/wiki/Palazzo",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Provenienza delle opere",
     "location": "Mondo",
     "explanation": "Documenta i passaggi di proprietà e ne verifica la legittimità.",
     "category": "storia",
-    "topic": "animali",
-    "source_article": "Tremarctinae"
+    "topic": "architettura",
+    "source_article": "Palazzo"
    },
    "source_audit_status": "manually_verified",
    "source_audited_at": "2026-08-05",
@@ -39729,13 +39729,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "343f57e376b60cfe63b6b98c894cc7ba1d6862990ca815eeb3605e4783576fe1",
-   "evidence_summary": "Voce «Tremarctinae» di Wikipedia in italiano: «I Tremarctini o orsi dal muso corto sono una sottofamiglia di Ursidae, oggi rappresentata da una singola specie vivente, l'orso dagli occhiali del Sud America.»",
-   "source_title": "Tremarctinae",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "2698d5608a20cf5f9eb63e92b444b475f9a1f796db60148ca70b88a2d8f04ded",
+   "evidence_summary": "Voce «Palazzo» di Wikipedia in italiano: «Un palazzo è un edificio di grandi dimensioni, proporzioni e pregio architettonico adibito ad abitazione di re.»",
+   "source_title": "Palazzo",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0584-open-source",
@@ -40241,11 +40241,11 @@
   {
    "id": "wc-0214-gru-giapponese",
    "sequence_index": 891,
-   "text": "Ailuropoda è l'unico genere esistente della sottofamiglia Ailuropodinae, della famiglia Ursidae che comprende tutti gli orsi.",
-   "category": "animali",
+   "text": "La Grande Basilica di Pliska è un complesso di palazzo religioso, che comprende una basilica, un palazzo arcivescovile e un monastero.",
+   "category": "architettura",
    "mood": "calm",
-   "explanation": "Questa sottofamiglia contiene una singola specie vivente e tre specie fossili.",
-   "caption": "Ailuropoda - Questa sottofamiglia contiene una singola specie vivente e tre specie fossili. Fonte: Wikipedia in italiano.",
+   "explanation": "Fu completata intorno all'875 ed è una delle più grandi basiliche dell'Europa sud-orientale medievale.",
+   "caption": "Grande basilica - Fu completata intorno all'875 ed è una delle più grandi basiliche dell'Europa sud-orientale medievale. Fonte: Wikipedia in italiano.",
    "call_to_action": "Se hai una fonte migliore, segnalala.",
    "hashtags": [
     "#animali",
@@ -40258,15 +40258,15 @@
    "background_prompt": "dark green-teal haze, soft focus, evocative",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Ailuropoda",
+   "source_url": "https://it.wikipedia.org/wiki/Grande_basilica",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Gru giapponese",
     "location": "Asia orientale",
     "explanation": "I movimenti sono ripetuti anche fuori dal periodo riproduttivo.",
     "category": "animali",
-    "topic": "animali",
-    "source_article": "Ailuropoda"
+    "topic": "architettura",
+    "source_article": "Grande basilica"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:42Z",
@@ -40275,13 +40275,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "a7a29893f97ce3a6fe96b093b8646a0ea78b1aa5beb6b91e84c51116f29ef6b7",
-   "evidence_summary": "Voce «Ailuropoda» di Wikipedia in italiano: «Ailuropoda è l'unico genere esistente della sottofamiglia Ailuropodinae, della famiglia Ursidae che comprende tutti gli orsi.»",
-   "source_title": "Ailuropoda",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "cd9d7999c6944c6bf9afbb1342dc3d3eba5a9ff99f85b897b490cc7ef744435b",
+   "evidence_summary": "Voce «Grande basilica» di Wikipedia in italiano: «La Grande Basilica di Pliska è un complesso di palazzo religioso, che comprende una basilica, un palazzo arcivescovile e un monastero.»",
+   "source_title": "Grande basilica",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0631-acqua-potabile",
@@ -43141,11 +43141,11 @@
   {
    "id": "wc-0008-stretto-di-bering",
    "sequence_index": 955,
-   "text": "Vengono, a volte, inserite nell'ipotetica sottofamiglia delle lingue balto-slave a causa di molteplici similitudini isoglottiche con le lingue baltiche.",
-   "category": "lingue",
+   "text": "Fu completata intorno all'875 ed è una delle più grandi basiliche dell'Europa sud-orientale medievale.",
+   "category": "architettura",
    "mood": "focused",
-   "explanation": "Le lingue slave sono un gruppo di lingue appartenenti alla famiglia delle lingue indoeuropee.",
-   "caption": "Lingue slave - Le lingue slave sono un gruppo di lingue appartenenti alla famiglia delle lingue indoeuropee. Fonte: Wikipedia in italiano.",
+   "explanation": "Il complesso è un importante monumento della cultura bulgara altomedievale dal suo periodo cristiano - dalla seconda metà del IX alla metà dell'XI secolo.",
+   "caption": "Grande basilica - Il complesso è un importante monumento della cultura bulgara altomedievale dal suo periodo cristiano - dalla seconda metà del IX alla metà dell'XI secolo. Fonte: Wikipedia in italiano.",
    "call_to_action": "Se hai una fonte migliore, segnalala.",
    "hashtags": [
     "#geografia",
@@ -43158,15 +43158,15 @@
    "background_prompt": "dark cerulean haze, blurred, contemplative",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Lingue_slave",
+   "source_url": "https://it.wikipedia.org/wiki/Grande_basilica",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Stretto di Bering",
     "location": "Fra Russia e Stati Uniti",
     "explanation": "La linea internazionale del cambio di data passa fra le due isole, che appartengono a paesi diversi.",
     "category": "geografia",
-    "topic": "lingue",
-    "source_article": "Lingue slave"
+    "topic": "architettura",
+    "source_article": "Grande basilica"
    },
    "source_audit_status": "manually_verified",
    "source_audited_at": "2026-08-05",
@@ -43177,13 +43177,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "2712348dcc6928ce152bc1cc8d4611637760e52947ba148ec9d16b1c59f9d168",
-   "evidence_summary": "Voce «Lingue slave» di Wikipedia in italiano: «Vengono, a volte, inserite nell'ipotetica sottofamiglia delle lingue balto-slave a causa di molteplici similitudini isoglottiche con le lingue baltiche.»",
-   "source_title": "Lingue slave",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "7c98013590e5b6f4272e1c8e034ab4ac07752afbe1a11e4331846a04c1939190",
+   "evidence_summary": "Voce «Grande basilica» di Wikipedia in italiano: «Fu completata intorno all'875 ed è una delle più grandi basiliche dell'Europa sud-orientale medievale.»",
+   "source_title": "Grande basilica",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0247-prestiti-linguistici",

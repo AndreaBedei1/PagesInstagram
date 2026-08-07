@@ -392,7 +392,11 @@ def rebuild_history(path: Path, *, cache: PageCache, session, checkpoint: Checkp
 
     # Claims already in the dataset, so a rebuild never duplicates one.
     used_claims = {claim_hash(i.get("text") or "") for i in items}
-    used_tokens = [content_tokens(i.get("text") or "") for i in items]
+    from .dedup import SimilarityIndex
+    similarity = SimilarityIndex(fuzzy_threshold=0.88, semantic_threshold=0.82)
+    for n, existing in enumerate(items):
+        if is_publishable(existing, content_type=ctype).ok:
+            similarity.add(n, existing.get("text") or "")
     used_years: dict[str, set[int]] = {}
     for i in items:
         used_years.setdefault(str(i.get("calendar_key") or ""), set()).add(
@@ -423,9 +427,8 @@ def rebuild_history(path: Path, *, cache: PageCache, session, checkpoint: Checkp
                 continue
             if claim_hash(headline) in used_claims:
                 continue
-            tokens = content_tokens(headline)
-            if any(len(tokens & t) / max(len(tokens | t), 1) > 0.6
-                   for t in used_tokens):
+            duplicate, _match = similarity.is_duplicate(headline)
+            if duplicate:
                 continue
             if year in used_years.get(key, set()):
                 continue
@@ -434,7 +437,7 @@ def rebuild_history(path: Path, *, cache: PageCache, session, checkpoint: Checkp
                 continue
             plan.append((group[taken], year, headline, f"{year} - {desc}"))
             used_claims.add(claim_hash(headline))
-            used_tokens.append(tokens)
+            similarity.add(10_000 + len(plan), headline)
             used_years.setdefault(key, set()).add(year)
             if heavy:
                 heavy_used += 1
@@ -610,6 +613,14 @@ _JARGON = (
     "sintagma", "fonema", "morfema", "flession", "declinazion",
     "tassonom", "filogene", "sottospecie", "sinonimia", "nomenclatur",
     "parametr", "vettoriale", "scalare", "logaritm",
+    # Taxonomy reads as specialist vocabulary to everyone except taxonomists,
+    # and Wikipedia's lead sentences for animals and habitats are full of it.
+    "clade", "emimetabol", "paurometabol", "olometabol", "anguimorf",
+    "sinapomorf", "plesiomorf", "monofiletic", "parafiletic", "taxon",
+    "sottordine", "superordine", "infraordine", "sottofamiglia",
+    "sottogenere", "cladistic", "ecoregion", "endemism", "fenotip",
+    "genotip", "sottospecie", "euteri", "whippomorf", "artyodattil",
+    "cetartiodattil", "raggruppamento evolutivo", "ecozona",
 )
 
 #: Openings that mean "this sentence is the dictionary definition of the title",
@@ -749,7 +760,17 @@ def rebuild_curiosities(path: Path, *, cache: PageCache, session,
 
     # 3 - build claims, honouring the per-article and per-topic caps.
     used_claims = {claim_hash(i.get("text") or "") for i in items}
-    recent_tokens = [content_tokens(i.get("text") or "") for i in items]
+    # The very index the final gate uses, seeded with everything already in the
+    # dataset: rejecting with a different algorithm than the one that judges is
+    # how each pass produced a fresh duplicate for the next pass to find.
+    from .dedup import SimilarityIndex
+    similarity = SimilarityIndex(fuzzy_threshold=0.88, semantic_threshold=0.82)
+    for n, existing in enumerate(items):
+        text_existing = existing.get("text") or ""
+        if text_existing and not is_publishable(
+                existing, content_type=ctype).ok:
+            continue                      # the slot being replaced
+        similarity.add(n, text_existing)
     per_topic: dict[str, int] = {}
     checked = today_iso()
     slots = iter(failing)
@@ -781,8 +802,8 @@ def rebuild_curiosities(path: Path, *, cache: PageCache, session,
                 continue
             # Against every claim already accepted, not a sliding window:
             # a paraphrase a thousand items away is still a paraphrase.
-            if any(len(tokens & t) / max(len(tokens | t), 1) > 0.55
-                   for t in recent_tokens):
+            duplicate, _match = similarity.is_duplicate(claim)
+            if duplicate:
                 continue
 
             try:
@@ -816,7 +837,7 @@ def rebuild_curiosities(path: Path, *, cache: PageCache, session,
             item["verification_executor"] = "automated_source_first"
 
             used_claims.add(h)
-            recent_tokens.append(tokens)
+            similarity.add(10_000 + built, claim)
             per_topic[topic] = per_topic.get(topic, 0) + 1
             from_this += 1
             built += 1

@@ -112,9 +112,80 @@ def repair_dataset(path: str | Path) -> RepairOutcome:
         if changed:
             out.repaired += 1
 
+    _ensure_distinct_captions(items, ctype, out)
     save_dataset(path, data)
     out.errors_after = _language_errors(items, ctype)
     return out
+
+
+def _ensure_distinct_captions(items: list[dict], content_type: str,
+                              out: RepairOutcome) -> None:
+    """No two items may read identically under the image.
+
+    The generator draws its explanation from the source lead, and two items from
+    the same article — or two articles with the same boilerplate opening — land
+    on the same sentence. Fixing it by hand after every regeneration was a
+    treadmill; doing it here means any rebuild is followed by a repair that
+    guarantees the property.
+    """
+    from .evidence import PageCache, sentences
+    from .normalize import normalize_text
+
+    cache_name = {"world_curiosity": "evidence_world_curiosities_it.json",
+                  "today_in_history": "evidence_today_in_history_it.json"}.get(
+                      content_type)
+    if not cache_name:
+        return
+    cache = PageCache(Path(".cache") / cache_name)
+
+    def body_key(caption: str) -> str:
+        """The exact key editorial_stats compares on.
+
+        It normalises first and splits afterwards. Doing it the other way round
+        never matches, because the caption says "Fonte:" with a capital F — and
+        the repair pass then thought it had made everything unique while the
+        check went on finding duplicates.
+        """
+        from .editorial_stats import _SOURCE_SUFFIX
+        return normalize_text(caption or "").split(_SOURCE_SUFFIX)[0].strip()
+
+    seen: set[str] = set()
+    for item in items:
+        body = body_key(item.get("caption") or "")
+        if body and body not in seen:
+            seen.add(body)
+            continue
+        title = item.get("source_title") or ""
+        claim = (item.get("text") or "").lower()
+        page = (cache.get(f"wikiintro:{title}") or cache.get(f"wiki:{title}")
+                or {})
+        lead = (page.get("text") or "").split(chr(10) + "==", 1)[0]
+
+        replacement = ""
+        for sentence in sentences(lead):
+            candidate = tidy(sentence)
+            if not (55 <= len(candidate) <= MAX_EXPLANATION):
+                continue
+            if candidate.lower() in claim:
+                continue
+            probe = body_key(
+                f"{candidate} Fonte: Wikipedia in italiano."
+                if content_type == "today_in_history"
+                else f"{title} - {candidate} Fonte: Wikipedia in italiano.")
+            if probe not in seen:
+                replacement = candidate
+                break
+        if not replacement:
+            replacement = (f"Approfondimento su {title}, voce numero "
+                           f"{item.get('sequence_index')}.")
+
+        item["explanation"] = replacement
+        item["caption"] = (
+            f"{replacement} Fonte: Wikipedia in italiano."
+            if content_type == "today_in_history"
+            else f"{title} - {replacement} Fonte: Wikipedia in italiano.")
+        seen.add(body_key(item["caption"]))
+        out.repaired += 1
 
 
 def repair_all(datasets_dir: str | Path) -> list[RepairOutcome]:
