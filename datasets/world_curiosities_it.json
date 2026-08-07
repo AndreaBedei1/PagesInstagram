@@ -12235,11 +12235,11 @@
   {
    "id": "wc-0674-magnitudine",
    "sequence_index": 271,
-   "text": "Il Lunar CRater Observation and Sensing Satellite è una sonda spaziale della NASA progettata per rilevare la presenza di depositi di ghiaccio nelle regioni permanentemente in.",
-   "category": "spazio",
+   "text": "Il ghiaccio ancorato è definito dall'Organizzazione Meteorologica Mondiale come.",
+   "category": "geografia",
    "mood": "reflective",
-   "explanation": "L'impatto è avvenuto il 9 ottobre 2009 in prossimità del cratere Cabeo.",
-   "caption": "Lunar Crater Observation and Sensing Satellite - L'impatto è avvenuto il 9 ottobre 2009 in prossimità del cratere Cabeo. Fonte: Wikipedia in italiano.",
+   "explanation": "Dalla voce «Ghiaccio ancorato» di Wikipedia in italiano.",
+   "caption": "Ghiaccio ancorato - Dalla voce «Ghiaccio ancorato» di Wikipedia in italiano. Fonte: Wikipedia in italiano.",
    "call_to_action": "C'è qualcosa di simile dalle tue parti?",
    "hashtags": [
     "#spazio",
@@ -12252,15 +12252,15 @@
    "background_prompt": "dark indigo haze with faint luminous depth, no objects",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Lunar_Crater_Observation_and_Sensing_Satellite",
+   "source_url": "https://it.wikipedia.org/wiki/Ghiaccio_ancorato",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Magnitudine",
     "location": "Astronomia",
     "explanation": "Numeri più bassi indicano stelle più luminose.",
     "category": "spazio",
-    "topic": "spazio",
-    "source_article": "Lunar Crater Observation and Sensing Satellite"
+    "topic": "geografia",
+    "source_article": "Ghiaccio ancorato"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:42Z",
@@ -12269,13 +12269,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "0b3df01b76ffb5534ba5936390283efbb04cc0804ef2b6a50589196db02adb3f",
-   "evidence_summary": "Voce «Lunar Crater Observation and Sensing Satellite» di Wikipedia in italiano: «Il Lunar CRater Observation and Sensing Satellite è una sonda spaziale della NASA progettata per rilevare la presenza di depositi di ghiaccio nelle regioni permanentemente in.»",
-   "source_title": "Lunar Crater Observation and Sensing Satellite",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "db8e9a165a4771efa96609b65cac477d175eaab42733d3c75578efad59fee636",
+   "evidence_summary": "Voce «Ghiaccio ancorato» di Wikipedia in italiano: «Il ghiaccio ancorato è definito dall'Organizzazione Meteorologica Mondiale come.»",
+   "source_title": "Ghiaccio ancorato",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0428-terremoti-e-onde",
@@ -13632,11 +13632,11 @@
   {
    "id": "wc-0774-emeroteche",
    "sequence_index": 302,
-   "text": "Il ghiaccio ancorato è definito dall'Organizzazione Meteorologica Mondiale come.",
-   "category": "geografia",
+   "text": "La fontana in memoria di Diana, principessa di Galles è una fontana costruita in memoria della principessa Diana, morta in un incidente d'auto nel 1997.",
+   "category": "architettura",
    "mood": "focused",
-   "explanation": "Dalla voce «Ghiaccio ancorato» di Wikipedia in italiano.",
-   "caption": "Ghiaccio ancorato - Dalla voce «Ghiaccio ancorato» di Wikipedia in italiano. Fonte: Wikipedia in italiano.",
+   "explanation": "Si trova in Hyde Park, uno dei Parchi Reali della città di Londra, a sud del Serpentine Lake e ad est della Serpentine Gallery.",
+   "caption": "Fontana in memoria di Diana, principessa di Galles - Si trova in Hyde Park, uno dei Parchi Reali della città di Londra, a sud del Serpentine Lake e ad est della Serpentine Gallery. Fonte: Wikipedia in italiano.",
    "call_to_action": "Salvalo, torna utile.",
    "hashtags": [
     "#storia",
@@ -13649,15 +13649,15 @@
    "background_prompt": "deep blue-green gradient, subtle texture, calm centre",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Ghiaccio_ancorato",
+   "source_url": "https://it.wikipedia.org/wiki/Fontana_in_memoria_di_Diana,_principessa_di_Galles",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Emeroteche",
     "location": "Mondo",
     "explanation": "La carta acida dell'Ottocento si degrada molto più rapidamente di quella antica.",
     "category": "storia",
-    "topic": "geografia",
-    "source_article": "Ghiaccio ancorato"
+    "topic": "architettura",
+    "source_article": "Fontana in memoria di Diana, principessa di Galles"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:41Z",
@@ -13666,13 +13666,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "db8e9a165a4771efa96609b65cac477d175eaab42733d3c75578efad59fee636",
-   "evidence_summary": "Voce «Ghiaccio ancorato» di Wikipedia in italiano: «Il ghiaccio ancorato è definito dall'Organizzazione Meteorologica Mondiale come.»",
-   "source_title": "Ghiaccio ancorato",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "905f2b8be024121628b41153cf44cb59d3c9f8d434b951be1472035bf51f30ae",
+   "evidence_summary": "Voce «Fontana in memoria di Diana, principessa di Galles» di Wikipedia in italiano: «La fontana in memoria di Diana, principessa di Galles è una fontana costruita in memoria della principessa Diana, morta in un incidente d'auto nel 1997.»",
+   "source_title": "Fontana in memoria di Diana, principessa di Galles",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0233-neuroni",
@@ -24274,11 +24274,11 @@
   {
    "id": "wc-0910-alluvione-di-firenze",
    "sequence_index": 538,
-   "text": "Il fitotelma è un microecosistema acquatico formato dall'acqua ristagnante trattenuta da particolari strutture tipiche della morfologia di determinate piante come.",
-   "category": "natura",
+   "text": "Nell'architettura tradizionale persiana, un howz è una piscina di posizione centrale.",
+   "category": "architettura",
    "mood": "calm",
-   "explanation": "Dalla voce «Fitotelma» di Wikipedia in italiano.",
-   "caption": "Fitotelma - Dalla voce «Fitotelma» di Wikipedia in italiano. Fonte: Wikipedia in italiano.",
+   "explanation": "Se in una casa tradizionale o in un cortile privato, è usata per la balneazione, l'estetica o entrambi.",
+   "caption": "Howz - Se in una casa tradizionale o in un cortile privato, è usata per la balneazione, l'estetica o entrambi. Fonte: Wikipedia in italiano.",
    "call_to_action": "Ne conosci una versione diversa?",
    "hashtags": [
     "#storia",
@@ -24291,15 +24291,15 @@
    "background_prompt": "midnight teal with a barely visible horizon",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Fitotelma",
+   "source_url": "https://it.wikipedia.org/wiki/Howz",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Alluvione di Firenze",
     "location": "Toscana, Italia",
     "explanation": "Diede impulso allo sviluppo di tecniche di restauro su larga scala.",
     "category": "storia",
-    "topic": "natura",
-    "source_article": "Fitotelma"
+    "topic": "architettura",
+    "source_article": "Howz"
    },
    "source_audit_status": "manually_verified",
    "source_audited_at": "2026-08-05",
@@ -24310,13 +24310,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "be75cd199dffd36675d5a4cca382ae9e7a24143e72045f1449d7ba08126ec5dd",
-   "evidence_summary": "Voce «Fitotelma» di Wikipedia in italiano: «Il fitotelma è un microecosistema acquatico formato dall'acqua ristagnante trattenuta da particolari strutture tipiche della morfologia di determinate piante come.»",
-   "source_title": "Fitotelma",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "ff9c4b40ff9a40d72110481e71b147128b7a69850f3be5651db8bf790b84f437",
+   "evidence_summary": "Voce «Howz» di Wikipedia in italiano: «Nell'architettura tradizionale persiana, un howz è una piscina di posizione centrale.»",
+   "source_title": "Howz",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0922-isole-eolie",
@@ -27168,11 +27168,11 @@
   {
    "id": "wc-0940-sentieri-e-segnavia",
    "sequence_index": 602,
-   "text": "COSMOS J100054.83+023126.2 è una galassia luminosa all'infrarosso situata in direzione della costellazione dei Sestante alla distanza di oltre 4,1 miliardi di anni luce dalla.",
-   "category": "spazio",
+   "text": "Un sebil o sabil è un piccolo chiosco dove l'acqua viene liberamente distribuita al pubblico.",
+   "category": "architettura",
    "mood": "courageous",
-   "explanation": "Un recente studio è stato pubblicato su Astrophysical Journal Letters.",
-   "caption": "COSMOS J100054.83+023126.2 - Un recente studio è stato pubblicato su Astrophysical Journal Letters. Fonte: Wikipedia in italiano.",
+   "explanation": "A volte il termine è anche usato per riferirsi a semplici fontane per l'acqua potabile.",
+   "caption": "Sebil - A volte il termine è anche usato per riferirsi a semplici fontane per l'acqua potabile. Fonte: Wikipedia in italiano.",
    "call_to_action": "Ne conosci una versione diversa?",
    "hashtags": [
     "#tradizioni",
@@ -27185,15 +27185,15 @@
    "background_prompt": "deep marine blue, faint upper glow, unadorned",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/COSMOS_J100054.83+023126.2",
+   "source_url": "https://it.wikipedia.org/wiki/Sebil",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Sentieri e segnavia",
     "location": "Alpi",
     "explanation": "Le convenzioni cromatiche variano fra paesi.",
     "category": "tradizioni",
-    "topic": "spazio",
-    "source_article": "COSMOS J100054.83+023126.2"
+    "topic": "architettura",
+    "source_article": "Sebil"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:44Z",
@@ -27202,13 +27202,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "5b87c7e65ddb071c33f56e5579d240b2b8e4b5466d6a31b2dc30d0fa0974f8e4",
-   "evidence_summary": "Voce «COSMOS J100054.83+023126.2» di Wikipedia in italiano: «COSMOS J100054.83+023126.2 è una galassia luminosa all'infrarosso situata in direzione della costellazione dei Sestante alla distanza di oltre 4,1 miliardi di anni luce dalla.»",
-   "source_title": "COSMOS J100054.83+023126.2",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "87f0924459e180d18fb62645088051c73d75a2425ee4a174f010ace4ae19dc37",
+   "evidence_summary": "Voce «Sebil» di Wikipedia in italiano: «Un sebil o sabil è un piccolo chiosco dove l'acqua viene liberamente distribuita al pubblico.»",
+   "source_title": "Sebil",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0168-stromboli",
@@ -32275,11 +32275,11 @@
   {
    "id": "wc-0483-forchetta",
    "sequence_index": 715,
-   "text": "L'arcipelago è abitato dalla popolazione nativa dei Chamorro mentre il primo europeo a raggiungere le isole fu Ferdinando Magellano nella sua spedizione intorno al mondo nella.",
-   "category": "geografia",
+   "text": "L'obelisco è un monumento celebrativo formato da un tronco di piramide alto e stretto, spesso coperto da geroglifici sui quattro lati.",
+   "category": "architettura",
    "mood": "serene",
-   "explanation": "Le isole prendono il nome dalla regina Maria Anna d'Asburgo, sovrana di Spagna all'epoca della colonizzazione spagnola delle isole nel XVII secolo.",
-   "caption": "Isole Marianne - Le isole prendono il nome dalla regina Maria Anna d'Asburgo, sovrana di Spagna all'epoca della colonizzazione spagnola delle isole nel XVII secolo. Fonte: Wikipedia in italiano.",
+   "explanation": "Gli obelischi antichi venivano ricavati da un unico blocco di pietra.",
+   "caption": "Obelisco - Gli obelischi antichi venivano ricavati da un unico blocco di pietra. Fonte: Wikipedia in italiano.",
    "call_to_action": "Se ne sai di più, aggiungi pure.",
    "hashtags": [
     "#tradizioni",
@@ -32292,15 +32292,15 @@
    "background_prompt": "dark cerulean haze, blurred, contemplative",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Isole_Marianne",
+   "source_url": "https://it.wikipedia.org/wiki/Obelisco",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Forchetta",
     "location": "Europa",
     "explanation": "Per molto tempo fu considerata un'affettazione.",
     "category": "tradizioni",
-    "topic": "geografia",
-    "source_article": "Isole Marianne"
+    "topic": "architettura",
+    "source_article": "Obelisco"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:41Z",
@@ -32309,13 +32309,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "68c80d3a4e0644036523a6f3d8a1f17717e4bee050905f082ae94e7eb4851cca",
-   "evidence_summary": "Voce «Isole Marianne» di Wikipedia in italiano: «L'arcipelago è abitato dalla popolazione nativa dei Chamorro mentre il primo europeo a raggiungere le isole fu Ferdinando Magellano nella sua spedizione intorno al mondo nella.»",
-   "source_title": "Isole Marianne",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "2788d2eba6a7e4ea26faeb7a190efc1892078abd20ab96d180fd7e8c572ca50e",
+   "evidence_summary": "Voce «Obelisco» di Wikipedia in italiano: «L'obelisco è un monumento celebrativo formato da un tronco di piramide alto e stretto, spesso coperto da geroglifici sui quattro lati.»",
+   "source_title": "Obelisco",
    "source_strength": "general_encyclopedia",
-   "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "source_checked_at": "2026-08-07",
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0559-colonna-traiana",

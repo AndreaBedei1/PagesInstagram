@@ -241,6 +241,15 @@ def tidy(text: str) -> str:
     return out.strip(" -:;,")
 
 
+#: Lowercase function words and gerunds that cannot end a sentence. Matched
+#: case-sensitively so "Valentiniano I" and "drive-in" survive.
+_DANGLING_TAIL = re.compile(
+    r"(?<![A-Za-zÀ-ù-])(accecando|uccidendo|creando|portando|dando|facendo|"
+    r"rendendo|con|per|di|da|in|su|tra|fra|verso|contro|senza|dopo|presso|"
+    r"sotto|sopra|come|che|cui|del|della|dei|delle|dal|dalla|nel|nella|"
+    r"sul|sulla|ed|ma)\s*$")
+
+
 def as_headline(text: str, limit: int = MAX_TEXT) -> str:
     """A single clause, capitalised, within the renderer's width."""
     clean = tidy(text)
@@ -258,6 +267,9 @@ def as_headline(text: str, limit: int = MAX_TEXT) -> str:
                 break
         clean = cut.rstrip(" ,;:-")
     clean = clean.rstrip(".")
+    # Cutting at a clause boundary can leave the word that introduced the clause
+    # dangling — "…si rimpossessa del trono di Costantinopoli accecando".
+    clean = _DANGLING_TAIL.sub("", clean).rstrip(" ,;:-")
     return (clean[:1].upper() + clean[1:]) if clean else ""
 
 
