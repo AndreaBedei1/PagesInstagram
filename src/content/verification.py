@@ -38,6 +38,12 @@ A verified item carries:
     by itself, but it makes a corpus verified by an older, weaker checker
     identifiable.
 
+``verification_executor``
+    **Who** did it: ``automated_source_first`` when a program fetched the source
+    and extracted the passage, ``human`` when a person read it. Calling the
+    first one "manually verified" — as an earlier schema did — is the specific
+    lie this field exists to prevent.
+
 The gate in :func:`is_publishable` checks all of these. It never looks at a
 status string alone.
 """
@@ -51,6 +57,11 @@ from datetime import date as date_cls
 
 #: Bumped whenever the evidence rules change in a way that invalidates old runs.
 TOOL_VERSION = "2.0"
+
+#: Who established the verification.
+EXECUTOR_AUTOMATED = "automated_source_first"
+EXECUTOR_HUMAN = "human"
+EXECUTORS = frozenset({EXECUTOR_AUTOMATED, EXECUTOR_HUMAN})
 
 # ---------------------------------------------------------------------------
 # Vocabulary
@@ -176,6 +187,12 @@ def is_publishable(item: dict, *, content_type: str,
     if not tool:
         reasons.append("verification_tool_version assente")
 
+    executor = (item.get("verification_executor") or "").strip()
+    if executor not in EXECUTORS:
+        reasons.append(
+            f"verification_executor={executor!r} non dichiarato: deve dire se "
+            f"la verifica è stata automatica o umana")
+
     if content_type in ORIGINAL_TYPES:
         if method != METHOD_ORIGINAL:
             reasons.append(
@@ -265,6 +282,7 @@ def attach_verification(item: dict, *, method: str, evidence: str,
     item["verification_status"] = "verified"
     item["verification_method"] = method
     item["verification_tool_version"] = TOOL_VERSION
+    item.setdefault("verification_executor", EXECUTOR_AUTOMATED)
     item["verified_content_hash"] = claim_hash(item.get("text") or "")
     if method in METHODS_REQUIRING_EVIDENCE:
         item["evidence_summary"] = _trim_evidence(evidence)
@@ -295,6 +313,7 @@ def mark_original(item: dict) -> dict:
     item["verification_status"] = "verified"
     item["verification_method"] = METHOD_ORIGINAL
     item["verification_tool_version"] = TOOL_VERSION
+    item.setdefault("verification_executor", EXECUTOR_AUTOMATED)
     item["verified_content_hash"] = claim_hash(item.get("text") or "")
     for stale in ("evidence_summary", "source_url", "source_title",
                   "source_strength", "source_checked_at"):

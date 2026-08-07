@@ -342,6 +342,7 @@ def import_dataset(
             "source_strength": item.get("source_strength"),
             "verified_content_hash": item.get("verified_content_hash"),
             "verification_tool_version": item.get("verification_tool_version"),
+            "verification_executor": item.get("verification_executor"),
         }
         new_id, inserted = db.insert_content(row)
         if not inserted:

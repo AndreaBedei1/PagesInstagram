@@ -46,3 +46,8 @@ CREATE INDEX IF NOT EXISTS idx_contents_verification_method
     ON contents(content_type, verification_method);
 CREATE INDEX IF NOT EXISTS idx_contents_evidence_gate
     ON contents(content_type, status, verification_status, source_strength);
+
+-- Who established the verification. Calling an automated source-first check
+-- "manually verified" — as the retired 0004 vocabulary did — misrepresents the
+-- work; this records it instead.
+ALTER TABLE contents ADD COLUMN verification_executor TEXT;

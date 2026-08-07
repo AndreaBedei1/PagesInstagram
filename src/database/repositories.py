@@ -106,7 +106,7 @@ class Database:
         # 0005_evidence_verification
         "verification_method", "evidence_summary", "source_title",
         "source_checked_at", "source_strength", "verified_content_hash",
-        "verification_tool_version",
+        "verification_tool_version", "verification_executor",
     )
 
     #: Extra SQL predicate that keeps unverified content out of production.
@@ -124,6 +124,7 @@ class Database:
         AND verified_content_hash IS NOT NULL
         AND verified_content_hash <> ''
         AND verification_tool_version IS NOT NULL
+        AND verification_executor IN ('automated_source_first', 'human')
         AND (
             content_type NOT IN ('world_curiosity', 'word_of_the_day',
                                  'today_in_history')

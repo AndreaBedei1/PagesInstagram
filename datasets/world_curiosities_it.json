@@ -2270,7 +2270,7 @@
    "category": "natura",
    "mood": "grateful",
    "explanation": "In questo caso si parla più precisamente di oasi di protezione.",
-   "caption": "Oasi - In questo caso si parla più precisamente di oasi di protezione. Fonte: Wikipedia in italiano.",
+   "caption": "Oasi (area protetta) - In questo caso si parla più precisamente di oasi di protezione. Fonte: Wikipedia in italiano.",
    "call_to_action": "C'è un motivo semplice dietro?",
    "hashtags": [
     "#storia",
@@ -3477,7 +3477,8 @@
    "source_strength": "general_encyclopedia",
    "source_checked_at": "2026-08-06",
    "verification_note": "4/6 parole chiave presenti nella fonte",
-   "verified_content_hash": "2d462e126402c878779a9bee6e0b5456813791da40e2fee22493114868e67fca"
+   "verified_content_hash": "2d462e126402c878779a9bee6e0b5456813791da40e2fee22493114868e67fca",
+   "verification_executor": "automated_source_first"
   },
   {
    "id": "wc-0387-energia-potenziale",
@@ -7628,7 +7629,8 @@
    "source_strength": "general_encyclopedia",
    "source_checked_at": "2026-08-06",
    "verification_note": "5/8 parole chiave presenti nella fonte",
-   "verified_content_hash": "92f9bbba7cd700a6fb5e06ae152deabb4efa3cc03849e685418bb8a542388909"
+   "verified_content_hash": "92f9bbba7cd700a6fb5e06ae152deabb4efa3cc03849e685418bb8a542388909",
+   "verification_executor": "automated_source_first"
   },
   {
    "id": "wc-0571-numeri-primi",
@@ -9298,7 +9300,8 @@
    "source_strength": "general_encyclopedia",
    "source_checked_at": "2026-08-06",
    "verification_note": "4/7 parole chiave presenti nella fonte",
-   "verified_content_hash": "dd19ea5e75f2e3b0c29272dbe66dc7c9e3c444116794f96df4e865a8c8bf1801"
+   "verified_content_hash": "dd19ea5e75f2e3b0c29272dbe66dc7c9e3c444116794f96df4e865a8c8bf1801",
+   "verification_executor": "automated_source_first"
   },
   {
    "id": "wc-0397-azoto-atmosferico",
@@ -9430,7 +9433,8 @@
    "source_strength": "general_encyclopedia",
    "source_checked_at": "2026-08-06",
    "verification_note": "5/5 parole chiave presenti nella fonte",
-   "verified_content_hash": "2aea32ea46ab67a507507f517d0326e6e986e4c83ad6f859dc6c27cba3a4d503"
+   "verified_content_hash": "2aea32ea46ab67a507507f517d0326e6e986e4c83ad6f859dc6c27cba3a4d503",
+   "verification_executor": "automated_source_first"
   },
   {
    "id": "wc-0500-televisione",
@@ -12583,7 +12587,8 @@
    "source_strength": "general_encyclopedia",
    "source_checked_at": "2026-08-06",
    "verification_note": "5/7 parole chiave presenti nella fonte",
-   "verified_content_hash": "04740f086734aefa4e93b8a23bb5911b1957d50a0fd4fe8badc24583698e6ba4"
+   "verified_content_hash": "04740f086734aefa4e93b8a23bb5911b1957d50a0fd4fe8badc24583698e6ba4",
+   "verification_executor": "automated_source_first"
   },
   {
    "id": "wc-0856-corporazioni",
@@ -15791,7 +15796,8 @@
    "source_strength": "general_encyclopedia",
    "source_checked_at": "2026-08-06",
    "verification_note": "4/6 parole chiave presenti nella fonte",
-   "verified_content_hash": "6dc18994689fa28f5b5686800c787599683d3ef6bbe0cc8b759bb5dc061da995"
+   "verified_content_hash": "6dc18994689fa28f5b5686800c787599683d3ef6bbe0cc8b759bb5dc061da995",
+   "verification_executor": "automated_source_first"
   },
   {
    "id": "wc-0987-mulini-ad-acqua",
@@ -16193,7 +16199,8 @@
    "source_strength": "general_encyclopedia",
    "source_checked_at": "2026-08-06",
    "verification_note": "5/7 parole chiave presenti nella fonte",
-   "verified_content_hash": "2da3718a3df840f3ae1c2e44ab6b54e73aee620c00a0c53298b0f98e7312412f"
+   "verified_content_hash": "2da3718a3df840f3ae1c2e44ab6b54e73aee620c00a0c53298b0f98e7312412f",
+   "verification_executor": "automated_source_first"
   },
   {
    "id": "wc-0305-satelliti-geostazionari",
@@ -17227,7 +17234,8 @@
    "source_strength": "general_encyclopedia",
    "source_checked_at": "2026-08-06",
    "verification_note": "6/7 parole chiave presenti nella fonte",
-   "verified_content_hash": "f93def3a665a0afbdc8ab410b98c8435d3b42833babedcc3518f4edd766e7f2d"
+   "verified_content_hash": "f93def3a665a0afbdc8ab410b98c8435d3b42833babedcc3518f4edd766e7f2d",
+   "verification_executor": "automated_source_first"
   },
   {
    "id": "wc-0491-numeri-e-musica",
@@ -17449,7 +17457,8 @@
    "source_strength": "general_encyclopedia",
    "source_checked_at": "2026-08-06",
    "verification_note": "5/7 parole chiave presenti nella fonte",
-   "verified_content_hash": "37665cb62f852cf73db33d102771858c20483d4d77042fcfde9cf26f1c5ec1b5"
+   "verified_content_hash": "37665cb62f852cf73db33d102771858c20483d4d77042fcfde9cf26f1c5ec1b5",
+   "verification_executor": "automated_source_first"
   },
   {
    "id": "wc-0530-semaforo",
@@ -17941,7 +17950,8 @@
    "source_strength": "general_encyclopedia",
    "source_checked_at": "2026-08-06",
    "verification_note": "7/8 parole chiave presenti nella fonte",
-   "verified_content_hash": "bfce4838165578413ea4934428d6302608de12744441015bfbdf49e81dabb307"
+   "verified_content_hash": "bfce4838165578413ea4934428d6302608de12744441015bfbdf49e81dabb307",
+   "verification_executor": "automated_source_first"
   },
   {
    "id": "wc-0166-appennini",
@@ -17983,7 +17993,8 @@
    "source_strength": "general_encyclopedia",
    "source_checked_at": "2026-08-06",
    "verification_note": "3/5 parole chiave presenti nella fonte",
-   "verified_content_hash": "4b3adf94341c333cec21d19d121989fd491eb7ac71a44a72bad7494808202481"
+   "verified_content_hash": "4b3adf94341c333cec21d19d121989fd491eb7ac71a44a72bad7494808202481",
+   "verification_executor": "automated_source_first"
   },
   {
    "id": "wc-0542-fusi-orari-e-ferrovie",
@@ -18252,7 +18263,8 @@
    "source_strength": "general_encyclopedia",
    "source_checked_at": "2026-08-06",
    "verification_note": "5/8 parole chiave presenti nella fonte",
-   "verified_content_hash": "c7b24afcda9d15954ccb3e15d3e64e4d2f461c918062d6d648f8d0d42bbdf31e"
+   "verified_content_hash": "c7b24afcda9d15954ccb3e15d3e64e4d2f461c918062d6d648f8d0d42bbdf31e",
+   "verification_executor": "automated_source_first"
   },
   {
    "id": "wc-0543-ora-legale",
@@ -24708,7 +24720,8 @@
    "source_strength": "general_encyclopedia",
    "source_checked_at": "2026-08-06",
    "verification_note": "6/8 parole chiave presenti nella fonte",
-   "verified_content_hash": "fe46491313f632586c557bd5d1b748afdf6eaf70b94d4fed9f86dcc72102b9fa"
+   "verified_content_hash": "fe46491313f632586c557bd5d1b748afdf6eaf70b94d4fed9f86dcc72102b9fa",
+   "verification_executor": "automated_source_first"
   },
   {
    "id": "wc-0994-conservazione-sotto-vuoto",
@@ -27149,7 +27162,8 @@
    "source_strength": "general_encyclopedia",
    "source_checked_at": "2026-08-06",
    "verification_note": "4/4 parole chiave presenti nella fonte",
-   "verified_content_hash": "e77ae90bfdfb79c3a872b548e06392ee3a97595580c5fa3f4e9e0502e39deaec"
+   "verified_content_hash": "e77ae90bfdfb79c3a872b548e06392ee3a97595580c5fa3f4e9e0502e39deaec",
+   "verification_executor": "automated_source_first"
   },
   {
    "id": "wc-0940-sentieri-e-segnavia",
@@ -29911,11 +29925,11 @@
   {
    "id": "wc-0733-anno-bisestile",
    "sequence_index": 663,
-   "text": "La balena franca australe è un mammifero marino appartenente alla famiglia Balaenidae.",
-   "category": "animali",
+   "text": "La Grande Muraglia Verde dell'Iniziativa per il Sahara e il Sahel è una pionieristica iniziativa africana condotta nell'ambito della lotta agli effetti indotti dal cambiamento.",
+   "category": "natura",
    "mood": "inspirational",
-   "explanation": "Dalla carcassa di un solo esemplare, che aveva la caratteristica di galleggiare appena ucciso, si ottenevano grandi quantità di olio.",
-   "caption": "Eubalaena australis - Dalla carcassa di un solo esemplare, che aveva la caratteristica di galleggiare appena ucciso, si ottenevano grandi quantità di olio. Fonte: Wikipedia in italiano.",
+   "explanation": "Dalla voce «Grande Muraglia Verde» di Wikipedia in italiano.",
+   "caption": "Grande Muraglia Verde - Dalla voce «Grande Muraglia Verde» di Wikipedia in italiano. Fonte: Wikipedia in italiano.",
    "call_to_action": "Ne avevi mai sentito parlare?",
    "hashtags": [
     "#scienza",
@@ -29928,15 +29942,15 @@
    "background_prompt": "dark turquoise depth, faint light from above, no detail",
    "status": "approved_for_publication",
    "source_name": "Wikipedia in italiano",
-   "source_url": "https://it.wikipedia.org/wiki/Eubalaena_australis",
+   "source_url": "https://it.wikipedia.org/wiki/Grande_Muraglia_Verde",
    "verified_at": "2026-08-04",
    "metadata": {
     "title": "Anno bisestile",
     "location": "Mondo",
     "explanation": "La regola corregge lo scarto residuo del calendario giuliano.",
     "category": "scienza",
-    "topic": "animali",
-    "source_article": "Eubalaena australis"
+    "topic": "natura",
+    "source_article": "Grande Muraglia Verde"
    },
    "source_audit_status": "reachable",
    "source_audited_at": "2026-08-05T21:06:39Z",
@@ -29945,13 +29959,13 @@
    "verification_status": "verified",
    "verification_method": "structured_official_dataset",
    "verification_tool_version": "2.0",
-   "verified_content_hash": "2cacbc6ffb6d74a8d9d84f743e1584fe90d308fba815cf1e491da948c0fb4d12",
-   "evidence_summary": "Voce «Eubalaena australis» di Wikipedia in italiano: «La balena franca australe è un mammifero marino appartenente alla famiglia Balaenidae.»",
-   "source_title": "Eubalaena australis",
+   "verification_executor": "automated_source_first",
+   "verified_content_hash": "8bfd8ee7dbf9b22813630acc91aa1567175015a51afb4f4b66405455209ed2b6",
+   "evidence_summary": "Voce «Grande Muraglia Verde» di Wikipedia in italiano: «La Grande Muraglia Verde dell'Iniziativa per il Sahara e il Sahel è una pionieristica iniziativa africana condotta nell'ambito della lotta agli effetti indotti dal cambiamento.»",
+   "source_title": "Grande Muraglia Verde",
    "source_strength": "general_encyclopedia",
    "source_checked_at": "2026-08-06",
-   "verification_note": "affermazione estratta dall'incipit della voce citata",
-   "verification_executor": "automated_source_first"
+   "verification_note": "affermazione estratta dall'incipit della voce citata"
   },
   {
    "id": "wc-0632-raccolta-differenziata",
@@ -42583,7 +42597,8 @@
    "source_strength": "general_encyclopedia",
    "source_checked_at": "2026-08-06",
    "verification_note": "8/9 parole chiave presenti nella fonte",
-   "verified_content_hash": "1b45567b696ff6eb126fda3b556a0a6f14f0cf0e07711c54f6c51c615a480019"
+   "verified_content_hash": "1b45567b696ff6eb126fda3b556a0a6f14f0cf0e07711c54f6c51c615a480019",
+   "verification_executor": "automated_source_first"
   },
   {
    "id": "wc-0064-nowruz",
@@ -42850,7 +42865,8 @@
    "source_strength": "general_encyclopedia",
    "source_checked_at": "2026-08-06",
    "verification_note": "3/6 parole chiave presenti nella fonte",
-   "verified_content_hash": "aeb32f58ce56886818bb847804788565fde0bbb9443ab194ac981f22c88f95a9"
+   "verified_content_hash": "aeb32f58ce56886818bb847804788565fde0bbb9443ab194ac981f22c88f95a9",
+   "verification_executor": "automated_source_first"
   },
   {
    "id": "wc-0104-isole-galapagos",
@@ -43029,7 +43045,8 @@
    "source_strength": "general_encyclopedia",
    "source_checked_at": "2026-08-06",
    "verification_note": "4/6 parole chiave presenti nella fonte",
-   "verified_content_hash": "358381825e3917ffa067c74b6156aaf8dbf494c0ac39f28592310adaafc7b301"
+   "verified_content_hash": "358381825e3917ffa067c74b6156aaf8dbf494c0ac39f28592310adaafc7b301",
+   "verification_executor": "automated_source_first"
   },
   {
    "id": "wc-0265-mole-antonelliana",
@@ -43572,7 +43589,8 @@
    "source_strength": "general_encyclopedia",
    "source_checked_at": "2026-08-06",
    "verification_note": "6/8 parole chiave presenti nella fonte",
-   "verified_content_hash": "b6627a0de39437e6d1bdab6db2d96bd0f98dced5e8458b91352248d605520da8"
+   "verified_content_hash": "b6627a0de39437e6d1bdab6db2d96bd0f98dced5e8458b91352248d605520da8",
+   "verification_executor": "automated_source_first"
   },
   {
    "id": "wc-0445-punti-caldi",
@@ -44064,7 +44082,8 @@
    "source_strength": "general_encyclopedia",
    "source_checked_at": "2026-08-06",
    "verification_note": "6/8 parole chiave presenti nella fonte",
-   "verified_content_hash": "45e0e9c3f7a43587710756300f9a58e54d94dfe5b0a3f0967c3278e40c66608f"
+   "verified_content_hash": "45e0e9c3f7a43587710756300f9a58e54d94dfe5b0a3f0967c3278e40c66608f",
+   "verification_executor": "automated_source_first"
   },
   {
    "id": "wc-0557-abu-simbel",
@@ -44106,7 +44125,8 @@
    "source_strength": "general_encyclopedia",
    "source_checked_at": "2026-08-06",
    "verification_note": "5/7 parole chiave presenti nella fonte",
-   "verified_content_hash": "f4c0d3e649e51b242919d4ef7d4a14de076fc5f07db3fa03dad5d92976af790b"
+   "verified_content_hash": "f4c0d3e649e51b242919d4ef7d4a14de076fc5f07db3fa03dad5d92976af790b",
+   "verification_executor": "automated_source_first"
   },
   {
    "id": "wc-0642-monocolture",
@@ -44193,7 +44213,8 @@
    "source_strength": "general_encyclopedia",
    "source_checked_at": "2026-08-06",
    "verification_note": "6/8 parole chiave presenti nella fonte",
-   "verified_content_hash": "57970af9f6f2a3a47ab8c3b20ca561899ecbeef4014378d594518eebeb70f6b2"
+   "verified_content_hash": "57970af9f6f2a3a47ab8c3b20ca561899ecbeef4014378d594518eebeb70f6b2",
+   "verification_executor": "automated_source_first"
   },
   {
    "id": "wc-0011-sequoia-gigante",
@@ -44464,7 +44485,8 @@
    "source_strength": "general_encyclopedia",
    "source_checked_at": "2026-08-06",
    "verification_note": "4/7 parole chiave presenti nella fonte",
-   "verified_content_hash": "a65048567ffa9d911cbe413232c19dc6ad2c7a288fb74d07b5a9e7edbd6e6f7f"
+   "verified_content_hash": "a65048567ffa9d911cbe413232c19dc6ad2c7a288fb74d07b5a9e7edbd6e6f7f",
+   "verification_executor": "automated_source_first"
   },
   {
    "id": "wc-0308-capodanno-cinese",
@@ -44506,7 +44528,8 @@
    "source_strength": "general_encyclopedia",
    "source_checked_at": "2026-08-06",
    "verification_note": "8/10 parole chiave presenti nella fonte",
-   "verified_content_hash": "1f25f6888d58e2510f3aea51f9f3c1131ed691d8afe0bb3aa02c0295c67c990c"
+   "verified_content_hash": "1f25f6888d58e2510f3aea51f9f3c1131ed691d8afe0bb3aa02c0295c67c990c",
+   "verification_executor": "automated_source_first"
   },
   {
    "id": "wc-0792-sbadiglio-contagioso",
@@ -44638,7 +44661,8 @@
    "source_strength": "general_encyclopedia",
    "source_checked_at": "2026-08-06",
    "verification_note": "4/6 parole chiave presenti nella fonte",
-   "verified_content_hash": "c0cbb52e095f8194fed32e2d9c103b89f55d1ea6fcdba24175f56cf10162070d"
+   "verified_content_hash": "c0cbb52e095f8194fed32e2d9c103b89f55d1ea6fcdba24175f56cf10162070d",
+   "verification_executor": "automated_source_first"
   },
   {
    "id": "wc-0561-affresco",
@@ -44680,7 +44704,8 @@
    "source_strength": "general_encyclopedia",
    "source_checked_at": "2026-08-06",
    "verification_note": "3/5 parole chiave presenti nella fonte",
-   "verified_content_hash": "8ad0c0dd834871c27a4b208de00724eda23a271054bd1c1885ccfb92a8351e6d"
+   "verified_content_hash": "8ad0c0dd834871c27a4b208de00724eda23a271054bd1c1885ccfb92a8351e6d",
+   "verification_executor": "automated_source_first"
   },
   {
    "id": "wc-0250-sardo",
@@ -44767,7 +44792,8 @@
    "source_strength": "general_encyclopedia",
    "source_checked_at": "2026-08-06",
    "verification_note": "4/5 parole chiave presenti nella fonte",
-   "verified_content_hash": "9ee42355d816bdc72e20cdc32030507f8e5682f0cfaf9e399b03758eaf45b3c5"
+   "verified_content_hash": "9ee42355d816bdc72e20cdc32030507f8e5682f0cfaf9e399b03758eaf45b3c5",
+   "verification_executor": "automated_source_first"
   },
   {
    "id": "wc-0830-vocali-greche",
@@ -44809,7 +44835,8 @@
    "source_strength": "general_encyclopedia",
    "source_checked_at": "2026-08-06",
    "verification_note": "6/8 parole chiave presenti nella fonte",
-   "verified_content_hash": "beefb76a24eb618a599bc515039c30bdc11e96407d2ea15a33d03096e75fb661"
+   "verified_content_hash": "beefb76a24eb618a599bc515039c30bdc11e96407d2ea15a33d03096e75fb661",
+   "verification_executor": "automated_source_first"
   },
   {
    "id": "wc-0995-liofilizzazione",
@@ -44898,7 +44925,8 @@
    "source_strength": "general_encyclopedia",
    "source_checked_at": "2026-08-06",
    "verification_note": "4/5 parole chiave presenti nella fonte",
-   "verified_content_hash": "c610f198a25dc948b98390ba551b5f666119e17e394459d1f264b0ee894170d5"
+   "verified_content_hash": "c610f198a25dc948b98390ba551b5f666119e17e394459d1f264b0ee894170d5",
+   "verification_executor": "automated_source_first"
   },
   {
    "id": "wc-0999-denominazioni-di-origine",
@@ -45032,7 +45060,8 @@
    "source_strength": "general_encyclopedia",
    "source_checked_at": "2026-08-06",
    "verification_note": "5/7 parole chiave presenti nella fonte",
-   "verified_content_hash": "e045f15034383f557ad946a444dbe30b6b0d0d50207fa5d3fc268faeaef0474f"
+   "verified_content_hash": "e045f15034383f557ad946a444dbe30b6b0d0d50207fa5d3fc268faeaef0474f",
+   "verification_executor": "automated_source_first"
   },
   {
    "id": "wc-0822-transumanza-delle-api",
@@ -45074,7 +45103,8 @@
    "source_strength": "general_encyclopedia",
    "source_checked_at": "2026-08-06",
    "verification_note": "6/7 parole chiave presenti nella fonte",
-   "verified_content_hash": "c359dec1a67cab0f041ad2de45e9aa19d7ca6f348298d5891dd7eb5b7c22d2a5"
+   "verified_content_hash": "c359dec1a67cab0f041ad2de45e9aa19d7ca6f348298d5891dd7eb5b7c22d2a5",
+   "verification_executor": "automated_source_first"
   },
   {
    "id": "wc-0113-cefalopodi-e-colore",
