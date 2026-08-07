@@ -42,27 +42,30 @@ non richiede di toccare il codice.
 
 ## I contenuti
 
-**5.000 elementi**, 1.000 per pagina, versionati in `datasets/`. Di questi,
-**482 sono pubblicabili in produzione**: gli altri sono strutturalmente validi
-ma non ancora letti da una persona, e il sistema tiene le due cose distinte.
+**5.000 elementi, 1.000 per pagina, tutti pronti per la produzione.** Ogni
+contenuto fattuale porta con sé la prova con cui è stato costruito: la frase
+della fonte, l'URL, il titolo della pagina, la data del controllo e un hash che
+lo lega al proprio testo. Modificare il testo dopo la verifica lo rende
+automaticamente non pubblicabile — è il modo in cui il cancello impedisce di
+approvare un corpus e poi cambiarne il contenuto.
 
-- pensieri e domande sono **originali** — nessuna attribuzione, nessuna falsa
-  citazione;
-- parole, curiosità ed eventi storici portano nome della fonte, URL e data di
-  verifica; gli eventi storici coprono tutte le **366** date (29 febbraio
-  incluso) con almeno due eventi ciascuna;
-- **un URL formalmente valido non è una verifica.** Un contenuto fattuale
-  diventa pubblicabile solo quando la fonte è stata aperta e confrontata con
-  l'affermazione da una persona.
+| Pagina | Elementi | Metodo di verifica | Fonte |
+|---|---|---|---|
+| Pensiero Essenziale | 1.000 | `original_nonfactual` | scrittura originale |
+| Una Domanda al Giorno | 1.000 | `original_nonfactual` | scrittura originale |
+| Una Parola al Giorno | 1.000 | `authoritative_reference` | Treccani, voce del lemma |
+| Oggi nella Storia | 1.000 | `structured_official_dataset` / `cross_checked_sources` | elenco del giorno + voce dell'evento |
+| Curiosità dal Mondo | 1.000 | `structured_official_dataset` | incipit della voce citata |
 
-| Stadio | Che cosa garantisce | Quanti |
-|---|---|---|
-| `total_items` | esiste nel dataset | 5.000 |
-| `structurally_valid` | ben formato, non duplicato, renderizzabile | 5.000 |
-| `source_reachable` | il link citato risponde davvero | 2.788 URL su 2.820 |
-| `fact_checked` | qualcuno ha letto affermazione e fonte insieme | 282 |
-| `editorially_approved` | qualcuno ha letto il testo | 502 |
-| `production_ready` | pubblicabile su un account reale | **482** |
+I contenuti fattuali sono stati **costruiti a partire dalle fonti**, non scritti
+per primi e corredati di fonte dopo: `verification_executor` vale
+`automated_source_first`, e il campo esiste proprio per non chiamare "verifica
+manuale" un lavoro che una persona non ha svolto.
+
+```powershell
+python -m src.cli corpus-final-gate        # 12 contatori, tutti a zero
+python -m src.cli production-readiness --from 2026-08-07 --days 1000 --all-pages
+```
 
 Fonti, gerarchia di qualità, copertura effettiva dell'audit e limiti residui:
 [docs/DATASET_SOURCES.md](docs/DATASET_SOURCES.md). Come si approva un contenuto:
@@ -91,6 +94,7 @@ Poi, quando vuoi pubblicare davvero: compila `.env`, esegui
 | [DATASET_SOURCES.md](docs/DATASET_SOURCES.md) | fonti, gerarchia di qualità, copertura reale dell'audit, limiti noti |
 | [EDITORIAL_REVIEW_WORKFLOW.md](docs/EDITORIAL_REVIEW_WORKFLOW.md) | stati editoriali, come approvare, primo test Meta |
 | [PREPRODUCTION_AUDIT.md](docs/PREPRODUCTION_AUDIT.md) | che cosa ha trovato l'audit di pre-produzione |
+| [PRODUCTION_RUNBOOK.md](docs/PRODUCTION_RUNBOOK.md) | **le variabili da compilare e i comandi, in ordine** |
 | [LOCAL_MODEL_SETUP.md](docs/LOCAL_MODEL_SETUP.md) | ComfyUI, SDXL, licenza, profili di sfondo |
 | [META_RESUMABLE_UPLOAD.md](docs/META_RESUMABLE_UPLOAD.md) | API ufficiali Meta, upload diretto |
 | [PRODUCTION_CHECKLIST.md](docs/PRODUCTION_CHECKLIST.md) | tutto ciò che va verificato prima della produzione |
@@ -247,6 +251,12 @@ in produzione.
 validate            Controlla ambiente (ffmpeg, ComfyUI, font, DB, pagine)
 init-db             Crea/aggiorna il database e registra le pagine
 validate-datasets   Valida i cinque dataset (struttura, lingua, date, lemmi)
+verify-corpus       Legge le fonti ed estrae la prova di ogni affermazione
+rebuild-unverified-corpus  Ricostruisce dai sorgenti ciò che non supera la verifica
+corpus-final-gate   Il cancello unico: 12 contatori, tutti a zero
+production-readiness Simula 1.000 giorni x 5 pagine con il gate di produzione
+prepare-buffer      Genera il buffer di Reel senza pubblicare
+arm-page / arming-status  Arma una pagina dopo il canary
 audit-sources       Verifica che gli URL delle fonti esistano davvero
 editorial-sample    Campione stratificato riproducibile da rivedere a mano
 apply-review        Registra i verdetti umani (unico modo per approvare)
