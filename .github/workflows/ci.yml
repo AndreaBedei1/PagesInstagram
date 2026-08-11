@@ -1,0 +1,106 @@
+name: CI
+
+# Plain triggers. An earlier investigation concluded that pushes to the release
+# branch produced no runs; they did — the unauthenticated GitHub API had hit its
+# hourly rate limit and was answering with empty result sets. Keeping
+# workflow_dispatch means the next such question can be answered by pressing a
+# button instead of by inference.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Nothing in CI may reach a real account.
+  ICE_MODE: dry_run
+  PYTHONIOENCODING: utf-8
+
+jobs:
+  test:
+    name: test (python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv venv .venv --python ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: uv pip install --python .venv/bin/python -r requirements.txt
+
+      # Fails in seconds on a syntax error in a module no test imports.
+      - name: Byte-compile everything
+        run: .venv/bin/python -m compileall -q src tools
+
+      - name: Unit and integration tests
+        run: .venv/bin/python -m pytest -q -m "not e2e" --cov=src --cov-report=term-missing
+
+      # Named separately from the aggregate run above so that a regression in
+      # the go-live path says so in the run summary instead of being one dot
+      # among three hundred. The PowerShell behaviour tests skip on Linux (no
+      # interpreter); the BOM check is byte-level and runs everywhere.
+      - name: Go-live guards (preflight, canary, Reel specifications)
+        run: >
+          .venv/bin/python -m pytest -q
+          tests/unit/test_reel_specs.py
+          tests/unit/test_go_live_guards.py
+          tests/unit/test_health_check.py
+          tests/unit/test_powershell_scripts.py
+          tests/unit/test_powershell_behaviour.py
+
+      # Structure, language, dates, lemmas. No network: the online verification
+      # happens once during the rebuild and its evidence is committed, so what
+      # CI checks is the recorded evidence and the hashes that bind it.
+      - name: Validate datasets
+        run: .venv/bin/python -m src.cli validate-datasets --skip-quality
+
+      # The gate that decides. Twelve counters, all of which must be zero, and
+      # exactly a thousand items per page. Recomputes hashes and duplicates
+      # rather than reading a stored verdict.
+      - name: Corpus final gate
+        run: .venv/bin/python -m src.cli corpus-final-gate
+
+      - name: Editorial repetition analysis
+        run: .venv/bin/python -m src.cli editorial-stats --strict
+
+      - name: Secret scan
+        run: .venv/bin/python -m src.cli security-check
+
+      # Five thousand selections through the real gate, in the real timezone.
+      - name: Full-cycle production readiness (1000 days)
+        run: .venv/bin/python -m src.cli production-readiness --from 2026-08-07 --days 1000 --all-pages
+
+      # Five pages end to end, deterministic background fallback, no GPU.
+      - name: Five-page preproduction smoke test
+        run: .venv/bin/python -m src.cli preproduction-smoke-test --date 2026-08-07
+
+      # A missing report means a gate did not run. That must fail, not warn.
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports-py${{ matrix.python-version }}
+          path: |
+            reports/corpus_final_gate.json
+            reports/production_readiness.json
+            reports/production_readiness.html
+            reports/datasets_validation.json
+            reports/editorial_stats.json
+            reports/preproduction_smoke_test.json
+          if-no-files-found: error
+          retention-days: 14

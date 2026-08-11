@@ -18,24 +18,54 @@ class Mode(StrEnum):
 
 
 class MediaType(StrEnum):
-    """Internal media artifact kinds produced by the pipeline."""
+    """Internal media artifact kinds produced by the pipeline.
 
-    FEED_IMAGE = "feed_image"
-    FEED_VIDEO = "feed_video"
-    STORY_IMAGE = "story_image"
-    STORY_VIDEO = "story_video"
-    REEL = "reel"
+    The daily *main* content is a ``REEL`` published with ``share_to_feed=true``
+    (i.e. REEL_WITH_FEED_SHARE — visible in the Feed and Reels tabs). The
+    ``STORY_VIDEO`` is the same 9:16 content published as a Story. The 4:5
+    ``FEED_*`` kinds are legacy/optional (hosted_url provider only).
+    """
+
+    REEL = "reel"                 # main content, 9:16, shared to feed
+    STORY_VIDEO = "story_video"   # same content as a 9:16 Story
+    FEED_IMAGE = "feed_image"     # legacy/optional (hosted_url)
+    FEED_VIDEO = "feed_video"     # legacy/optional (hosted_url)
+    STORY_IMAGE = "story_image"   # legacy/optional
 
 
-# Mapping from an internal MediaType to the Meta Graph API ``media_type`` value
-# and the aspect it is published as.
+# Mapping from an internal MediaType to the Meta Graph API ``media_type`` value.
 META_MEDIA_TYPE = {
+    MediaType.REEL: "REELS",
+    MediaType.STORY_VIDEO: "STORIES",
     MediaType.FEED_IMAGE: "IMAGE",
     MediaType.FEED_VIDEO: "VIDEO",
     MediaType.STORY_IMAGE: "STORIES",
-    MediaType.STORY_VIDEO: "STORIES",
-    MediaType.REEL: "REELS",
 }
+
+#: MediaTypes that are 9:16 vertical videos (Reel + Story).
+VERTICAL_VIDEO_TYPES = frozenset({MediaType.REEL, MediaType.STORY_VIDEO})
+
+
+class UploadMethod(StrEnum):
+    """How media bytes reach Meta."""
+
+    RESUMABLE = "resumable"   # direct local-file upload to rupload.facebook.com (default)
+    HOSTED_URL = "hosted_url"  # legacy: Meta downloads from a public https URL
+
+
+class UploadStatus(StrEnum):
+    """Resumable upload lifecycle (stored on the job)."""
+
+    PENDING = "pending"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+class AccountType(StrEnum):
+    BUSINESS = "business"
+    CREATOR = "creator"
+    PERSONAL = "personal"
 
 
 class JobStatus(StrEnum):

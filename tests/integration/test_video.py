@@ -42,8 +42,9 @@ def test_build_video_without_music(tmp_path, project_paths):
     Image.new("RGB", (1080, 1920), (30, 30, 34)).save(img)
     vb = VideoBuilder(s)
     out = tmp_path / "v2.mp4"
+    # music_path=None + silent_audio=False => no audio stream at all
     res = vb.build(image_path=img, out_path=out, aspect="story", duration=2.0,
-                   music_path=None, ken_burns=False)
+                   music_path=None, ken_burns=False, silent_audio=False)
     assert res.has_audio is False
     info = probe_media(str(out))
     assert (info.width, info.height) == (1080, 1920)

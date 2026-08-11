@@ -97,10 +97,72 @@ Tabelle: `schema_migrations`, `pages`, `contents`, `media_assets`, `publication_
 | 7 | Scheduler, worker persistente, recovery, Task Scheduler | ✅ fatto (Task Scheduler: script ok, registrazione richiede sessione utente) |
 | 8 | Client pubblicazione Meta + mock + dry-run + idempotenza/retry | ✅ fatto+testato (mock) |
 | 9 | Dashboard locale (review/approvazione) | ✅ fatto+testato |
-| 10 | Verifica finale: ambiente pulito, test, pipeline dry-run, docs | ✅ in corso |
+| 10 | Verifica finale: ambiente pulito, test, pipeline dry-run, docs | ✅ fatto |
+| 11 | **Cinque pagine evergreen** (vedi §7) | ✅ fatto |
 
 ## 6. Punti che richiedono credenziali/risorse reali (blocchi noti)
 
-- **Pubblicazione reale**: token long-lived Meta + IG user id + hosting pubblico dei media (`ICE_PUBLIC_MEDIA_BASE_URL`). Finché mancano → tutto testato in `dry_run`/mock; comando reale pronto e documentato.
-- **Musica reale**: file audio con licenza compatibile (non inclusi nel repo). La pipeline è testata con toni sintetici generati localmente + metadati/licenze registrati.
-- **ComfyUI**: reale e disponibile su questo PC; il client lo avvia e lo interroga. In CI/ambienti senza GPU si usa uno sfondo di test deterministico.
+- **Pubblicazione reale**: token long-lived Meta + IG user id. **Nessun hosting
+  pubblico richiesto**: dal branch `fix/direct-meta-upload` in poi si usa il
+  resumable upload diretto e `ICE_PUBLIC_MEDIA_BASE_URL` serve soltanto al
+  provider opzionale e inattivo `hosted_url`. Finché mancano i token → tutto
+  testato in `dry_run`/mock; i comandi reali sono pronti e documentati.
+- **Musica reale**: non più necessaria per le cinque pagine evergreen, che
+  pubblicano senza musica con una traccia AAC silenziosa di compatibilità. La
+  libreria musicale resta disponibile per pagine future.
+- **ComfyUI**: reale e disponibile su questo PC; il client lo avvia e lo
+  interroga. In CI/ambienti senza GPU si usa uno sfondo di test deterministico —
+  ma **solo** in `dry_run`/`test`: in produzione il fallback è vietato.
+
+---
+
+## 7. Cinque pagine evergreen (branch `feature/five-evergreen-pages`)
+
+Piano dettagliato e checklist: [FIVE_PAGES_IMPLEMENTATION_PLAN.md](FIVE_PAGES_IMPLEMENTATION_PLAN.md).
+
+### Che cosa cambia rispetto alle fasi 1-10
+
+| Area | Prima | Adesso |
+|---|---|---|
+| Pagine | 2 dimostrative | **5 attive** (le due demo sono in `accounts/_archive/`) |
+| Contenuti | 182 seed | **5.000** approvati, 1.000 per pagina |
+| Selezione | "pesca un approvato mai usato" + `RANDOM()` | `cyclic_ordered` (modulo 1.000) e `calendar_rotating` (`MM-DD`) |
+| Sfondo | seed da prompt/mood | seed da `page_id · content_id · data · ciclo · media_type` |
+| Modello | SD 1.5 hard-coded | **SDXL Base 1.0** configurabile, SD 1.5 come fallback esplicito |
+| Rendering | 2 template | **5 template** strutturalmente distinti (motore a blocchi) |
+| Video | 12 s con musica | **8 s** senza musica, traccia AAC silenziosa |
+| Buffer | 2 giorni | 60 giorni pianificati / 30 generati / retention 45 giorni |
+| Sicurezza | redazione nei log | + `security-check` sui file tracciati e test dedicati |
+
+### Nuovi moduli
+
+`src/content/selection.py` · `src/content/dataset_validation.py` ·
+`src/rendering/templates.py` · `src/security/scan.py` ·
+`src/monitoring/previews.py` · `src/database/migrations/0003_evergreen_content.sql`
+· `tools/dataset_build/` · `tools/build_datasets.py`
+
+### Nuovi comandi
+
+`validate-datasets` · `security-check` · `preview-pages` · `sample-review` ·
+`comfyui status` · `comfyui test-generation` · `instagram health-check --all`
+
+### Stato dei requisiti di accettazione
+
+| # | Requisito | Stato |
+|---|---|---|
+| 1-2 | cinque YAML, cinque pagine attive | ✅ test |
+| 3-4 | 1.000 contenuti per dataset, 5.000 totali | ✅ test |
+| 5-6 | indici `0..999` senza buchi, wrap 999 → 0 | ✅ test |
+| 7-8 | selezione stabile dopo riavvio, sfondo nuovo al ciclo successivo | ✅ test |
+| 9-11 | coerenza `MM-DD`, 29 febbraio, ≥ 2 eventi per data | ✅ test |
+| 12 | nessun contenuto fattuale approvato senza fonte | ✅ test |
+| 13 | dedup esatta, fuzzy e semantica | ✅ test |
+| 14-15 | cinque template, contrasto/margini/font | ✅ test |
+| 16-17 | grafo SDXL, nessun fallback silenzioso in produzione | ✅ test |
+| 18 | MP4 valido | ✅ test |
+| 19-20 | pubblicazione mock per pagina, idempotenza pagina/data | ✅ test |
+| 21-23 | retry, nessun doppio upload, ripristino dopo crash | ✅ test |
+| 24-25 | buffer 30 giorni, pulizia media vecchi | ✅ test |
+| 26 | assenza di segreti | ✅ test + `security-check` |
+| 27-29 | 5 job/giorno, 35 in sette giorni, nessuna Story | ✅ test |
+| 30 | worker singolo | ✅ test |

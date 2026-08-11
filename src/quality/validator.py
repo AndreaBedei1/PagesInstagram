@@ -141,7 +141,8 @@ class MediaValidator:
         checks: dict = {}
         issues: list[str] = []
         info = probe_media(str(video_path))
-        target = tuple(s.rendering.story_size if aspect == "story"
+        # Reel and Story are both 9:16; only the legacy feed video is 4:5.
+        target = tuple(s.rendering.story_size if aspect in ("story", "reel")
                        else s.rendering.post_size)
 
         # duration

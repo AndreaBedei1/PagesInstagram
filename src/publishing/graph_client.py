@@ -15,10 +15,14 @@ apply exponential backoff only to transient failures.
 """
 from __future__ import annotations
 
+import os
+
 import requests
 
 from ..core.errors import PublishError
-from ..core.logging_setup import get_logger
+from ..core.logging_setup import get_logger, register_secret
+from ..core.meta_api import (API_HOSTS, DEFAULT_GRAPH_API_VERSION,
+                             TOKEN_DEBUG_HOST)
 
 log = get_logger("publishing.graph")
 
@@ -29,14 +33,18 @@ _AUTH_CODES = {190, 102, 10, 200, 803}
 
 
 class GraphClient:
-    def __init__(self, access_token: str, *, api_version: str = "v23.0",
+    def __init__(self, access_token: str, *,
+                 api_version: str = DEFAULT_GRAPH_API_VERSION,
                  flavor: str = "instagram_login", session: requests.Session | None = None,
-                 timeout: int = 60):
+                 timeout: int = 60, upload_timeout: int = 600):
         self.token = access_token
+        register_secret(access_token)  # never let the token reach a log
         self.api_version = api_version
-        host = "graph.instagram.com" if flavor == "instagram_login" else "graph.facebook.com"
+        self.flavor = flavor
+        host = API_HOSTS.get(flavor, API_HOSTS["facebook_login"])
         self.base = f"https://{host}/{api_version}"
         self.timeout = timeout
+        self.upload_timeout = upload_timeout
         self._s = session or requests.Session()
 
     # -- low-level ---------------------------------------------------------
@@ -97,14 +105,134 @@ class GraphClient:
             raise PublishError(f"no media id in publish response: {data}")
         return mid
 
+    # -- resumable (direct) upload ----------------------------------------
+    def create_resumable_container(self, ig_user_id: str, *, media_type: str,
+                                   caption: str | None = None,
+                                   share_to_feed: bool | None = None,
+                                   **extra) -> tuple[str, str]:
+        """Create a resumable container. Returns (container_id, upload_uri).
+
+        ``media_type`` = REELS | STORIES. ``share_to_feed`` applies to REELS only.
+        The returned ``uri`` targets rupload.facebook.com and is what we POST bytes to.
+        """
+        params: dict = {"upload_type": "resumable", "media_type": media_type}
+        if caption is not None:
+            params["caption"] = caption
+        if share_to_feed is not None:
+            params["share_to_feed"] = "true" if share_to_feed else "false"
+        params.update(extra)
+        data = self._request("POST", f"{ig_user_id}/media", **params)
+        cid, uri = data.get("id"), data.get("uri")
+        if not cid or not uri:
+            raise PublishError(f"resumable container response missing id/uri: {data}")
+        return cid, uri
+
+    def upload_video_file(self, upload_uri: str, file_path: str, *, offset: int = 0,
+                          timeout: int | None = None) -> dict:
+        """Stream a local video to ``upload_uri`` starting at ``offset`` (bytes).
+
+        The file object is passed directly to requests, which streams it in chunks
+        and computes Content-Length as (file_size - offset) — the whole file is
+        never loaded into memory. Returns the parsed upload response.
+        """
+        size = os.path.getsize(file_path)
+        headers = {
+            "Authorization": f"OAuth {self.token}",  # 'OAuth' prefix, not 'Bearer'
+            "offset": str(int(offset)),
+            "file_size": str(size),
+        }
+        try:
+            with open(file_path, "rb") as fh:
+                if offset:
+                    fh.seek(offset)
+                r = self._s.post(upload_uri, headers=headers, data=fh,
+                                 timeout=timeout or self.upload_timeout)
+        except requests.RequestException as e:
+            # connection interrupted mid-upload -> retryable (resume from offset)
+            raise PublishError(f"upload network error: {e}", retryable=True) from e
+        return self._parse_upload(r)
+
+    def get_upload_status(self, container_id: str) -> dict:
+        """Return {status_code, bytes_transferred|None} for a resumable container."""
+        data = self._request("GET", container_id, fields="status_code,video_status")
+        vs = data.get("video_status") or {}
+        up = vs.get("uploading_phase") or {}
+        bt = up.get("bytes_transferred")
+        return {"status_code": data.get("status_code", "UNKNOWN"),
+                "bytes_transferred": int(bt) if bt is not None else None}
+
+    def get_account_info(self, ig_user_id: str) -> dict:
+        """Best-effort account info (id, username, account_type)."""
+        try:
+            return self._request("GET", ig_user_id, fields="user_id,username,account_type")
+        except PublishError:
+            # some deployments expose these on /me
+            return self._request("GET", "me", fields="user_id,username,account_type")
+
+    def _parse_upload(self, r: requests.Response) -> dict:
+        try:
+            data = r.json()
+        except ValueError:
+            data = {}
+        if data.get("success"):
+            return data
+        if r.status_code >= 400 or "error" in data or "debug_info" in data:
+            dbg = data.get("debug_info") or {}
+            err = data.get("error") or {}
+            retryable = (bool(dbg.get("retriable")) or r.status_code >= 500
+                         or err.get("code") in _RETRYABLE_CODES)
+            msg = dbg.get("message") or err.get("message") or f"HTTP {r.status_code}"
+            raise PublishError(f"upload error: {msg}", retryable=retryable,
+                               code=str(dbg.get("type") or err.get("code") or r.status_code))
+        # No explicit success and no explicit error → ambiguous → treat as retryable
+        raise PublishError(f"ambiguous upload response (HTTP {r.status_code})",
+                           retryable=True, code="AMBIGUOUS")
+
     def get_publishing_limit(self, ig_user_id: str) -> dict:
         return self._request("GET", f"{ig_user_id}/content_publishing_limit",
                              fields="config,quota_usage")
 
-    def debug_token(self) -> dict:
-        """Best-effort token info (validity/expiry). Non-fatal on error."""
+    # -- token inspection --------------------------------------------------
+    def verify_token(self) -> dict:
+        """Ask the API who this token belongs to. Raises on an invalid token.
+
+        The token authenticates itself here — this is the only token check that
+        works without app credentials, and it is the one the health check leans
+        on. It answers "valid / invalid / could not tell"; it does not answer
+        "when does it expire", because the endpoint does not carry that.
+        """
+        return self._request("GET", "me",
+                             fields="user_id,username,account_type")
+
+    def debug_token(self, app_id: str, app_secret: str) -> dict:
+        """Expiry and granted scopes, via ``GET /debug_token``.
+
+        Three things this had wrong before, all of them documented on
+        developers.facebook.com and none of them guessable:
+
+        * ``debug_token`` lives on graph.facebook.com. Calling it on
+          graph.instagram.com — which is where an Instagram-Login client points
+          — is a request to an endpoint that is not there.
+        * the ``access_token`` parameter must be an **app** access token or a
+          developer user token, not the token being examined. Passing the
+          subject token as its own authority is what the old code did.
+        * therefore the app id and secret are genuinely required *for this
+          call*, and for nothing else in this client.
+
+        The secret is registered with the log redactor before it is used and is
+        never returned, printed or stored.
+        """
+        if not (app_id and app_secret):
+            raise PublishError(
+                "debug_token richiede META_APP_ID e META_APP_SECRET: sono le "
+                "sole credenziali applicative necessarie, e servono solo qui",
+                retryable=False, code="APP_CREDENTIALS")
+        register_secret(app_secret)
+        url = f"https://{TOKEN_DEBUG_HOST}/{self.api_version}/debug_token"
+        params = {"input_token": self.token,
+                  "access_token": f"{app_id}|{app_secret}"}
         try:
-            return self._request("GET", "debug_token", input_token=self.token)
-        except PublishError as e:
-            log.warning("debug_token failed: %s", e)
-            return {}
+            r = self._s.get(url, params=params, timeout=self.timeout)
+        except requests.RequestException as e:
+            raise PublishError(f"network error: {e}", retryable=True) from e
+        return self._parse(r)

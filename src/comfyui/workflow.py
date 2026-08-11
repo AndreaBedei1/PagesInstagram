@@ -70,6 +70,108 @@ def sd15_txt2img(
     }
 
 
+def sdxl_txt2img(
+    *,
+    prompt: str,
+    negative: str,
+    width: int,
+    height: int,
+    seed: int,
+    checkpoint: str = "sd_xl_base_1.0.safetensors",
+    steps: int = 30,
+    cfg: float = 6.0,
+    sampler_name: str = "dpmpp_2m",
+    scheduler: str = "karras",
+    denoise: float = 1.0,
+    filename_prefix: str = "ice_bg",
+) -> dict:
+    """Return an API-format ComfyUI graph for a single **SDXL Base 1.0** background.
+
+    Node topology is identical to the SD1.5 graph (``CheckpointLoaderSimple`` →
+    two ``CLIPTextEncode`` → ``KSampler`` → ``VAEDecode`` → ``SaveImage``), which
+    is what ComfyUI's own SDXL-base-only template uses. The differences that
+    matter are the checkpoint, the latent resolution (an SDXL aspect bucket) and
+    a slightly lower CFG.
+    """
+    return {
+        "4": {
+            "class_type": "CheckpointLoaderSimple",
+            "inputs": {"ckpt_name": checkpoint},
+        },
+        "5": {
+            "class_type": "EmptyLatentImage",
+            "inputs": {"width": int(width), "height": int(height), "batch_size": 1},
+        },
+        "6": {
+            "class_type": "CLIPTextEncode",
+            "inputs": {"text": prompt, "clip": ["4", 1]},
+        },
+        "7": {
+            "class_type": "CLIPTextEncode",
+            "inputs": {"text": negative, "clip": ["4", 1]},
+        },
+        "3": {
+            "class_type": "KSampler",
+            "inputs": {
+                "seed": int(seed),
+                "steps": int(steps),
+                "cfg": float(cfg),
+                "sampler_name": sampler_name,
+                "scheduler": scheduler,
+                "denoise": float(denoise),
+                "model": ["4", 0],
+                "positive": ["6", 0],
+                "negative": ["7", 0],
+                "latent_image": ["5", 0],
+            },
+        },
+        "8": {
+            "class_type": "VAEDecode",
+            "inputs": {"samples": ["3", 0], "vae": ["4", 2]},
+        },
+        "9": {
+            "class_type": "SaveImage",
+            "inputs": {"filename_prefix": filename_prefix, "images": ["8", 0]},
+        },
+    }
+
+
+#: Per-family sampling defaults and 9:16 latent buckets.
+FAMILY_DEFAULTS: dict[str, dict] = {
+    "sdxl": {
+        "builder": sdxl_txt2img,
+        "steps": 30, "cfg": 6.0,
+        "sampler_name": "dpmpp_2m", "scheduler": "karras",
+        # official SDXL aspect bucket closest to 9:16 (768*1344 ≈ 1024²)
+        "dims": {"reel": (768, 1344), "story": (768, 1344), "feed": (896, 1152)},
+    },
+    "sd15": {
+        "builder": sd15_txt2img,
+        "steps": 26, "cfg": 6.5,
+        "sampler_name": "dpmpp_2m", "scheduler": "karras",
+        "dims": {"reel": (576, 1024), "story": (576, 1024), "feed": (768, 960)},
+    },
+}
+
+
+def family_dims(family: str, aspect: str) -> tuple[int, int]:
+    fam = FAMILY_DEFAULTS.get(family, FAMILY_DEFAULTS["sdxl"])
+    return fam["dims"].get(aspect, fam["dims"]["reel"])
+
+
+def build_graph(family: str, **kwargs) -> dict:
+    """Build a txt2img graph for ``family`` ("sdxl" | "sd15").
+
+    Unknown families fall back to SDXL — the project's documented baseline — so a
+    typo in ``ICE_COMFYUI_MODEL_FAMILY`` never silently produces a broken graph.
+    """
+    fam = FAMILY_DEFAULTS.get(family, FAMILY_DEFAULTS["sdxl"])
+    for key in ("steps", "cfg", "sampler_name", "scheduler"):
+        if kwargs.get(key) is None:
+            kwargs[key] = fam[key]
+    return fam["builder"](**kwargs)
+
+
 def load_workflow(path: str | Path) -> dict:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 

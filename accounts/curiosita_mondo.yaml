@@ -1,0 +1,53 @@
+# Pagina 2 — Curiosità dal Mondo (fatti verificati con fonte, italiano).
+# Segreti SOLO da .env:
+#   ICE_CURIOSITA_MONDO_IT_IG_USER_ID / ICE_CURIOSITA_MONDO_IT_ACCESS_TOKEN
+page_id: curiosita_mondo_it
+enabled: true
+display_name: Curiosità dal Mondo
+content_type: world_curiosity
+language: it
+
+publishing:
+  posts_per_day: 1
+  publish_feed: true
+  publish_story: false
+  publish_reel: false
+  feed_time: "11:00"
+  story_time: "22:00"
+  timezone: "Europe/Rome"
+  missed_job_policy: publish_within_window
+  missed_job_window_minutes: 240
+  upload_method: resumable
+  feed_media_type: REELS
+  share_reel_to_feed: true
+  story_media_type: STORIES
+
+instagram:
+  account_type: business
+  api_flavor: instagram_login
+
+visual:
+  style: deep_geographic
+  template: world_curiosity
+  show_author: false
+  font_family: default
+  background_profile: world_deep_geographic
+  logo_enabled: true
+  logo_text: "@curiosita.dal.mondo"
+
+music:
+  enabled: false
+  profile: calm
+
+content:
+  source: database
+  minimum_quality_score: 0.60   # i fatti verificati sono più lunghi delle massime
+  avoid_semantic_duplicates: true
+  selection_policy: cyclic_ordered
+  cycle_anchor_date: "2026-01-01"
+  cycle_length: 1000
+
+generation:
+  prepare_ahead_days: 30
+  planning_horizon_days: 60
+  published_media_retention_days: 45

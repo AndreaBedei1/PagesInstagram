@@ -1,0 +1,56 @@
+# Pagina 4 — Oggi nella Storia (eventi legati al giorno e mese correnti).
+# NON usa il ciclo lineare di 1.000 giorni: usa la rotazione per calendario.
+# Segreti SOLO da .env:
+#   ICE_OGGI_NELLA_STORIA_IT_IG_USER_ID / ICE_OGGI_NELLA_STORIA_IT_ACCESS_TOKEN
+page_id: oggi_nella_storia_it
+enabled: true
+display_name: Oggi nella Storia
+content_type: today_in_history
+language: it
+
+publishing:
+  posts_per_day: 1
+  publish_feed: true
+  publish_story: false
+  publish_reel: false
+  feed_time: "17:00"
+  story_time: "21:00"
+  timezone: "Europe/Rome"
+  missed_job_policy: publish_within_window
+  missed_job_window_minutes: 240
+  upload_method: resumable
+  feed_media_type: REELS
+  share_reel_to_feed: true
+  story_media_type: STORIES
+
+instagram:
+  account_type: business
+  api_flavor: instagram_login
+
+visual:
+  style: archival
+  template: today_in_history
+  show_author: false
+  font_family: default
+  background_profile: history_archival
+  logo_enabled: true
+  logo_text: "@oggi.nella.storia"
+
+music:
+  enabled: false
+  profile: reflective
+
+content:
+  source: database
+  minimum_quality_score: 0.55
+  avoid_semantic_duplicates: true
+  selection_policy: calendar_rotating
+  # L'ancora fissa l'anno 0 della rotazione: nel 2026 si vede il 1° evento della
+  # data, nel 2027 il 2°, e così via.
+  cycle_anchor_date: "2026-01-01"
+  cycle_length: 1000
+
+generation:
+  prepare_ahead_days: 30
+  planning_horizon_days: 60
+  published_media_retention_days: 45

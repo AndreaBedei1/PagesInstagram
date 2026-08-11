@@ -1,21 +1,36 @@
-<#
-.SYNOPSIS Stop the running worker via its PID lock file (graceful).
+﻿<#
+.SYNOPSIS  Stop publishing now.
+.DESCRIPTION
+    Stops the scheduled task and the running worker. Media already uploaded to
+    Meta but not published stay as containers and expire on their own after 24
+    hours; nothing is lost and nothing is published.
+    Use -Disarm to also disarm every page, so a restart cannot resume publishing.
 #>
-$ErrorActionPreference = "SilentlyContinue"
-$Root = Split-Path -Parent $PSScriptRoot
-$lock = "$Root\logs\worker.lock"
-if (-not (Test-Path $lock)) { Write-Host "Nessun lock: il worker non risulta in esecuzione."; return }
-$pidText = (Get-Content $lock -Raw).Trim()
-if ($pidText -match '^\d+$') {
-  $procId = [int]$pidText
-  $p = Get-Process -Id $procId -ErrorAction SilentlyContinue
-  if ($p) {
-    Write-Host "Arresto worker PID $procId ..."
-    Stop-Process -Id $procId -Force
-    Write-Host "Worker arrestato." -ForegroundColor Green
-  } else {
-    Write-Host "Il PID $procId non è attivo (lock obsoleto)."
-  }
+[CmdletBinding()] param([switch]$Disarm, [string]$PythonPath)
+$ErrorActionPreference = 'Continue'
+$root = Split-Path -Parent $PSScriptRoot
+Set-Location $root
+if ($PythonPath) {
+    $python = $PythonPath
 } else {
-  Write-Host "Lock non valido."
+    $python = Join-Path $root '.venv\Scripts\python.exe'
+    if (-not (Test-Path $python)) { $python = 'python' }
 }
+
+Write-Host "Arresto dell'attività pianificata…" -ForegroundColor Cyan
+Stop-ScheduledTask -TaskName 'InstagramContentEngineWorker' -ErrorAction SilentlyContinue
+Disable-ScheduledTask -TaskName 'InstagramContentEngineWorker' -ErrorAction SilentlyContinue | Out-Null
+
+$lock = Join-Path $root 'logs\worker.lock'
+if (Test-Path $lock) {
+    $processId = (Get-Content $lock -Raw).Trim()
+    if ($processId -match '^\d+$') {
+        Write-Host "Arresto del worker (PID $processId)…" -ForegroundColor Cyan
+        Stop-Process -Id ([int]$processId) -ErrorAction SilentlyContinue
+    }
+}
+if ($Disarm) {
+    Write-Host "Disarmo di tutte le pagine…" -ForegroundColor Cyan
+    & $python -m src.cli arm-page all --disarm
+}
+Write-Host "Fermo. Nessuna pubblicazione in corso." -ForegroundColor Green

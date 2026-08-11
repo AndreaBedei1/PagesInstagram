@@ -1,0 +1,28 @@
+"""Pensiero Essenziale — thoughts 988-999."""
+
+BATCH: list[tuple[str, str, str, str]] = [
+    ("Nelle relazioni si perdona il torto e si ricorda il tono.",
+     "Il contenuto di un litigio evapora; il modo in cui è stato condotto resta a lungo.", "relazione", "peaceful"),
+    ("Ciò che desideriamo per noia lo abbandoniamo appena la noia finisce.",
+     "Un obiettivo nato per riempire un vuoto sparisce quando il vuoto viene occupato altrove.", "desiderio", "calm"),
+    ("Un confine chiaro rende possibile la generosità dentro di esso.",
+     "Chi sa dove finisce può dare senza calcolare, perché il calcolo è già stato fatto.", "limite", "tender"),
+    ("Le parole più utili in una discussione sono forse hai ragione tu.",
+     "Concedere un punto abbassa la tensione e restituisce spazio all'argomento successivo.", "linguaggio", "peaceful"),
+    ("Il lichene cresce sulle rocce dove nessun'altra pianta potrebbe.",
+     "Alcune forme di vita non competono: occupano il posto che nessuno ha rivendicato.", "natura", "resilient"),
+    ("Chi non prova un metodo per almeno un mese non ha ancora dati per giudicarlo.",
+     "Le prime settimane misurano l'adattamento, non l'efficacia.", "azione", "focused"),
+    ("Il tempo che passiamo a rifare cose già fatte è il costo della memoria mancata.",
+     "Annotare è un investimento minimo con un rendimento che nessuno calcola.", "tempo", "focused"),
+    ("Ci giudichiamo dalla distanza dall'ideale invece che dal cammino percorso.",
+     "Il metro scelto decide se la stessa traiettoria appare come progresso o come fallimento.", "identita", "hopeful"),
+    ("Una conoscenza che non possiamo mettere in dubbio non è più conoscenza.",
+     "L'indiscutibilità trasforma un contenuto in appartenenza e lo sottrae alla verifica.", "conoscenza", "reflective"),
+    ("Chi ha bisogno di permesso per riposare non riposa nemmeno quando dorme.",
+     "L'autorizzazione interna conta più di quella esterna e va concessa esplicitamente.", "liberta", "calm"),
+    ("Restare in silenzio è una risposta, e a volte la più chiara.",
+     "L'assenza di parole comunica comunque: conviene sapere che cosa sta comunicando.", "linguaggio", "calm"),
+    ("Le stagioni non tornano: si ripresentano con un altro anno addosso.",
+     "La ciclicità non è ripetizione, perché nel frattempo tutto il resto si è spostato.", "natura", "serene"),
+]

@@ -17,6 +17,10 @@ comfyui:
   default_workflow: sd15_background.json
   max_retries: 3
   request_timeout_seconds: 120
+  # Deterministic fallback policy per mode (production must not silently degrade).
+  allow_fallback_in_dry_run: true
+  allow_fallback_in_test: true
+  allow_fallback_in_production: false
 
 rendering:
   post_size: [1080, 1350]     # 4:5 feed
@@ -45,9 +49,18 @@ music:
   avoid_reuse_last_n: 8
 
 publishing:
-  graph_api_version: v23.0
+  graph_api_version: v25.0      # verificata il 2026-08-05, vedi docs/META_RESUMABLE_UPLOAD.md
   api_flavor: instagram_login   # instagram_login | facebook_login
-  public_media_base_url: ""     # env: ICE_PUBLIC_MEDIA_BASE_URL (required for production)
+  # Direct resumable upload = default. NO public hosting / ports / external storage.
+  upload_method: resumable      # resumable | hosted_url
+  feed_media_type: REELS        # main content published as a Reel...
+  share_reel_to_feed: true      # ...visible in the Feed and Reels tabs
+  story_media_type: STORIES
+  upload_timeout_seconds: 600
+  upload_chunk_size: 8388608    # 8 MiB streaming chunks (no full file in RAM)
+  resumable_max_retries: 5
+  # hosted_url provider ONLY (legacy/optional). Not needed with resumable.
+  public_media_base_url: ""     # env: ICE_PUBLIC_MEDIA_BASE_URL
   status_poll_interval_seconds: 5.0
   status_poll_max_seconds: 300.0
   max_retries: 5

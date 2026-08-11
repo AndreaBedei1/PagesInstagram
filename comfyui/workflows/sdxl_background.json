@@ -1,0 +1,86 @@
+{
+  "4": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "sd_xl_base_1.0.safetensors"
+    }
+  },
+  "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+      "width": 768,
+      "height": 1344,
+      "batch_size": 1
+    }
+  },
+  "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "minimal warm abstract composition, soft sand beige and cream, gentle diffused light, matte paper grain, wide calm empty center, vertical 9:16 composition, clean uncluttered area in the middle for text overlay, absolutely no text, no letters, no watermark",
+      "clip": [
+        "4",
+        1
+      ]
+    }
+  },
+  "7": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "text, words, letters, lettering, typography, numbers, handwriting, watermark, signature, logo, brand, caption, subtitles, label, poster, frame, border, ui, interface, low quality, jpeg artifacts, distorted, deformed, faces, people, hands, cluttered, busy, noisy, oversaturated, harsh contrast, high detail in the center",
+      "clip": [
+        "4",
+        1
+      ]
+    }
+  },
+  "3": {
+    "class_type": "KSampler",
+    "inputs": {
+      "seed": 123456789,
+      "steps": 30,
+      "cfg": 6.0,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "denoise": 1.0,
+      "model": [
+        "4",
+        0
+      ],
+      "positive": [
+        "6",
+        0
+      ],
+      "negative": [
+        "7",
+        0
+      ],
+      "latent_image": [
+        "5",
+        0
+      ]
+    }
+  },
+  "8": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "3",
+        0
+      ],
+      "vae": [
+        "4",
+        2
+      ]
+    }
+  },
+  "9": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "ice_bg_sdxl",
+      "images": [
+        "8",
+        0
+      ]
+    }
+  }
+}

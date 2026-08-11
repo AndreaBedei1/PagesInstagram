@@ -1,0 +1,2342 @@
+{
+ "reviewer": "audit di pre-produzione 2026-08-05",
+ "reviewed_at": "2026-08-05",
+ "method": "Campione stratificato riproducibile (editorial-sample --per-dataset 100 --seed 20260805): 500 contenuti su 5.000, il 10%. Ogni elemento è stato letto insieme alla propria fonte. manually_verified è assegnato solo quando l'affermazione e la voce citata sono state confrontate e concordano. I link deboli, quelli irraggiungibili e le affermazioni non sostenute restano bloccati. Alcuni difetti trovati durante la revisione riguardano elementi fuori campione e sono registrati comunque. I contenuti non elencati qui NON sono stati controllati e restano not_checked.",
+ "sample": {
+  "per_dataset": 100,
+  "seed": 20260805,
+  "total": 500
+ },
+ "verdicts": {
+  "daily_questions_it.json": {
+   "3": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "12": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "20": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "25": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "30": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "46": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "51": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "59": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "112": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "116": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "127": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "132": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "135": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "139": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "146": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "162": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "169": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "175": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "177": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "188": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "204": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "219": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "230": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "231": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "235": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "245": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "251": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "266": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "281": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "283": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "289": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "299": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "308": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "314": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "315": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "323": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "355": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "356": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "378": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "381": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "395": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "399": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "420": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "444": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "458": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "471": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "474": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "475": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "502": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "507": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "509": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "532": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "546": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "571": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "579": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "581": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "586": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "601": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "607": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "622": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "630": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "648": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "681": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "684": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "691": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "694": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "700": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "706": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "723": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "727": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "728": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "751": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "752": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "771": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "773": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "786": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "799": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "800": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "813": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "827": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "847": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "854": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "873": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "879": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "886": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "898": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "909": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "920": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "921": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "929": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "946": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "948": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "951": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "954": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "961": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "972": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "973": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "976": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "986": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "993": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   }
+  },
+  "philosophical_thoughts_it.json": {
+   "12": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "13": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "17": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "20": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "46": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "59": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "65": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "92": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "107": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "112": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "127": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "146": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "148": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "162": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "175": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "177": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "180": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "187": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "197": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "204": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "205": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "213": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "219": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "230": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "235": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "246": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "247": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "248": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "264": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "266": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "274": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "289": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "296": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "299": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "310": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "312": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "314": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "323": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "335": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "336": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "363": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "378": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "389": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "399": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "417": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "424": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "444": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "458": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "471": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "475": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "496": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "503": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "532": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "552": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "571": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "586": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "607": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "615": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "618": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "622": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "630": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "634": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "659": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "679": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "684": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "692": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "707": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "723": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "724": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "728": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "731": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "748": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "753": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "771": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "773": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "786": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "791": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "799": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "803": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "823": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "827": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "835": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "847": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "854": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "861": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "864": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "883": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "920": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "927": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "938": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "948": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "950": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "951": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "956": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "957": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "970": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "972": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "991": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "994": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   },
+   "997": {
+    "editorial": "approved",
+    "note": "testo originale letto in revisione"
+   }
+  },
+  "today_in_history_it.json": {
+   "0": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "1": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "2": {
+    "source": "unsupported",
+    "note": "nessuna fonte collega il 1° gennaio 1959 all'entrata in funzione degli organi di garanzia",
+    "editorial": "needs_revision"
+   },
+   "9": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "34": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "46": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "59": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "68": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "89": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "90": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "116": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "128": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "139": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "148": {
+    "source": "broken_source",
+    "editorial": "approved",
+    "note": "letto in revisione: il testo regge, manca una fonte raggiungibile"
+   },
+   "155": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "158": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "159": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "161": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "164": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "206": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "208": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "214": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "226": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "230": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "233": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "235": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "241": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "243": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "244": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "249": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "250": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "263": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "272": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "297": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "300": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "305": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "315": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "356": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "359": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "362": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "384": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "409": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "444": {
+    "source": "needs_review",
+    "editorial": "approved",
+    "note": "la voce copre l'argomento ma non l'affermazione specifica"
+   },
+   "456": {
+    "source": "needs_review",
+    "note": "le fonti datano la menzione del whisky al 1494 o al 1495: verificare quale",
+    "editorial": "approved"
+   },
+   "458": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "473": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "480": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "484": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "500": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "509": {
+    "source": "needs_review",
+    "editorial": "approved",
+    "note": "la voce copre l'argomento ma non l'affermazione specifica"
+   },
+   "513": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "523": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "525": {
+    "source": "broken_source",
+    "editorial": "approved",
+    "note": "letto in revisione: il testo regge, manca una fonte raggiungibile"
+   },
+   "549": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "550": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "563": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "569": {
+    "source": "unsupported",
+    "note": "l'impatto della cometa Shoemaker-Levy 9 avvenne fra il 16 e il 22 luglio 1994, non l'8",
+    "editorial": "needs_revision"
+   },
+   "571": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "572": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "582": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "588": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "593": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "600": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "621": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "657": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "679": {
+    "source": "needs_review",
+    "note": "«prima registrazione sopravvissuta» richiede una fonte che lo affermi esplicitamente",
+    "editorial": "approved"
+   },
+   "701": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "708": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "711": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "723": {
+    "source": "needs_review",
+    "editorial": "approved",
+    "note": "la voce copre l'argomento ma non l'affermazione specifica"
+   },
+   "733": {
+    "source": "broken_source",
+    "editorial": "approved",
+    "note": "letto in revisione: il testo regge, manca una fonte raggiungibile"
+   },
+   "735": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "753": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "767": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "770": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "772": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "786": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "799": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "806": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "829": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "838": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "851": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "854": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "867": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "879": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "882": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "888": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "889": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "890": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "896": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "897": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "909": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "920": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "933": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "938": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "945": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "951": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "967": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "969": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "970": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "998": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   }
+  },
+  "words_of_the_day_it.json": {
+   "20": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "22": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "39": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "46": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "55": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "57": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "58": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "59": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "60": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "89": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "104": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "116": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "146": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "151": {
+    "source": "broken_source",
+    "editorial": "approved",
+    "note": "letto in revisione: il testo regge, manca una fonte raggiungibile"
+   },
+   "160": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "162": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "179": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "180": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "185": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "203": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "227": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "230": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "235": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "253": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "256": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "264": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "266": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "314": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "315": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "318": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "327": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "328": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "335": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "336": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "337": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "346": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "357": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "412": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "420": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "422": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "444": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "454": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "457": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "458": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "474": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "478": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "493": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "511": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "513": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "527": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "532": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "542": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "546": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "552": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "571": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "573": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "586": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "588": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "608": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "615": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "617": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "660": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "667": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "680": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "687": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "688": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "689": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "703": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "717": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "723": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "730": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "748": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "754": {
+    "source": "broken_source",
+    "editorial": "approved",
+    "note": "letto in revisione: il testo regge, manca una fonte raggiungibile"
+   },
+   "759": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "775": {
+    "source": "broken_source",
+    "editorial": "approved",
+    "note": "letto in revisione: il testo regge, manca una fonte raggiungibile"
+   },
+   "795": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "799": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "805": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "806": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "821": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "827": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "846": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "847": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "852": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "857": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "879": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "894": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "914": {
+    "source": "broken_source",
+    "editorial": "approved",
+    "note": "letto in revisione: il testo regge, manca una fonte raggiungibile"
+   },
+   "920": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "937": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "948": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "951": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "962": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "966": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "970": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "972": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "973": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "977": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "982": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "989": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   }
+  },
+  "world_curiosities_it.json": {
+   "5": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "9": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "12": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "40": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "59": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "61": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "69": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "71": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "89": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "107": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "142": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "205": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "221": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "230": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "235": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "243": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "249": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "255": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "314": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "315": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "329": {
+    "source": "broken_source",
+    "editorial": "approved",
+    "note": "letto in revisione: il testo regge, manca una fonte raggiungibile"
+   },
+   "331": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "336": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "349": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "rapporto saune/automobili sostituito con un ordine di grandezza verificabile"
+   },
+   "350": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "356": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "358": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione «visibile dallo spazio» sostituita con una formulazione verificabile"
+   },
+   "363": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "«quasi ventiquattro ore di fuso» corretto: la differenza documentata è di ventuno ore"
+   },
+   "365": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "confronto non sostenuto dalla fonte sostituito con altezza e longevità documentate"
+   },
+   "377": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "405": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "414": {
+    "source": "broken_source",
+    "editorial": "approved",
+    "note": "letto in revisione: il testo regge, manca una fonte raggiungibile"
+   },
+   "426": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "437": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "444": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "456": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "458": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "467": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "472": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "475": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "484": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "513": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "518": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "543": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "547": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "550": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "571": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "574": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "578": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "588": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "592": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "595": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "608": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "610": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "613": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "636": {
+    "source": "needs_review",
+    "editorial": "approved",
+    "note": "la voce copre l'argomento ma non l'affermazione specifica"
+   },
+   "638": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "642": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "643": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "649": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "664": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "668": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "676": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "678": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "680": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "694": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "713": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "714": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "718": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "724": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "728": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "751": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "759": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "763": {
+    "source": "broken_source",
+    "editorial": "approved",
+    "note": "letto in revisione: il testo regge, manca una fonte raggiungibile"
+   },
+   "767": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "777": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "789": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "795": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "799": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "802": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "805": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "806": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "834": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "840": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "848": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "852": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "853": {
+    "source": "broken_source",
+    "editorial": "approved",
+    "note": "letto in revisione: il testo regge, manca una fonte raggiungibile"
+   },
+   "854": {
+    "source": "broken_source",
+    "editorial": "approved",
+    "note": "letto in revisione: il testo regge, manca una fonte raggiungibile"
+   },
+   "857": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "875": {
+    "source": "broken_source",
+    "editorial": "approved",
+    "note": "letto in revisione: il testo regge, manca una fonte raggiungibile"
+   },
+   "879": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "880": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "883": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "884": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "887": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "948": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "951": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "952": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "963": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "972": {
+    "source": "needs_review",
+    "editorial": "approved",
+    "note": "la voce copre l'argomento ma non l'affermazione specifica"
+   },
+   "974": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "977": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   },
+   "991": {
+    "source": "manually_verified",
+    "editorial": "approved",
+    "note": "affermazione e fonte lette e confrontate"
+   }
+  }
+ }
+}

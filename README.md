@@ -1,457 +1,324 @@
-# Instagram Content Engine
+# Instagram Content Engine — cinque pagine evergreen
 
-Motore **unico, modulare e multi-account** per generare e pubblicare
-automaticamente contenuti su più pagine Instagram (un contenuto al giorno per
-pagina, **feed + storia**), con:
+Motore **locale, deterministico e multi-account** che gestisce cinque pagine
+Instagram evergreen e pubblica **un contenuto al giorno per pagina**, senza
+servizi cloud, senza browser automation, senza API di modelli a pagamento e
+**senza richiedere Claude a runtime**.
 
-- sfondi generati **localmente con ComfyUI** (Stable Diffusion),
-- testo aggiunto in modo **deterministico** (Pillow) — il modello non scrive mai il testo,
-- **controllo qualità misurabile** con auto-correzione,
-- **musica coerente col mood**, con licenza, incorporata nel video,
-- **video** feed 4:5 e storia 9:16 conformi ai requisiti Meta,
-- **scheduler persistente** con ripristino dopo riavvio (Windows Task Scheduler),
-- **pubblicazione tramite API ufficiali Meta** (Instagram Content Publishing API),
-  con modalità `dry_run` / `test` / `production`,
-- **dashboard locale** di revisione.
+```
+datasets/*.json  ──import──►  SQLite (sequence_index / calendar_key)
+                                   │
+              planner (60 gg)  ────┼──►  publication_jobs idempotenti
+                                   │
+   selezione deterministica per (page_id, data locale programmata)
+                                   │
+                ComfyUI SDXL locale → SOLO lo sfondo (seed deterministico)
+                                   │
+                     Pillow → testo (un template per pagina)
+                                   │
+              qualità (WCAG, margini, righe) + auto-riparazione
+                                   │
+                 FFmpeg → MP4 9:16 1080×1920, 8 s, H.264, faststart
+                                   │
+     worker → Meta resumable upload → REELS con share_to_feed=true
+```
 
-Aggiungere una pagina = aggiungere **un file YAML** in `accounts/`. Nessun codice duplicato.
-
-> Progettato e testato su Windows 11 + Python 3.14 + NVIDIA RTX 6000 Ada. ComfyUI
-> è opzionale a runtime: senza GPU/ComfyUI l'engine usa uno sfondo di fallback
-> deterministico e la pipeline funziona comunque end-to-end.
+> Progettato e testato su Windows 11 + Python 3.14 + NVIDIA RTX 6000 Ada.
 
 ---
 
-## Indice
-1. [Architettura](#architettura)
-2. [Requisiti](#requisiti)
-3. [Installazione (Windows)](#installazione-windows)
-4. [Configurazione ComfyUI](#configurazione-comfyui)
-5. [Configurazione FFmpeg](#configurazione-ffmpeg)
-6. [Database](#database)
-7. [Configurazione degli account](#configurazione-degli-account)
-8. [Token Meta / Instagram](#token-meta--instagram)
-9. [Modalità dry-run / test / produzione](#modalità-dry-run--test--produzione)
-10. [Aggiungere una nuova pagina](#aggiungere-una-nuova-pagina)
-11. [Aggiungere contenuti](#aggiungere-contenuti)
-12. [Aggiungere musica e licenze](#aggiungere-musica-e-licenze)
-13. [Scheduler e worker](#scheduler-e-worker)
-14. [Gestione PC spento](#gestione-pc-spento)
-15. [Ripristino dopo crash](#ripristino-dopo-crash)
-16. [Dashboard](#dashboard)
-17. [Log](#log)
-18. [Test](#test)
-19. [Sicurezza](#sicurezza)
-20. [Limiti API Meta (reali)](#limiti-api-meta-reali)
-21. [Backup e aggiornamento](#backup-e-aggiornamento)
-22. [Troubleshooting](#troubleshooting)
-23. [Comandi CLI](#comandi-cli)
+## Le cinque pagine
+
+| Pagina | `page_id` | Contenuto | Orario | Policy |
+|---|---|---|---|---|
+| Pensiero Essenziale | `pensiero_essenziale_it` | pensieri filosofici originali | 08:30 | `cyclic_ordered` |
+| Curiosità dal Mondo | `curiosita_mondo_it` | fatti verificati con fonte | 11:00 | `cyclic_ordered` |
+| Parola del Giorno | `parola_giorno_it` | lessico italiano con fonte | 13:30 | `cyclic_ordered` |
+| Oggi nella Storia | `oggi_nella_storia_it` | eventi del giorno corrente | 17:00 | `calendar_rotating` |
+| Una Domanda al Giorno | `domanda_giorno_it` | domande originali | 20:30 | `cyclic_ordered` |
+
+Ogni pagina è **un solo file YAML** in `accounts/`. Aggiungerne o modificarne una
+non richiede di toccare il codice.
+
+## I contenuti
+
+**5.000 elementi, 1.000 per pagina, tutti pronti per la produzione.** Ogni
+contenuto fattuale porta con sé la prova con cui è stato costruito: la frase
+della fonte, l'URL, il titolo della pagina, la data del controllo e un hash che
+lo lega al proprio testo. Modificare il testo dopo la verifica lo rende
+automaticamente non pubblicabile — è il modo in cui il cancello impedisce di
+approvare un corpus e poi cambiarne il contenuto.
+
+| Pagina | Elementi | Metodo di verifica | Fonte |
+|---|---|---|---|
+| Pensiero Essenziale | 1.000 | `original_nonfactual` | scrittura originale |
+| Una Domanda al Giorno | 1.000 | `original_nonfactual` | scrittura originale |
+| Una Parola al Giorno | 1.000 | `authoritative_reference` | Treccani, voce del lemma |
+| Oggi nella Storia | 1.000 | `structured_official_dataset` / `cross_checked_sources` | elenco del giorno + voce dell'evento |
+| Curiosità dal Mondo | 1.000 | `structured_official_dataset` | incipit della voce citata |
+
+I contenuti fattuali sono stati **costruiti a partire dalle fonti**, non scritti
+per primi e corredati di fonte dopo: `verification_executor` vale
+`automated_source_first`, e il campo esiste proprio per non chiamare "verifica
+manuale" un lavoro che una persona non ha svolto.
+
+```powershell
+python -m src.cli corpus-final-gate        # 12 contatori, tutti a zero
+python -m src.cli production-readiness --from 2026-08-07 --days 1000 --all-pages
+```
+
+Fonti, gerarchia di qualità, copertura effettiva dell'audit e limiti residui:
+[docs/DATASET_SOURCES.md](docs/DATASET_SOURCES.md). Come si approva un contenuto:
+[docs/EDITORIAL_REVIEW_WORKFLOW.md](docs/EDITORIAL_REVIEW_WORKFLOW.md).
+
+---
+
+## Avvio rapido
+
+```powershell
+scripts\bootstrap_five_pages.ps1        # da repo pulito a dry-run funzionante
+scripts\install_local_model.ps1         # scarica SDXL Base 1.0 per ComfyUI
+```
+
+Poi, quando vuoi pubblicare davvero: compila `.env`, esegui
+[docs/PRODUCTION_CHECKLIST.md](docs/PRODUCTION_CHECKLIST.md) e imposta
+`ICE_MODE=production`.
+
+## Documentazione
+
+| Documento | Contenuto |
+|---|---|
+| [FIVE_PAGES_SETUP.md](docs/FIVE_PAGES_SETUP.md) | installazione, gestione, backup, ripristino, aggiornamenti |
+| [CONTENT_ROTATION.md](docs/CONTENT_ROTATION.md) | come viene scelto il contenuto del giorno |
+| [DATASET_SCHEMA.md](docs/DATASET_SCHEMA.md) | struttura dei dataset e regole di validazione |
+| [DATASET_SOURCES.md](docs/DATASET_SOURCES.md) | fonti, gerarchia di qualità, copertura reale dell'audit, limiti noti |
+| [EDITORIAL_REVIEW_WORKFLOW.md](docs/EDITORIAL_REVIEW_WORKFLOW.md) | stati editoriali, come approvare, primo test Meta |
+| [PREPRODUCTION_AUDIT.md](docs/PREPRODUCTION_AUDIT.md) | che cosa ha trovato l'audit di pre-produzione |
+| [PRODUCTION_RUNBOOK.md](docs/PRODUCTION_RUNBOOK.md) | **le variabili da compilare e i comandi, in ordine** |
+| [LOCAL_MODEL_SETUP.md](docs/LOCAL_MODEL_SETUP.md) | ComfyUI, SDXL, licenza, profili di sfondo |
+| [META_RESUMABLE_UPLOAD.md](docs/META_RESUMABLE_UPLOAD.md) | API ufficiali Meta, upload diretto |
+| [PRODUCTION_CHECKLIST.md](docs/PRODUCTION_CHECKLIST.md) | tutto ciò che va verificato prima della produzione |
+| [FIVE_PAGES_IMPLEMENTATION_PLAN.md](docs/FIVE_PAGES_IMPLEMENTATION_PLAN.md) | piano di implementazione e stato |
 
 ---
 
 ## Architettura
 
 ```
-accounts/*.yaml   ── una pagina = un file (config indipendente, niente segreti)
+accounts/*.yaml   ── una pagina = un file (nessun segreto)
 config/           ── settings globali non-segreti (+ override da .env)
-datasets/*.json   ── contenuti seed (frasi motivazionali, citazioni verificate)
-assets/           ── font, musica (con catalogo licenze), overlay, template
-comfyui/          ── workflow SD1.5 di riferimento
-database/         ── SQLite (schema versionato con migrazioni)
-generated/        ── output: backgrounds, posts, stories, reels, failed
+datasets/*.json   ── 5.000 contenuti versionati
+tools/            ── sorgenti dei dataset + build_datasets.py
+comfyui/          ── workflow SDXL (e SD1.5 legacy)
+database/         ── SQLite con migrazioni versionate
+generated/        ── output: sfondi, immagini, video
+reports/          ── validazione dataset, anteprime, campione di revisione
 src/
-  core/        paths, settings, logging (redazione token), enum, timeutils
-  accounts/    modelli + registry delle pagine
-  content/     normalizzazione, qualità testo, dedup, importer, caption
-  comfyui/     client API + generatore sfondi (con fallback)
-  rendering/   font, layout (wrap+fit), renderer tipografico
-  quality/     WCAG, validazione immagine/video + loop di auto-riparazione
-  music/       sintesi toni CC0, libreria/licenze, selezione per mood
-  video/       ffmpeg + builder video (Ken Burns + musica bakizzata)
-  publishing/  credenziali (solo env), Graph API client, mock, publisher
-  scheduling/  pipeline generazione, planner giornaliero, worker persistente, lock
-  monitoring/  status, report JSON, preview HTML
-  dashboard/   dashboard FastAPI locale
-  cli/         interfaccia a riga di comando (typer)
+  core/        paths, settings, logging (redazione token), enum, tempo
+  accounts/    modelli e registry delle pagine
+  content/     normalizzazione, qualità, dedup, importer, selezione, validazione
+  comfyui/     client API + generatore sfondi (SDXL/SD1.5, seed deterministici)
+  rendering/   font, layout, template a blocchi, renderer
+  quality/     WCAG, validazione immagine/video, auto-riparazione
+  video/       ffmpeg + builder (Ken Burns leggero, traccia AAC silenziosa)
+  publishing/  credenziali da env, Graph API, mock, publisher idempotente
+  scheduling/  pipeline, planner, worker con buffer scorrevole, lock
+  security/    scanner di segreti sui file tracciati
+  monitoring/  stato, report JSON, anteprime HTML
+  dashboard/   dashboard locale FastAPI
+  cli/         interfaccia a riga di comando
 ```
 
-**Macchina a stati del job** (idempotente, una sola pubblicazione):
+**Stato del job** (idempotente, una sola pubblicazione):
 `DRAFT → VALIDATED → BACKGROUND_GENERATED → RENDERED → MEDIA_READY → SCHEDULED →
-UPLOADING → CONTAINER_CREATED → PUBLISHING → PUBLISHED` con rami
+UPLOADING → CONTAINER_CREATED → PUBLISHING → PUBLISHED`, con rami
 `FAILED / RETRY_PENDING / SKIPPED / REJECTED / NEEDS_REVIEW`.
 
-**Pipeline giornaliera:** planner crea i job → worker seleziona un contenuto
-approvato (mai duplicato sulla pagina) → ComfyUI genera lo sfondo → rendering del
-testo → validazione qualità con auto-fix (colore → posizione → overlay →
-dimensione → wrapping → rigenera sfondo) → selezione musica per mood → video con
-musica incorporata → pubblicazione (o dry-run) all'orario previsto.
-
----
-
-## Requisiti
-
-- **Windows 10/11**
-- **Python ≥ 3.11** (testato su 3.14)
-- **[uv](https://docs.astral.sh/uv/)** (gestione ambiente; consigliato)
-- **FFmpeg**: non serve installarlo — è incluso via `imageio-ffmpeg`. Se ne hai
-  uno di sistema, puoi usarlo con `ICE_FFMPEG_PATH`.
-- **ComfyUI** (opzionale a runtime): per gli sfondi reali. GPU NVIDIA consigliata.
-- Per la **pubblicazione reale**: account Instagram **professional** (Business/Creator),
-  token Meta long-lived e un **hosting pubblico** per i media (vedi §20).
-
----
-
-## Installazione (Windows)
-
-```powershell
-# dalla cartella del progetto
-scripts\install_windows.ps1
-```
-
-Lo script: crea `.venv` con uv, installa le dipendenze, copia `.env.example`→`.env`,
-valida l'ambiente, inizializza il DB e importa dataset + musica placeholder.
-
-Installazione manuale equivalente:
-
-```powershell
-uv venv .venv
-uv pip install --python .venv\Scripts\python.exe -r requirements.txt
-copy .env.example .env
-.venv\Scripts\python.exe -m src.cli validate
-.venv\Scripts\python.exe -m src.cli init-db
-.venv\Scripts\python.exe -m src.cli import-content
-.venv\Scripts\python.exe -m src.cli music generate
-.venv\Scripts\python.exe -m src.cli music sync
-```
-
-Verifica completa (env + test + pipeline dry-run):
-
-```powershell
-scripts\validate_installation.ps1
-```
-
----
-
-## Configurazione ComfyUI
-
-L'engine parla con ComfyUI via **API locali ufficiali** (`/prompt`, `/history`,
-`/view`). Configurazione in `config/settings.yaml` → `comfyui:` o via env:
+## Selezione deterministica
 
 ```
-ICE_COMFYUI_URL=http://127.0.0.1:8188
-ICE_COMFYUI_LAUNCH_BAT=F:\AI\start_comfyui.bat   # per l'avvio automatico
-ICE_COMFYUI_OUTPUT_DIR=F:\AI\output
+giorni  = (data_locale_programmata − cycle_anchor_date).days
+indice  = giorni mod 1000
+ciclo   = giorni div 1000
 ```
 
-- Se `auto_start: true` e il launcher esiste, l'engine **avvia ComfyUI** e attende
-  che sia pronto (fino a `startup_timeout_seconds`).
-- Il workflow usato è un **SD1.5 txt2img** (checkpoint `DreamShaper_8_pruned.safetensors`),
-  costruito in `src/comfyui/workflow.py`; riferimento in `comfyui/workflows/sd15_background.json`.
-- ComfyUI genera **solo lo sfondo**. Il testo è aggiunto dopo, in modo deterministico.
-- Senza ComfyUI raggiungibile, l'engine usa uno **sfondo di fallback** (gradiente
-  elegante per mood) e prosegue.
+Stessa pagina + stessa data ⇒ **sempre** lo stesso contenuto, indipendentemente
+da riavvii, ordine delle query SQL, inserimenti successivi, casualità e numero di
+tentativi. Dopo 1.000 giorni il testo si ripete, ma `ciclo` entra nel seed dello
+sfondo e l'immagine è nuova.
 
----
+"Oggi nella Storia" usa invece la rotazione per calendario: filtra su
+`calendar_key = MM-DD` e ruota per anno, quindi non pubblica **mai** un evento in
+un giorno diverso da quello in cui è accaduto.
 
-## Configurazione FFmpeg
+## Buffer scorrevole
 
-Nessuna azione necessaria: viene usato il binario di `imageio-ffmpeg`. Per usare
-un ffmpeg di sistema imposta `ICE_FFMPEG_PATH=C:\path\ffmpeg.exe` (o `video.ffmpeg_path`
-in `settings.yaml`). I video rispettano i requisiti Meta: MP4/H.264 High, `yuv420p`,
-GOP chiuso, **AAC 48 kHz stereo**, `+faststart`.
-
----
-
-## Database
-
-SQLite in `database/content.sqlite`, **schema versionato** con migrazioni in
-`src/database/migrations/` applicate automaticamente all'apertura.
-Tabelle: `pages, contents, media_assets, publication_jobs, publication_logs,
-music_tracks, music_usage, schema_migrations`. **Nessun token** è mai salvato nel DB.
-
-```powershell
-.venv\Scripts\python.exe -m src.cli init-db     # crea/aggiorna schema + registra pagine
+```yaml
+generation:
+  prepare_ahead_days: 30
+  planning_horizon_days: 60
+  published_media_retention_days: 45
 ```
 
----
+Il worker, a ogni tick: pianifica 60 giorni di job → genera i media dei 30 giorni
+successivi → pubblica i job scaduti → riprende quelli interrotti → elimina i media
+locali dei job **pubblicati** più vecchi della retention (database, log e metadati
+restano; i file di job falliti o da revisionare non vengono mai toccati).
+Il buffer si ricostruisce da solo dopo un riavvio.
 
-## Configurazione degli account
+## Rendering
 
-Ogni pagina è un file YAML in `accounts/` (vedi `motivational_page.yaml`,
-`famous_quotes_page.yaml`). Campi principali: `page_id`, `content_type`,
-`publishing` (orari feed/story, timezone, policy PC-spento), `visual` (stile,
-`show_author`, logo), `music` (profilo, volume), `content` (soglia qualità).
-I **segreti non vanno mai** nello YAML: si usano variabili d'ambiente.
+Cinque template tipografici realmente distinti, non lo stesso layout ricolorato:
 
----
+| Pagina | Struttura |
+|---|---|
+| Pensiero Essenziale | testo centrale grande in serif, filetto, watermark |
+| Curiosità dal Mondo | occhiello con la località, filetto, fatto grande, categoria |
+| Parola del Giorno | etichetta, parola molto grande, categoria grammaticale in corsivo, filetto, definizione |
+| Oggi nella Storia | giorno e mese spaziati, anno grandissimo, filetto, titolo, descrizione |
+| Una Domanda al Giorno | numero progressivo, domanda centrale, filetto, fondo scuro |
 
-## Token Meta / Instagram
+Un'unica ricerca binaria trova la dimensione base che fa entrare l'intera pila di
+blocchi nel riquadro sicuro. Restano attivi controllo di contrasto WCAG, margini,
+adattamento del font, wrapping, limite righe, auto-riparazione e validazione della
+risoluzione.
 
-L'engine usa l'**Instagram Content Publishing API** ufficiale. Consigliata la
-configurazione *Instagram API with Instagram Login* (`graph.instagram.com`,
-permessi `instagram_business_basic`, `instagram_business_content_publish`).
+Anteprime reali: `python -m src.cli preview-pages --per-page 5` →
+`reports/previews/index.html`.
 
-I segreti si impostano in `.env` (mai committato), **per pagina**:
+## Video
 
-```
-# prefisso = ICE_<PAGE_ID_MAIUSCOLO>
-ICE_MOTIVATIONAL_IT_IG_USER_ID=1789xxxxxxxxxxx
-ICE_MOTIVATIONAL_IT_ACCESS_TOKEN=EAAG...        # long-lived (60 giorni)
-ICE_FAMOUS_QUOTES_IT_IG_USER_ID=1789yyyyyyyyyyy
-ICE_FAMOUS_QUOTES_IT_ACCESS_TOKEN=EAAG...
-# in alternativa un token globale:
-META_ACCESS_TOKEN=EAAG...
-```
+MP4 1080×1920, H.264 High, `yuv420p`, 30 fps, **8 secondi**, GOP chiuso,
+`+faststart`, Ken Burns molto leggero (zoom 1.04). Le cinque pagine pubblicano
+**senza musica**: il file porta comunque una traccia **AAC silenziosa** a 48 kHz
+per compatibilità con il contenitore atteso da Meta. Nessuna musica di terzi,
+nessuna dipendenza dalla libreria audio di Instagram.
 
-Ottenere il token (sintesi): crea un'app su developers.facebook.com, collega
-l'account professional, ottieni un token short-lived (1h) e scambialo per uno
-**long-lived (60 giorni)**, rinnovabile prima della scadenza. Vedi la
-[doc ufficiale](https://developers.facebook.com/docs/instagram-platform/content-publishing/).
+## Pubblicazione
 
-> **La Graph API scarica i media da URL pubblici**: imposta
-> `ICE_PUBLIC_MEDIA_BASE_URL` a un host https che serve la cartella `generated/`.
-> Senza questo, la produzione non può pubblicare (il dry-run sì).
+Upload **resumable diretto**: il file locale viaggia verso i server Meta
+(`rupload.facebook.com`). **Nessun hosting pubblico, nessuna porta aperta,
+nessuno storage esterno.** Il contenuto principale è un **Reel** con
+`share_to_feed=true`, quindi visibile sia nel Feed sia nella tab Reels.
 
----
+Modalità: `dry_run` (default, nessuna rete) · `test` (pubblicazione solo manuale
+e confermata) · `production` (worker automatico, fallback dello sfondo vietato).
 
-## Modalità dry-run / test / produzione
+## Sicurezza
 
-Impostabile con `ICE_MODE` o `config/settings.yaml`:
-
-- **`dry_run`** (default): genera tutto (sfondo, immagini, video, caption) ma **non**
-  effettua chiamate di pubblicazione. Il job diventa `PUBLISHED` con media id
-  `DRYRUN-...` — idempotente.
-- **`test`**: pubblica solo con un client esplicito (mock o account di test).
-- **`production`**: pubblica davvero. Richiede token + `ICE_PUBLIC_MEDIA_BASE_URL`.
-
-```powershell
-$env:ICE_MODE="dry_run"; .venv\Scripts\python.exe -m src.cli publish-next --dry-run
-```
-
----
-
-## Aggiungere una nuova pagina
-
-1. Copia `accounts/example_future_page.yaml` → `accounts/la_mia_pagina.yaml`.
-2. Cambia `page_id`, `display_name`, `content_type`, orari, stile.
-3. Aggiungi i segreti in `.env` con prefisso `ICE_<PAGE_ID_MAIUSCOLO>_...`.
-4. Assicurati che esistano contenuti approvati per quel `content_type`.
-5. `init-db` (registra la pagina) e `schedule`. Fatto — **nessun codice** da toccare.
-
----
-
-## Aggiungere contenuti
-
-I contenuti vivono in `datasets/*.json` e vengono importati con dedup + qualità:
-
-```powershell
-.venv\Scripts\python.exe -m src.cli import-content            # tutti i dataset
-.venv\Scripts\python.exe -m src.cli import-content --dataset datasets/mio.json
-```
-
-- **Motivazionali**: `text, category, mood, explanation, caption, call_to_action,
-  hashtags, background_prompt`. Qualità ≥ soglia ⇒ `approved_for_publication`.
-- **Citazioni**: in più `author, source_work, source_year, source_url,
-  attribution_confidence, status`. Solo `verified` + `high` + fonte ⇒ approvate;
-  le incerte restano `needs_review` (revisione manuale in dashboard).
-
-Deduplicazione a 3 livelli (esatta/hash, fuzzy, semantica) con clustering:
-niente due contenuti che dicono la stessa cosa con parole diverse.
-
----
-
-## Aggiungere musica e licenze
-
-Vedi `assets/music/README.md`. In sintesi:
-
-- Ogni traccia è in `assets/music/catalog.json` con **licenza obbligatoria**;
-  senza licenza ⇒ `instagram_safe=0` ⇒ **mai** selezionata.
-- Toni segnaposto **CC0** generati (uno per mood): `python -m src.cli music generate`.
-- Aggiungi tracce reali (royalty-free/pubblico dominio/licenziate), poi
-  `python -m src.cli music sync`.
-- La musica è **incorporata nel video** con fade-in/out e volume attenuato
-  (l'API Meta non consente audio della libreria Instagram — vedi §20).
-
----
-
-## Scheduler e worker
-
-Il **worker** persistente: pianifica i job, genera i media in anticipo e pubblica
-all'orario previsto.
-
-```powershell
-.venv\Scripts\python.exe -m src.cli schedule --days 7     # pianifica
-.venv\Scripts\python.exe -m src.cli worker                # esegui (foreground)
-.venv\Scripts\python.exe -m src.cli worker --once         # un solo ciclo
-```
-
-Avvio automatico all'accensione (Windows Task Scheduler — **eseguire dalla propria
-sessione interattiva**, serve il permesso di registrare task):
-
-```powershell
-scripts\register_task_scheduler.ps1      # avvio al login, riavvio automatico
-scripts\unregister_task_scheduler.ps1    # rimozione
-scripts\stop_worker.ps1                  # stop controllato (via PID lock)
-```
-
-Il worker usa un **lock a livello di OS** per evitare due istanze; gestisce
-timezone Europe/Rome con ora legale.
-
----
-
-## Gestione PC spento
-
-Se il PC è spento all'orario previsto, alla riaccensione il worker applica la
-`missed_job_policy` della pagina:
-
-- `publish_immediately` — pubblica subito;
-- `publish_within_window` — pubblica solo se il ritardo ≤ `missed_job_window_minutes`, altrimenti salta;
-- `skip` — salta il contenuto (stato `SKIPPED`);
-- `reschedule` — riprogramma al giorno successivo.
-
-**Architettura futura** (già predisposta): ComfyUI genera in anticipo sul PC
-locale, i media vengono caricati su storage, e un **piccolo server sempre acceso**
-si occupa solo della pubblicazione. Non incluso ora, ma il publisher è disaccoppiato
-dalla generazione (basta puntare `ICE_PUBLIC_MEDIA_BASE_URL` allo storage e far
-girare il worker in modalità sola-pubblicazione sul server).
-
----
-
-## Ripristino dopo crash
-
-- Job idempotenti: un contenuto non viene mai pubblicato due volte (chiave
-  univoca per pagina/tipo/giorno; container e media id riusati).
-- All'avvio il worker **riprende** i job in volo (`recover()`), riusando il
-  `container_id` già creato.
-- Retry con **backoff esponenziale** solo per errori transitori; nessun retry
-  infinito; oltre il massimo → `FAILED` (rimettibili in coda con `retry-failed`).
-
----
-
-## Dashboard
-
-```powershell
-.venv\Scripts\python.exe -m src.cli dashboard
-# apri l'URL mostrato:  http://127.0.0.1:8765/?token=<TOKEN>
-```
-
-Solo localhost, protetta da token (`ICE_DASHBOARD_TOKEN`). Permette: panoramica,
-**revisione/approvazione** contenuti, galleria media (immagini+video+musica),
-lista job con errori, **pausa/riattivazione** pagina, retry.
-
----
-
-## Log
-
-`logs/engine.log` con **rotazione** (5×5 MB). I **token non compaiono mai** nei log
-(redazione automatica). Il worker scrive anche `logs/worker_*.out.log`.
-Report JSON: `python -m src.cli export-report`.
-
----
+- token **solo** in `.env`, mai negli YAML, mai nel database, mai nei log
+  (redazione automatica);
+- `python -m src.cli security-check` analizza i file **tracciati da Git** e cerca
+  pattern compatibili con token Meta, app secret e credenziali, verificando anche
+  che `.env`, `secrets/` e `*.safetensors` siano esclusi;
+- `python -m src.cli instagram health-check --all` verifica le credenziali senza
+  pubblicare nulla e **senza stampare mai un token**;
+- dashboard solo su `127.0.0.1`, protetta da token.
 
 ## Test
 
 ```powershell
-.venv\Scripts\python.exe -m pytest -q            # tutto
-.venv\Scripts\python.exe -m pytest -m "not integration and not e2e" -q   # solo unit
-```
-
-Coprono: config/YAML, DB/migrazioni, dedup/similarità, qualità testo, selezione
-contenuti/musica, rendering, wrap/contrasto/margini, validazione immagine/video,
-creazione video, scheduler/timezone, job duplicati, retry, dry-run, **mock delle
-risposte Meta** (token scaduto, container fallito, rate limit, già pubblicato),
-worker end-to-end e dashboard.
-
----
-
-## Sicurezza
-
-- Token **solo** in variabili d'ambiente; `.env` escluso da git; **mai** nei log né nel DB.
-- URL validati; media serviti dalla dashboard solo da `generated/` (no path traversal).
-- Escaping dell'HTML in dashboard/preview; lock del DB (WAL + busy_timeout).
-- Dashboard su `127.0.0.1` con token; nessuna porta esposta pubblicamente di default.
-- Backup periodici e rotazione dei log.
-
----
-
-## Limiti API Meta (reali)
-
-Rilevati dalla documentazione ufficiale (vedi anche `docs/PLAN.md` §2):
-
-- **Le Stories via API NON supportano musica/sticker/link/audio di tendenza.**
-- **I Reels via API non hanno accesso ai suoni di tendenza/catalogo Instagram.**
-  ⇒ **La musica va incorporata nel file video** prima dell'upload (ciò che fa l'engine).
-- **Limite: 100 post pubblicati via API in 24h** (un carosello = 1). Il nostro
-  fabbisogno (1/giorno/pagina) è ampiamente sotto soglia.
-- Account **professional** (Business/Creator) obbligatorio.
-- Token long-lived **60 giorni**, rinnovabile.
-- La Graph API **scarica i media da URL pubblici**: serve hosting https
-  (`ICE_PUBLIC_MEDIA_BASE_URL`). Questo e i token sono gli unici **blocchi reali**
-  per la produzione; tutto il resto è testato in dry-run/mock.
-- **Non** si usano Selenium/automazioni non ufficiali: solo API ufficiali.
-
----
-
-## Backup e aggiornamento
-
-**Backup**: copia `database/content.sqlite`, `accounts/`, `datasets/`,
-`assets/music/catalog.json`, `.env` (in luogo sicuro). Esempio:
-
-```powershell
-Copy-Item database\content.sqlite "backup\content_$(Get-Date -Format yyyyMMdd).sqlite"
-```
-
-**Aggiornamento**:
-
-```powershell
-git pull
-uv pip install --python .venv\Scripts\python.exe -r requirements.txt
-.venv\Scripts\python.exe -m src.cli init-db     # applica eventuali migrazioni
 .venv\Scripts\python.exe -m pytest -q
+.venv\Scripts\python.exe -m pytest -m "not integration and not e2e" -q
 ```
 
----
+Oltre alla suite preesistente, `tests/unit/test_evergreen.py` e
+`tests/integration/test_evergreen_worker.py` coprono i requisiti delle cinque
+pagine: cinque YAML, cinque pagine attive, 1.000 contenuti per dataset e 5.000
+totali, indici `0..999` senza buchi, wrap dal giorno 999 al giorno 0, stabilità
+dopo riavvio e dopo nuovi inserimenti, sfondo nuovo al ciclo successivo, coerenza
+`MM-DD`, 29 febbraio, almeno due eventi per data, nessun contenuto fattuale
+approvato senza fonte, dedup esatta/fuzzy/semantica, i cinque template con
+contrasto e margini, grafo SDXL, divieto di fallback in produzione, buffer 30/60
+giorni, retention dei media, idempotenza per pagina e data, pubblicazione mock
+per ciascuna pagina, ripristino dopo crash, assenza di segreti, 5 job in un
+giorno e 35 in sette, nessuna Story pianificata, worker singolo.
 
-## Troubleshooting
-
-| Sintomo | Causa / Rimedio |
-|---|---|
-| `ComfyUI not running` in `validate` | Avvia ComfyUI o imposta `auto_start`; l'engine usa comunque il fallback |
-| Video senza audio | Nessuna traccia `instagram_safe`: aggiungi musica con licenza e `music sync` |
-| `ICE_PUBLIC_MEDIA_BASE_URL non impostato` | In produzione serve un hosting pubblico dei media |
-| `missing credentials` | Imposta `ICE_<PAGE>_IG_USER_ID` e `_ACCESS_TOKEN` in `.env` |
-| Font brutto/di sistema | Metti un TTF in `assets/fonts/` (es. Inter/EB Garamond) |
-| Task Scheduler "Accesso negato" | Esegui `register_task_scheduler.ps1` dalla **tua** sessione interattiva |
-| Qualità immagine bassa | Il validatore auto-corregge; se persiste, rigenera lo sfondo o abbassa `min_score` |
-
----
+`tests/unit/test_editorial_quality.py` e `tests/integration/test_preproduction.py`
+aggiungono i controlli nati dall'audit di pre-produzione: coerenza della versione
+Graph API fra codice, YAML, `.env.example` e documentazione; errori di lingua
+sui 5.000 contenuti; soft 404 e redirect; nessun contenuto pubblicabile con
+fonte non verificata; verifica manuale dichiarata e minoritaria; CTA, hashtag,
+prompt, categorie e mood non ripetitivi su finestre di 7, 30, 90 e 365 giorni;
+campionamento riproducibile e distribuito; date storiche e convenzione di
+calendario; lemmi e URL lessicografici; smoke test delle cinque pagine con
+idempotenza; `--no-publish` che resta tale; redazione dei token; fallback vietato
+in produzione.
 
 ## Comandi CLI
 
 ```
-validate         Controlla ambiente (ffmpeg, ComfyUI, font, DB, pagine)
-init-db          Crea/aggiorna il database e registra le pagine
-import-content   Importa i dataset (dedup + qualità)
-generate         Genera media (sfondo+immagini+video) per N contenuti
-render           Solo immagini (anteprima rapida)
-schedule         Pianifica i job giornalieri
-worker           Worker persistente (--once per un ciclo)
-publish-next     Prepara e pubblica il prossimo job (--dry-run)
-retry-failed     Rimette in coda i job FAILED
-status           Riepilogo stato
-preview          Galleria HTML dei media
-export-report    Report JSON
-dashboard        Avvia la dashboard locale
-pages            Elenca le pagine
-music generate   Genera toni CC0 (uno per mood)
-music sync       Carica catalog.json nel DB
+validate            Controlla ambiente (ffmpeg, ComfyUI, font, DB, pagine)
+init-db             Crea/aggiorna il database e registra le pagine
+validate-datasets   Valida i cinque dataset (struttura, lingua, date, lemmi)
+verify-corpus       Legge le fonti ed estrae la prova di ogni affermazione
+rebuild-unverified-corpus  Ricostruisce dai sorgenti ciò che non supera la verifica
+corpus-final-gate   Il cancello unico: 12 contatori, tutti a zero
+production-readiness Simula 1.000 giorni x 5 pagine con il gate di produzione
+prepare-buffer      Genera il buffer di Reel senza pubblicare (idempotente)
+buffer-status       Copertura dei giorni davanti + artefatti non referenziati
+arm-page / arming-status  Arma una pagina dopo il canary
+audit-sources       Verifica che gli URL delle fonti esistano davvero
+editorial-sample    Campione stratificato riproducibile da rivedere a mano
+apply-review        Registra i verdetti umani (unico modo per approvare)
+editorial-stats     Misura quanto le pagine sembrano generate
+media-audit         Controlla i video contro le specifiche Meta (ffprobe)
+preproduction-smoke-test  Dry-run riproducibile delle cinque pagine
+security-check      Cerca segreti e artefatti runtime tracciati da Git
+import-content      Importa i dataset (dedup + qualità + controllo fonti)
+preview-pages       Anteprime reali per pagina + indice HTML comparativo
+sample-review       Campione HTML di contenuti per la revisione umana
+generate            Genera media per N contenuti di una pagina
+render              Solo immagini (anteprima rapida)
+schedule            Pianifica i job giornalieri
+worker              Worker persistente (--once per un solo ciclo)
+publish-next        Prepara e pubblica il prossimo job (--dry-run)
+retry-failed        Rimette in coda i job FAILED
+status              Riepilogo stato
+preview             Galleria HTML dei media generati
+export-report       Report JSON
+dashboard           Avvia la dashboard locale
+pages               Elenca le pagine
+
+comfyui status                Modello locale configurato e raggiungibilità
+comfyui test-generation       Genera uno sfondo reale (fallisce sul fallback)
+
+instagram health-check --all  Credenziali: token, scadenza, permessi, account
+instagram check-config        Configurazione publishing (offline)
+instagram token-status        Identità del token; scadenza solo con app id/secret
+instagram account-status      Tipo account / limite di pubblicazione
+instagram upload-test         Container + upload di prova (non pubblica)
+                              --publish richiede anche --confirm fuori da dry_run
+instagram canary-plan         Il canary simulato: zero chiamate a Meta
+instagram canary-upload       Container + upload reali, nessuna pubblicazione
+instagram canary-status       A che punto è il canary (una volta sola)
+instagram publish-canary      L'unica pubblicazione senza armamento, una volta
+instagram publish-job         Pubblica un job (richiede --confirm e la pagina armata)
 ```
 
----
+## Da cosa dipende il funzionamento continuo
+
+Il sistema può funzionare in autonomia per lunghi periodi, ma **non è
+autosufficiente**. Continua a dipendere da:
+
+- **PC acceso** all'orario previsto, o riavviato entro la finestra di recupero
+  (`missed_job_window_minutes`, predefinita 240 minuti);
+- **ComfyUI funzionante** e checkpoint presente: in produzione un guasto manda il
+  job in `NEEDS_REVIEW`, non pubblica media degradati;
+- **validità dei token Meta**: scadono ogni 60 giorni e vanno rinnovati;
+- **stabilità delle API Meta**: modifiche o interruzioni del servizio bloccano la
+  pubblicazione;
+- **spazio disponibile su disco** per il buffer dei media;
+- **account Instagram attivi**, non bloccati né scollegati dall'app.
+
+Con 1.000 contenuti per pagina il ciclo dura circa due anni e nove mesi prima di
+ricominciare, con immagini nuove. Questo non equivale a un funzionamento
+garantito senza manutenzione: le voci sopra vanno controllate periodicamente
+(vedi la sezione *Manutenzione ricorrente* della checklist di produzione).
 
 ## Licenza
 
-Codice: MIT (vedi header). I **contenuti** (frasi, citazioni) e la **musica** hanno
-licenze proprie: rispetta le fonti indicate in `datasets/` e `assets/music/catalog.json`.
-Le citazioni usano autori di **pubblico dominio** con attribuzione verificata.
-```
+Codice: MIT. I contenuti dei dataset sono originali (pensieri, domande,
+definizioni riscritte, esempi) oppure fatti verificati con fonte citata; il
+modello generativo ha licenza propria (vedi
+[LOCAL_MODEL_SETUP.md](docs/LOCAL_MODEL_SETUP.md)).
