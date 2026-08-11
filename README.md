@@ -255,7 +255,8 @@ verify-corpus       Legge le fonti ed estrae la prova di ogni affermazione
 rebuild-unverified-corpus  Ricostruisce dai sorgenti ciò che non supera la verifica
 corpus-final-gate   Il cancello unico: 12 contatori, tutti a zero
 production-readiness Simula 1.000 giorni x 5 pagine con il gate di produzione
-prepare-buffer      Genera il buffer di Reel senza pubblicare
+prepare-buffer      Genera il buffer di Reel senza pubblicare (idempotente)
+buffer-status       Copertura dei giorni davanti + artefatti non referenziati
 arm-page / arming-status  Arma una pagina dopo il canary
 audit-sources       Verifica che gli URL delle fonti esistano davvero
 editorial-sample    Campione stratificato riproducibile da rivedere a mano
@@ -282,13 +283,17 @@ pages               Elenca le pagine
 comfyui status                Modello locale configurato e raggiungibilità
 comfyui test-generation       Genera uno sfondo reale (fallisce sul fallback)
 
-instagram health-check --all  Stato credenziali di tutte le pagine
+instagram health-check --all  Credenziali: token, scadenza, permessi, account
 instagram check-config        Configurazione publishing (offline)
-instagram token-status        Validità del token
+instagram token-status        Identità del token; scadenza solo con app id/secret
 instagram account-status      Tipo account / limite di pubblicazione
 instagram upload-test         Container + upload di prova (non pubblica)
                               --publish richiede anche --confirm fuori da dry_run
-instagram publish-job         Pubblica un job (richiede --confirm)
+instagram canary-plan         Il canary simulato: zero chiamate a Meta
+instagram canary-upload       Container + upload reali, nessuna pubblicazione
+instagram canary-status       A che punto è il canary (una volta sola)
+instagram publish-canary      L'unica pubblicazione senza armamento, una volta
+instagram publish-job         Pubblica un job (richiede --confirm e la pagina armata)
 ```
 
 ## Da cosa dipende il funzionamento continuo

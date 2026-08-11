@@ -217,6 +217,41 @@ def test_the_canary_bypass_is_not_reachable_from_the_normal_path():
         f"il bypass del canary non deve essere raggiungibile da: {importers}")
 
 
+def test_canary_plan_cannot_reach_the_network_at_all(monkeypatch):
+    """`-WhatIf` promises zero Meta calls; this makes the promise checkable.
+
+    Both funnels are blocked, not just the requests one: every HTTP call in the
+    project goes through an adapter, and anything clever enough to bypass that
+    still has to open a socket. If canary-plan touched the network in any way
+    the command would raise instead of exiting.
+    """
+    import socket
+
+    import requests.adapters
+    from typer.testing import CliRunner
+
+    from src.cli.main import app as cli
+
+    def refuse(*_a, **_k):
+        raise AssertionError("canary-plan ha tentato una connessione di rete")
+
+    monkeypatch.setattr(requests.adapters.HTTPAdapter, "send", refuse)
+    monkeypatch.setattr(socket.socket, "connect", refuse)
+
+    result = CliRunner().invoke(
+        cli, ["instagram", "canary-plan", "--page", PAGE_ID, "--json"])
+    assert not isinstance(result.exception, AssertionError), result.exception
+    if result.exit_code != 0:
+        # No buffer on this machine: the command still has to have got as far
+        # as looking, without a socket. Anything else is a real failure.
+        assert "Nessun job futuro" in result.output, result.output
+        return
+    import json
+
+    payload = json.loads(result.output.strip().splitlines()[-1])
+    assert payload["job_id"] and payload["output_path"], payload
+
+
 def test_canary_selects_a_future_job_never_an_expired_one(tmp_db, project_paths):
     from src.publishing import canary
 
