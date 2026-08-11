@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS  Undo a go-live: stop, disarm, and return to dry-run.
 .DESCRIPTION
     Does not delete anything already published — the API cannot — but guarantees
@@ -6,14 +6,18 @@
     engine returns to dry_run. Prints what was published so you can remove it
     from the app if you need to.
 #>
-[CmdletBinding()] param([switch]$KeepMode)
+[CmdletBinding()] param([switch]$KeepMode, [string]$PythonPath)
 $ErrorActionPreference = 'Continue'
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
-$python = Join-Path $root '.venv\Scripts\python.exe'
-if (-not (Test-Path $python)) { $python = 'python' }
+if ($PythonPath) {
+    $python = $PythonPath
+} else {
+    $python = Join-Path $root '.venv\Scripts\python.exe'
+    if (-not (Test-Path $python)) { $python = 'python' }
+}
 
-& (Join-Path $PSScriptRoot 'stop_worker.ps1') -Disarm
+& (Join-Path $PSScriptRoot 'stop_worker.ps1') -Disarm -PythonPath $python
 
 if (-not $KeepMode) {
     $envFile = Join-Path $root '.env'

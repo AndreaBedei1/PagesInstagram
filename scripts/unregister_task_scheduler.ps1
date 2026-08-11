@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS Remove the worker Scheduled Task.
 #>
 [CmdletBinding()]

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS  Arm every page, after at least one clean week on the canary page.
 .DESCRIPTION
     Deliberately separate from arm_page.ps1 and deliberately interactive: five
@@ -7,12 +7,16 @@
 .EXAMPLE  .\scripts\arm_all_pages.ps1
 #>
 [CmdletBinding()]
-param([switch]$Force)
+param([switch]$Force, [string]$PythonPath)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
-$python = Join-Path $root '.venv\Scripts\python.exe'
-if (-not (Test-Path $python)) { $python = 'python' }
+if ($PythonPath) {
+    $python = $PythonPath
+} else {
+    $python = Join-Path $root '.venv\Scripts\python.exe'
+    if (-not (Test-Path $python)) { $python = 'python' }
+}
 
 & $python -m src.cli arming-status
 if (-not $Force) {

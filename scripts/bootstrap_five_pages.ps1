@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Bootstrap completo delle cinque pagine evergreen su un'installazione pulita.
 

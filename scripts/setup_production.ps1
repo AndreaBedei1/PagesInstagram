@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     From a clean checkout to a machine ready for credentials.
 

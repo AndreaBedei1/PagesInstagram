@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS  Stop publishing now.
 .DESCRIPTION
     Stops the scheduled task and the running worker. Media already uploaded to
@@ -6,12 +6,16 @@
     hours; nothing is lost and nothing is published.
     Use -Disarm to also disarm every page, so a restart cannot resume publishing.
 #>
-[CmdletBinding()] param([switch]$Disarm)
+[CmdletBinding()] param([switch]$Disarm, [string]$PythonPath)
 $ErrorActionPreference = 'Continue'
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
-$python = Join-Path $root '.venv\Scripts\python.exe'
-if (-not (Test-Path $python)) { $python = 'python' }
+if ($PythonPath) {
+    $python = $PythonPath
+} else {
+    $python = Join-Path $root '.venv\Scripts\python.exe'
+    if (-not (Test-Path $python)) { $python = 'python' }
+}
 
 Write-Host "Arresto dell'attività pianificata…" -ForegroundColor Cyan
 Stop-ScheduledTask -TaskName 'InstagramContentEngineWorker' -ErrorAction SilentlyContinue

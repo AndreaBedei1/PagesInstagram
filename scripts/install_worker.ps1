@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS  Register the worker as a scheduled task (logon + daily catch-up).
 #>
 [CmdletBinding()] param([string]$TaskName = 'InstagramContentEngineWorker')

@@ -1,12 +1,16 @@
-<#
+﻿<#
 .SYNOPSIS  What the engine is doing right now.
 #>
-[CmdletBinding()] param()
+[CmdletBinding()] param([string]$PythonPath)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
-$python = Join-Path $root '.venv\Scripts\python.exe'
-if (-not (Test-Path $python)) { $python = 'python' }
+if ($PythonPath) {
+    $python = $PythonPath
+} else {
+    $python = Join-Path $root '.venv\Scripts\python.exe'
+    if (-not (Test-Path $python)) { $python = 'python' }
+}
 
 Write-Host "== Modalità e armamento ==" -ForegroundColor Cyan
 & $python -m src.cli arming-status

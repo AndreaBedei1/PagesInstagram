@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS  Start the worker in the foreground (one tick or continuous).
 #>
 [CmdletBinding()] param([switch]$Once, [double]$IntervalSeconds = 60)

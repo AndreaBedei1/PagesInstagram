@@ -36,6 +36,25 @@ def test_every_required_script_exists():
     assert REQUIRED <= present, f"mancano: {sorted(REQUIRED - present)}"
 
 
+@pytest.mark.parametrize("script", SCRIPTS, ids=lambda p: p.name)
+def test_non_ascii_scripts_carry_a_utf8_bom(script: Path):
+    """Without a BOM, Windows PowerShell 5.1 reads a .ps1 as ANSI.
+
+    That is not only a cosmetic problem. An em dash is three UTF-8 bytes, and
+    the last of them is 0x94 — which code page 1252 renders as a right double
+    quotation mark, and which PowerShell accepts as a string delimiter. An odd
+    number of em dashes in a file therefore turns the rest of the script into a
+    string literal and it stops parsing altogether. That is exactly what
+    happened here, and none of the sixteen scripts had a BOM.
+    """
+    raw = script.read_bytes()
+    text = raw.decode("utf-8-sig")
+    if any(ord(ch) > 127 for ch in text):
+        assert raw.startswith(b"\xef\xbb\xbf"), (
+            f"{script.name} contiene caratteri non ASCII senza BOM: Windows "
+            f"PowerShell 5.1 lo leggerebbe in ANSI")
+
+
 @needs_powershell
 @pytest.mark.parametrize("script", SCRIPTS, ids=lambda p: p.name)
 def test_script_parses(script: Path):
@@ -54,18 +73,25 @@ def test_script_parses(script: Path):
 
 
 def test_no_script_publishes_without_confirmation():
-    """The canary is the only script that may publish, and it must ask first."""
+    """The canary is the only script that may publish, and it must ask first.
+
+    What it may call has changed: ``publish-job`` goes through the ordinary
+    publisher, which refuses an unarmed page, so the canary now calls
+    ``publish-canary`` — the single-use path. No script, the canary included,
+    may reach ``publish-job``.
+    """
     canary = (ROOT / "scripts" / "go_live_canary.ps1").read_text(encoding="utf-8")
-    assert "publish-job" in canary
+    assert "publish-canary" in canary
     assert "Read-Host" in canary, "il canary deve chiedere conferma esplicita"
     assert "PUBBLICA" in canary
 
     for script in SCRIPTS:
-        if script.name == "go_live_canary.ps1":
-            continue
         body = script.read_text(encoding="utf-8")
         assert "publish-job" not in body, (
-            f"{script.name} pubblicherebbe senza passare dal canary")
+            f"{script.name} passerebbe dal publisher normale")
+        if script.name != "go_live_canary.ps1":
+            assert "publish-canary" not in body, (
+                f"{script.name} pubblicherebbe senza passare dal canary")
 
 
 def test_arming_scripts_do_not_change_mode():

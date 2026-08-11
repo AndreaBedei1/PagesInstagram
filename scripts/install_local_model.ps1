@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Installa il checkpoint locale SDXL Base 1.0 per ComfyUI (nessun token, nessun
     modello committato nel repository).

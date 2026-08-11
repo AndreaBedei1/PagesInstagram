@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Register a Windows Scheduled Task that starts the worker at logon and keeps it
   running (auto-restart on failure, runs when the PC becomes available after

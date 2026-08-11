@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Fresh Windows install. Kept as the documented entry point; the work happens
     in setup_production.ps1.
