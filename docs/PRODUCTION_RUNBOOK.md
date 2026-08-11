@@ -7,12 +7,10 @@ guidato. Tutto il resto è già fatto e verificabile con un comando.
 
 ## 1. Le variabili da compilare
 
-Copia `.env.example` in `.env` e riempi **queste tredici righe**. Nessun'altra è
-obbligatoria.
+Copia `.env.example` in `.env` e riempi **queste undici righe**. Sono le sole
+necessarie per pubblicare.
 
 ```
-META_APP_ID=
-META_APP_SECRET=
 META_GRAPH_API_VERSION=v25.0
 
 ICE_PENSIERO_ESSENZIALE_IT_IG_USER_ID=
@@ -31,6 +29,30 @@ ICE_DOMANDA_GIORNO_IT_IG_USER_ID=
 ICE_DOMANDA_GIORNO_IT_ACCESS_TOKEN=
 ```
 
+E **due facoltative**, che il preflight non pretende:
+
+```
+META_APP_ID=
+META_APP_SECRET=
+```
+
+Perché facoltative, e perché conviene comunque metterle. La documentazione
+ufficiale è esplicita su chi usa cosa:
+
+| Operazione | Host | Servono app id/secret? |
+|---|---|---|
+| pubblicare (`/media`, `/media_publish`) | `graph.instagram.com` | **no** |
+| identità del token (`/me`) | `graph.instagram.com` | **no** |
+| scadenza e permessi (`/debug_token`) | `graph.facebook.com` | **sì** |
+| rinnovo a 60 giorni (`ig_refresh_token`) | `graph.instagram.com` | **no** |
+| da breve a lungo (`ig_exchange_token`) | `graph.instagram.com` | **sì** (secret) |
+
+Quindi: senza di esse si pubblica benissimo, ma nessuno può dire quanti giorni
+di vita resti al token. `health-check` lo segnala come avviso, e per il primo
+go-live un avviso sulle credenziali è bloccante — quindi in pratica, per il
+primo avvio, mettile. Sono l'**Instagram** app ID/secret (App Dashboard →
+Instagram → *API setup with Instagram login*).
+
 Requisiti degli account: **Instagram professional Business**, collegati all'app
 Meta, con i permessi `instagram_business_basic` e
 `instagram_business_content_publish`. I token devono essere **long-lived**
@@ -48,24 +70,68 @@ il tempo strettamente necessario e lo rimette a posto.
 ### Preflight
 
 ```powershell
-.\scripts\preflight.ps1
+.\scripts\preflight.ps1                # profilo canary (predefinito)
+.\scripts\preflight.ps1 -Production    # quello che serve allo scheduler
 ```
 
 Senza credenziali elenca solo le variabili mancanti ed esce con codice 2 — è
 l'esito atteso, non un errore. Con le credenziali controlla account, token,
-scadenze, versione Graph API, ComfyUI, FFmpeg, disco, database, corpus e
-segreti. Non pubblica nulla e non stampa mai un token.
+scadenze, permessi, versione Graph API, ComfyUI, buffer, disco, database,
+corpus e segreti. Non pubblica nulla e non stampa mai un token.
+
+**Sulle credenziali non esistono avvisi.** Il `health-check` esce 0, 1 o 2, e
+sia 1 sia 2 fanno fallire il preflight: token scaduto o vicino alla scadenza,
+account non business, permessi non verificabili sono tutte ragioni per non far
+partire cinque account.
+
+I due profili differiscono su quanto serve *dopo* il primo post:
+
+| | `-Canary` | `-Production` |
+|---|---|---|
+| ComfyUI spento | avviso | **fallimento** |
+| buffer < 30 giorni | avviso | **fallimento** |
+| health check in avviso | fallimento | fallimento |
+
+Il canary pubblica un media che esiste già, quindi non ha bisogno del
+generatore; lo scheduler sì, e una pagina il cui generatore è fermo tace nel
+giro di pochi giorni.
 
 ### Canary: un solo post, su una sola pagina
 
+Tre livelli, e la differenza è dichiarata:
+
 ```powershell
-.\scripts\go_live_canary.ps1 -WhatIf     # tutto tranne media_publish
-.\scripts\go_live_canary.ps1
+.\scripts\go_live_canary.ps1 -WhatIf       # 0 chiamate Meta
+.\scripts\go_live_canary.ps1 -UploadOnly   # upload reale, nessuna pubblicazione
+.\scripts\go_live_canary.ps1               # una sola media_publish
 ```
 
-Carica davvero un Reel su `pensiero_essenziale_it`, attende l'elaborazione, si
-ferma **prima** di pubblicare, ti mostra account, didascalia e file, e pubblica
-solo dopo che scrivi `PUBBLICA`. Una singola chiamata `media_publish`.
+- **`-WhatIf`** sceglie il job, misura il file contro le specifiche pubblicate,
+  mostra didascalia e account di destinazione, elenca i passi e si ferma.
+  Nessun container, nessun upload, nessuna pubblicazione: non costruisce
+  nemmeno il client Graph.
+- **`-UploadOnly`** crea davvero il container, carica i byte, attende
+  `FINISHED` e si ferma lì. Stampa `UPLOAD META RIUSCITO` e `MEDIA NON
+  PUBBLICATO`. Sull'account non compare niente.
+- **senza parametri** riusa quel container — non ne crea un secondo e non
+  ricarica lo stesso Reel — ti mostra cosa uscirà, e pubblica solo dopo che
+  scrivi esattamente `PUBBLICA`.
+
+Il job scelto è **il primo futuro** della pagina con il media pronto: mai uno
+già scaduto. Se il processo muore fra l'upload e la pubblicazione, il canary
+successivo riconosce il container e propone di finire, invece di crearne un
+altro.
+
+Il canary **non arma la pagina**. È l'unico percorso del progetto che può
+pubblicare senza armamento, e resta irraggiungibile per sbaglio: pagina
+esplicita, job esplicito, container già `FINISHED`, audit verde, health check
+verde, processo interattivo, la parola, e una volta sola.
+
+Per sapere a che punto è:
+
+```powershell
+python -m src.cli instagram canary-status --page pensiero_essenziale_it
+```
 
 ### Armare le pagine
 
@@ -91,6 +157,26 @@ costoso possibile: cinque account che partono insieme.
 `rollback.ps1` non può cancellare un post già pubblicato — l'API non lo
 consente — ma garantisce che non ne esca un altro e ti elenca cosa è uscito.
 
+### Il buffer, prima di lasciare il worker da solo
+
+```powershell
+python -m src.cli buffer-status --days 30
+python -m src.cli prepare-buffer --from 2026-08-11 --days 30 --all-pages --require-comfyui
+```
+
+`buffer-status` misura la finestra **dalla data odierna**, non da quella in cui
+il buffer fu costruito: quanti dei giorni davanti hanno il media pronto, quanti
+job sono rimasti indietro non pubblicati, e quali file generati non sono più
+referenziati da alcun job. `--prune-stale` rimuove solo questi ultimi, e solo se
+fermi da almeno un giorno: un file che un job scheduled ancora referenzia non
+viene toccato, qualunque sia la sua data.
+
+`prepare-buffer` è idempotente — ripeterlo non duplica nulla e dice quanti job
+esistevano già — e senza `--from` parte da oggi nel fuso di ciascuna pagina.
+`--require-comfyui` fa fallire il comando invece di ripiegare sullo sfondo
+deterministico: un buffer costruito sul fallback sembra a posto in un report e
+sbagliato sull'account.
+
 ---
 
 ## 3. Che cosa è già verificato
@@ -104,6 +190,9 @@ consente — ma garantisce che non ne esca un altro e ti elenca cosa è uscito.
 | Segreti | `security-check` | nessuno |
 | Media | `media-audit --buffer --all` | conformi alle specifiche Meta |
 | Versione API | `tools/check_meta_api_version.py` | v25.0 supportata fino al 2028-07-29 |
+| Specifiche Reel | `pytest tests/unit/test_reel_specs.py` | 3 s – 15 min, 300 MB, un'unica fonte |
+| Percorso canary | `pytest tests/unit/test_go_live_guards.py` | pubblica una volta, non arma |
+| Wrapper PowerShell | `pytest tests/unit/test_powershell_behaviour.py` | preflight, `-WhatIf`, `-UploadOnly` |
 
 Rilanciali quando vuoi: sono deterministici e non toccano la rete, tranne il
 controllo della versione API.

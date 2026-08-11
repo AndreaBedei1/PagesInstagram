@@ -50,6 +50,18 @@ jobs:
       - name: Unit and integration tests
         run: .venv/bin/python -m pytest -q -m "not e2e" --cov=src --cov-report=term-missing
 
+      # Named separately from the aggregate run above so that a regression in
+      # the go-live path says so in the run summary instead of being one dot
+      # among three hundred. The PowerShell behaviour tests skip on Linux (no
+      # interpreter); the BOM check is byte-level and runs everywhere.
+      - name: Go-live guards (preflight, canary, Reel specifications)
+        run: >
+          .venv/bin/python -m pytest -q
+          tests/unit/test_reel_specs.py
+          tests/unit/test_go_live_guards.py
+          tests/unit/test_powershell_scripts.py
+          tests/unit/test_powershell_behaviour.py
+
       # Structure, language, dates, lemmas. No network: the online verification
       # happens once during the rebuild and its evidence is committed, so what
       # CI checks is the recorded evidence and the hashes that bind it.

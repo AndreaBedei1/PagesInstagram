@@ -88,7 +88,10 @@ attivare una pagina, non dopo.
 ## E. Credenziali e sicurezza
 
 - [ ] `.env` compilato con i cinque `IG_USER_ID` e i cinque `ACCESS_TOKEN`
-- [ ] `META_APP_ID` e `META_APP_SECRET` presenti (servono per `debug_token`)
+- [ ] `META_APP_ID` e `META_APP_SECRET` presenti — **facoltativi per
+      pubblicare**, necessari per `debug_token` (host `graph.facebook.com`), che
+      è l'unico modo di leggere scadenza e permessi del token. Senza,
+      `health-check` resta in avviso e il preflight del primo go-live si ferma.
 - [ ] `.env` **non** tracciato da Git
       → `git ls-files .env` non restituisce nulla
 - [ ] Nessun segreto nei file tracciati

@@ -2,8 +2,65 @@
 
 > Fonte primaria: **solo** documentazione ufficiale Meta. Nessun blog / nessuna
 > implementazione non ufficiale usata come fonte.
-> Prima verifica: 2026‑07‑22 · riverifica: 2026‑08‑04 · **riverifica dell'audit
-> di pre-produzione: 2026‑08‑05.**
+> Prima verifica: 2026‑07‑22 · riverifica: 2026‑08‑04 · riverifica dell'audit
+> di pre-produzione: 2026‑08‑05 · **riverifica pre-credenziali: 2026‑08‑11.**
+
+## Riverifica del 2026‑08‑11 — chi usa quali credenziali
+
+Il repository si contraddiceva: `.env.example` diceva che `META_APP_ID` e
+`META_APP_SECRET` servono «solo per generare/rinnovare i token», mentre
+`preflight.ps1` si rifiutava di partire senza. Ogni riga qui sotto è stata
+riletta oggi sulla documentazione ufficiale, una pagina alla volta.
+
+| Operazione | Endpoint | Host | App id/secret |
+|---|---|---|---|
+| Creare il container | `POST /<IG_ID>/media` | `graph.instagram.com` | **no** |
+| Pubblicare | `POST /<IG_ID>/media_publish` | `graph.instagram.com` | **no** |
+| Identità del token | `GET /me?fields=user_id,username` | `graph.instagram.com` | **no** |
+| Scadenza e scope | `GET /debug_token` | **`graph.facebook.com`** | **sì** |
+| Rinnovo a 60 giorni | `GET /refresh_access_token`, `grant_type=ig_refresh_token` | `graph.instagram.com` | **no** |
+| Da breve a lungo | `GET /access_token`, `grant_type=ig_exchange_token` | `graph.instagram.com` | **sì** (`client_secret`) |
+
+Fonti: la pagina *get started* di Instagram Login mostra le chiamate su
+`https://graph.instagram.com/v25.0/`; la pagina *refresh_access_token* elenca
+come parametri richiesti soltanto `grant_type` e `access_token`; la pagina
+*access_token* elenca `client_secret` come **Required**; il riferimento di
+`debug_token` richiede «un token d'accesso dell'app o un token d'accesso
+dell'utente di uno sviluppatore di app» e mostra `Host: graph.facebook.com`.
+
+**Conseguenza sul codice.** `GraphClient.debug_token()` chiamava `debug_token`
+sull'host Instagram passando il token Instagram come proprio `access_token`:
+endpoint sbagliato e autorità sbagliata. Non poteva funzionare, e il
+`health-check` leggeva il dizionario vuoto che ne usciva come «scadenza non
+nota». Ora esistono due metodi distinti — `verify_token()` (solo token,
+`/me`) e `debug_token(app_id, app_secret)` (host Facebook, app access token) —
+e `health-check` distingue *token non verificabile* da *token invalido*.
+
+**Conseguenza sul `.env`.** Le due variabili d'app non sono richieste per
+pubblicare e il preflight non le pretende più. Restano necessarie per leggere
+scadenza e permessi: senza, il health check resta in avviso, e per il primo
+go-live un avviso sulle credenziali è bloccante.
+
+### Specifiche Reel confermate lo stesso giorno
+
+Rilette letteralmente dal riferimento IG User `/media`:
+
+| Aspetto | Citazione |
+|---|---|
+| Durata | «Minimum of 3 seconds; maximum of 15 mins» |
+| Dimensione file | «300MB maximum» |
+| Pixel orizzontali | massimo 1920 |
+| Frame rate | «23-60 FPS» |
+| Codec video | «HEVC or H264, progressive scan, closed GOP, 4:2:0 chroma subsampling» |
+| Codec audio | «AAC, 48khz sample rate maximum, 1 or 2 channels» |
+| Contenitore | «MOV or MP4 (MPEG-4 Part 14), no edit lists, moov atom at the front of the file» |
+
+Questo corregge due affermazioni precedenti di questo documento: che il limite
+di dimensione non fosse pubblicato (lo è: 300 MB, ora verificato dal publisher)
+e — di nuovo — i 90 s, che `publisher.py` continuava a imporre in un letterale
+proprio nonostante la tabella qui sopra. Adesso ogni controllo legge
+`src/core/meta_api.py`, e un test cerca nell'albero una seconda copia del
+limite.
 
 ## Riferimenti ufficiali consultati il 2026‑08‑05
 - Changelog Graph API: https://developers.facebook.com/docs/graph-api/changelog
@@ -192,7 +249,8 @@ Dal riferimento IG User `/media`, verificato il 2026‑08‑05 (citazioni letter
 - **Rate limit pubblicazione: 100 post/24 h** (finestra mobile) — verificabile con
   `GET /<IG_USER_ID>/content_publishing_limit`. Cinque post al giorno su cinque
   account distinti restano ampiamente sotto la soglia, che è per account.
-- La doc non elenca un limite esplicito di dimensione file per il resumable.
+- Dimensione file: **300 MB** («300MB maximum»), verificata dal publisher prima
+  di creare il container.
 
 Questi valori sono replicati come costanti in `src/core/meta_api.py`, così che i
 controlli sul video li leggano dalla stessa fonte della documentazione.
