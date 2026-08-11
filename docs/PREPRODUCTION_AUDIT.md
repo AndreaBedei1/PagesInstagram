@@ -156,8 +156,17 @@ adesso il sistema distingue le due cose invece di confonderle.
 | Mood unico per 1.000 elementi | 2 dataset | pool per categoria |
 | Campionamento «stratificato» che restituiva 100 elementi consecutivi | 1 | chiave di batch corretta |
 | Versione Graph API divergente fra codice e documentazione | 4 file | fonte unica + test |
-| Durata massima dei Reel documentata male (90 s invece di 15 min) | 1 | corretta |
+| Durata massima dei Reel documentata male (90 s invece di 15 min) | 1 | corretta **solo nella documentazione** (vedi nota) |
 | Smoke test che pubblicava 6 elementi invece di 5 | 1 | `plan_enabled` sul worker |
+
+> **Nota aggiunta l'11 agosto 2026.** La riga sulla durata dei Reel diceva
+> «corretta» e non lo era del tutto: erano state corrette la tabella e la
+> costante in `src/core/meta_api.py`, mentre `src/publishing/publisher.py`
+> continuava a imporre `3 <= dur <= 90` in un letterale proprio. Restava quindi
+> il difetto che contava — un Reel valido di due minuti veniva rifiutato prima
+> di raggiungere Meta — mentre l'audit lo registrava come risolto. È stato
+> chiuso nella revisione pre-credenziali, e un test cerca ora nell'albero una
+> seconda copia del limite proprio perché correggere la prosa non basta.
 
 ---
 

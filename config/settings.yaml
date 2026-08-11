@@ -41,7 +41,10 @@ rendering:
   max_lines: 8
 
 video:
-  reel_duration_seconds: 8.0  # evergreen pages: short 7–9 s clip (Meta allows 3–90)
+  # Evergreen pages: a short 7–9 s clip. Meta documents 3 s to 15 minutes for
+  # Reels — the 90 s this comment used to claim is not in the reference. The
+  # limits live in src/core/meta_api.py and nothing else may restate them.
+  reel_duration_seconds: 8.0
   story_duration_seconds: 8.0
   feed_duration_seconds: 8.0
   fps: 30
@@ -84,7 +87,12 @@ publishing:
 quality:
   min_score: 0.75
   min_contrast_ratio: 4.5
-  max_repair_attempts: 5
+  # The declared repair escalation has nine steps and the loop always runs all
+  # of them: this value can only ask for *more*, never fewer. It used to be 5,
+  # which silently hid the four strongest repairs — full overlay, font scale,
+  # wrapping and the combination — and left one real Reel stuck at 0.7423 when
+  # full overlay would have scored 0.9358 on the same background.
+  max_repair_attempts: 9
   ocr_enabled: false
 
 database:

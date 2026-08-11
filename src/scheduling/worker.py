@@ -129,7 +129,10 @@ class Worker:
                     result = self.pipeline.generate_daily(
                         page, content, music_track_id=(daily or {}).get("music_track_id"),
                         try_comfyui=self.try_comfyui, scheduled_date=local_date,
-                        cycle_number=cycle_number)
+                        cycle_number=cycle_number,
+                        # Stored, so a restart regenerates the same media rather
+                        # than a different one. Only `regenerate-media` moves it.
+                        generation_round=int((daily or {}).get("generation_round") or 0))
                 except Exception as e:  # noqa: BLE001
                     log.exception("pipeline failed for %s: %s", page_id, e)
                     stats.failed += 1

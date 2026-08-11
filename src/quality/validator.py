@@ -47,6 +47,43 @@ def _clamp(x: float) -> float:
     return max(0.0, min(1.0, x))
 
 
+@dataclass(frozen=True)
+class RepairStrategy:
+    """One named step of the repair escalation.
+
+    Named rather than anonymous so a failure can say *which* repair saved a
+    render — or which one was never tried, which is how the truncation went
+    unnoticed for as long as it did.
+    """
+
+    name: str
+    build: Callable[[RenderOptions, tuple[int, int, int]], RenderOptions]
+
+
+#: The escalation, in order: change the text colour, move the text, darken
+#: behind it, cover the whole frame, shrink the type, force more wrapping, and
+#: finally combine the two strongest. Regenerating the background is the step
+#: after this list and belongs to the caller.
+#:
+#: The order matters and so does the length: everything below the fifth entry
+#: exists for backgrounds that a stronger scrim alone cannot rescue.
+REPAIR_STRATEGIES: tuple[RepairStrategy, ...] = (
+    RepairStrategy("text_color", lambda b, opp: replace(b, text_color=opp)),
+    RepairStrategy("vertical_upper", lambda b, opp: replace(b, vertical="upper")),
+    RepairStrategy("vertical_lower", lambda b, opp: replace(b, vertical="lower")),
+    RepairStrategy("scrim_medium", lambda b, opp: replace(
+        b, scrim_strength=min(0.6, b.scrim_strength + 0.22))),
+    RepairStrategy("scrim_strong", lambda b, opp: replace(
+        b, scrim_strength=min(0.75, b.scrim_strength + 0.42))),
+    RepairStrategy("full_overlay", lambda b, opp: replace(
+        b, full_overlay=True, scrim_strength=0.5)),
+    RepairStrategy("font_scale", lambda b, opp: replace(b, font_scale=0.85)),
+    RepairStrategy("box_shrink", lambda b, opp: replace(b, box_shrink=0.85)),
+    RepairStrategy("color_and_overlay", lambda b, opp: replace(
+        b, text_color=opp, full_overlay=True, scrim_strength=0.52)),
+)
+
+
 class MediaValidator:
     def __init__(self, settings: Settings):
         self.s = settings
@@ -210,29 +247,45 @@ class MediaValidator:
                                checks=checks, issues=issues)
 
     # ---- auto-repair loop -------------------------------------------------
+    @property
+    def repair_limit(self) -> int:
+        """How many repairs the loop may attempt.
+
+        A floor, not a ceiling. ``quality.max_repair_attempts`` was 5 while nine
+        repairs were declared, so the four strongest — full overlay, font scale,
+        wrapping and the combination — could never be reached. The loop simply
+        stopped and kept whatever the fifth had produced.
+
+        That is not a tuning question, it is a truncated strategy: the sequence
+        escalates on purpose, and the last steps exist precisely for the cases
+        the first five cannot fix. Job 180 of the real buffer scored 0.7423,
+        the best of the five reachable repairs, while full overlay scored 0.9358
+        on the same background.
+
+        So configuration may ask for *more* attempts than the declared sequence;
+        it cannot ask for fewer.
+        """
+        return max(int(self.s.quality.max_repair_attempts), len(REPAIR_STRATEGIES))
+
     def _repair_candidates(self, base: RenderOptions,
                            auto_color: tuple[int, int, int]) -> list[RenderOptions]:
         opposite = LIGHT if auto_color == DARK else DARK
-        return [
-            replace(base, text_color=opposite),                                   # 1 color
-            replace(base, vertical="upper"),                                      # 2 move
-            replace(base, vertical="lower"),
-            replace(base, scrim_strength=min(0.6, base.scrim_strength + 0.22)),   # 3 overlay
-            replace(base, scrim_strength=min(0.75, base.scrim_strength + 0.42)),
-            replace(base, full_overlay=True, scrim_strength=0.5),
-            replace(base, font_scale=0.85),                                       # 4 size
-            replace(base, box_shrink=0.85),                                       # 5 wrapping
-            replace(base, text_color=opposite, full_overlay=True,
-                    scrim_strength=0.52),                                         # combo
-        ]
+        return [strategy.build(base, opposite) for strategy in REPAIR_STRATEGIES]
 
     def render_until_valid(
-        self, render_fn: RenderFn, base_options: RenderOptions | None = None
+        self, render_fn: RenderFn, base_options: RenderOptions | None = None,
+        *, trace: list[str] | None = None,
     ) -> tuple[RenderResult, ImageValidation, RenderOptions]:
-        """Render, validate, and apply ordered repairs until valid or attempts run out.
+        """Render, validate, and escalate through the declared repairs.
 
-        Returns the best (result, validation, options). If ``validation.passed`` is
-        False the caller should regenerate the background (last-resort step).
+        Returns the best (result, validation, options), stopping at the first
+        repair that passes. If ``validation.passed`` is False every declared
+        repair has been tried and the caller should regenerate the background —
+        which is now a meaningful signal, because previously it could mean
+        "the loop ran out of attempts" instead.
+
+        ``trace`` collects the names of the repairs attempted, in order. The
+        diagnostics and the tests read it; nothing else depends on it.
         """
         base = base_options or RenderOptions()
         result = render_fn(base)
@@ -241,11 +294,14 @@ class MediaValidator:
         if val.passed:
             return best
 
-        attempts = 0
-        for cand in self._repair_candidates(base, result.text_color):
-            if attempts >= self.s.quality.max_repair_attempts:
+        opposite = LIGHT if result.text_color == DARK else DARK
+        limit = self.repair_limit
+        for attempts, strategy in enumerate(REPAIR_STRATEGIES):
+            if attempts >= limit:
                 break
-            attempts += 1
+            cand = strategy.build(base, opposite)
+            if trace is not None:
+                trace.append(strategy.name)
             r = render_fn(cand)
             v = self.validate_image(r, r.path)
             if v.score > best[1].score:

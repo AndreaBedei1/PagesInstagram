@@ -103,7 +103,8 @@ class GenerationPipeline:
                       music_path: str | None, *, try_comfyui: bool,
                       allow_fallback: bool, max_bg_regens: int = 2,
                       scheduled_date: str | None = None,
-                      cycle_number: int = 0) -> AspectOutput:
+                      cycle_number: int = 0,
+                      generation_round: int = 0) -> AspectOutput:
         p = self.s.paths
         stem = self._stem(page, content["id"], aspect)
         img_dir = p.posts if aspect == "feed" else p.stories
@@ -113,11 +114,14 @@ class GenerationPipeline:
         rres = val = None
         bgres = None
         for regen in range(max_bg_regens + 1):
-            bg_path = p.backgrounds / f"{stem}_bg{regen}.png"
+            suffix = f"_bg{regen}" if not generation_round \
+                else f"_r{generation_round}_bg{regen}"
+            bg_path = p.backgrounds / f"{stem}{suffix}.png"
             seed = background_seed(
                 page_id=page.page_id, content_id=int(content["id"]),
                 scheduled_date=scheduled_date or "", cycle_number=cycle_number,
-                media_type=aspect, attempt=regen)
+                media_type=aspect, attempt=regen,
+                generation_round=generation_round)
             bgres = self.bg.generate(
                 out_path=bg_path, background_prompt=content.get("background_prompt"),
                 mood=content.get("mood"), profile=page.visual.background_profile,
@@ -184,7 +188,8 @@ class GenerationPipeline:
                        music_track_id: str | None = None,
                        try_comfyui: bool = True,
                        scheduled_date: str | None = None,
-                       cycle_number: int = 0) -> DailyMedia:
+                       cycle_number: int = 0,
+                       generation_round: int = 0) -> DailyMedia:
         allow_fallback = self.s.comfyui_fallback_allowed()
         track_id, music_path = self._resolve_music(page, content, music_track_id)
         try:
@@ -192,7 +197,8 @@ class GenerationPipeline:
                                      try_comfyui=try_comfyui,
                                      allow_fallback=allow_fallback,
                                      scheduled_date=scheduled_date,
-                                     cycle_number=cycle_number)
+                                     cycle_number=cycle_number,
+                                     generation_round=generation_round)
         except ComfyUIError as e:
             log.error("Background generation failed (fallback disabled): %s", e)
             return DailyMedia(content_id=content["id"], ok=False,
