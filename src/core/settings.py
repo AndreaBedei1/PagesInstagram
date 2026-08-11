@@ -84,7 +84,9 @@ class PublishingSettings(BaseModel):
     # Single source of truth: src/core/meta_api.py (see docs/META_RESUMABLE_UPLOAD.md).
     graph_api_version: str = DEFAULT_GRAPH_API_VERSION
     api_flavor: str = "instagram_login"  # instagram_login | facebook_login
-    # Direct upload is the DEFAULT and needs no public hosting.
+    # Direct upload is the DEFAULT and needs no public hosting — with the
+    # facebook_login flavor. Meta does not implement resumable upload for
+    # instagram_login; check_upload_method() refuses that pairing.
     upload_method: str = "resumable"     # resumable | hosted_url
     feed_media_type: str = "REELS"       # main content -> Reel (share_to_feed)
     story_media_type: str = "STORIES"

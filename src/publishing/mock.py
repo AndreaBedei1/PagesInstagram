@@ -73,8 +73,8 @@ class MockGraphClient:
         return {"data": [{"quota_usage": len(self.published),
                           "config": {"quota_total": 100, "quota_duration": 86400}}]}
 
-    def verify_token(self) -> dict:
-        self.calls.append(("verify_token",))
+    def verify_token(self, ig_user_id: str | None = None) -> dict:
+        self.calls.append(("verify_token", ig_user_id))
         return {"user_id": "ig", "username": "mock_user",
                 "account_type": self.account_type.upper()}
 

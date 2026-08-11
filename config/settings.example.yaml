@@ -51,7 +51,8 @@ music:
 publishing:
   graph_api_version: v25.0      # verificata il 2026-08-05, vedi docs/META_RESUMABLE_UPLOAD.md
   api_flavor: instagram_login   # instagram_login | facebook_login
-  # Direct resumable upload = default. NO public hosting / ports / external storage.
+  # Direct resumable upload = default. No public hosting, ports or external
+  # storage — but ONLY with api_flavor: facebook_login (see settings.yaml).
   upload_method: resumable      # resumable | hosted_url
   feed_media_type: REELS        # main content published as a Reel...
   share_reel_to_feed: true      # ...visible in the Feed and Reels tabs

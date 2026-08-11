@@ -193,16 +193,62 @@ class GraphClient:
                              fields="config,quota_usage")
 
     # -- token inspection --------------------------------------------------
-    def verify_token(self) -> dict:
+    def verify_token(self, ig_user_id: str | None = None) -> dict:
         """Ask the API who this token belongs to. Raises on an invalid token.
 
-        The token authenticates itself here — this is the only token check that
-        works without app credentials, and it is the one the health check leans
-        on. It answers "valid / invalid / could not tell"; it does not answer
-        "when does it expire", because the endpoint does not carry that.
+        Flavor-dependent, because the two are not variations of one thing:
+
+        * ``instagram_login`` — the token *is* the account, so ``/me`` answers
+          with ``user_id``, ``username`` and ``account_type``.
+        * ``facebook_login`` — the token belongs to a **Page**, and ``/me``
+          answers about the Page, not about Instagram. The Instagram
+          professional account is a separate node, reached by its own id.
+
+        Passing an Instagram User token to graph.facebook.com does not fail
+        politely, it fails with "Cannot parse access token" (190): the two
+        flavors do not share a token namespace at all.
         """
+        if self.flavor == "facebook_login":
+            if not ig_user_id:
+                raise PublishError(
+                    "facebook_login: serve l'Instagram Business Account ID per "
+                    "verificare il token (il Page token non descrive da solo "
+                    "l'account Instagram)", retryable=False, code="NO_IG_ID")
+            data = self._request("GET", ig_user_id,
+                                 fields="username,name,profile_picture_url")
+            # Shaped like the Instagram Login answer so callers stay
+            # flavor-blind — but account_type is left empty rather than
+            # asserted. This flavor does not report it, and writing "BUSINESS"
+            # here would be the code telling itself something it never read.
+            return {"user_id": data.get("id", ig_user_id),
+                    "username": data.get("username"),
+                    "account_type": ""}
         return self._request("GET", "me",
                              fields="user_id,username,account_type")
+
+    # -- Facebook Login discovery ------------------------------------------
+    def list_pages(self) -> list[dict]:
+        """Pages this **User** token administers, with their Instagram account.
+
+        Only meaningful for the facebook_login flavor and only with a *User*
+        access token — the Page tokens it returns are what publishing actually
+        uses. Every one of them is registered with the log redactor before this
+        returns, because a list of Page tokens is a list of credentials.
+        """
+        data = self._request(
+            "GET", "me/accounts",
+            fields="id,name,access_token,instagram_business_account{id,username}")
+        pages = data.get("data") or []
+        for page in pages:
+            if page.get("access_token"):
+                register_secret(page["access_token"])
+        return pages
+
+    def instagram_account_for_page(self, page_id: str) -> dict:
+        """``GET /{page-id}?fields=instagram_business_account``."""
+        data = self._request("GET", page_id,
+                             fields="name,instagram_business_account{id,username}")
+        return data.get("instagram_business_account") or {}
 
     def debug_token(self, app_id: str, app_secret: str) -> dict:
         """Expiry and granted scopes, via ``GET /debug_token``.

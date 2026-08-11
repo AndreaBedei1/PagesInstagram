@@ -24,7 +24,12 @@ publishing:
 
 instagram:
   account_type: business
-  api_flavor: instagram_login
+  # Facebook Login for Business, non Instagram Login: il resumable upload —
+  # il file locale che viaggia verso Meta senza hosting pubblico — esiste solo
+  # per questo flavor. Con instagram_login, POST /media risponde «The parameter
+  # video_url is required», come ha fatto al primo canary reale.
+  # Le altre quattro pagine seguiranno quando questa avra dimostrato il flusso.
+  api_flavor: facebook_login
 
 visual:
   style: minimal_warm

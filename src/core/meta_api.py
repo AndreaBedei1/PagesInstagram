@@ -167,3 +167,74 @@ TOKEN_DEBUG_HOST = "graph.facebook.com"
 #: Hosts per API flavor, so nothing else has to know the mapping.
 API_HOSTS = {"instagram_login": "graph.instagram.com",
              "facebook_login": "graph.facebook.com"}
+
+
+# ---------------------------------------------------------------------------
+# What each flavor can actually do.
+#
+# This project shipped configured as `instagram_login` + `resumable`, and
+# described itself as uploading local files straight to Meta with no public
+# hosting. That combination does not exist. The first real canary got:
+#
+#   POST graph.instagram.com/v25.0/<ig-user-id>/media
+#        upload_type=resumable&media_type=REELS
+#   -> Graph API error [100]: The parameter video_url is required
+#
+# `upload_type=resumable` was simply ignored, and /media asked for what it
+# always asks for. The resumable-uploads reference says why, in one line:
+# "Only for apps that have implemented Facebook Login for Business." And the
+# content-publishing page is equally plain about the alternative: with
+# Instagram Login "the media must be hosted on a publicly accessible server at
+# the time of the attempt".
+#
+# So the "no hosting" architecture is real, but it belongs to the Facebook
+# Login flavor. Nothing in the codebase said so, and the failure surfaced at
+# the worst possible moment — during a live upload, after every gate had gone
+# green. Hence a matrix, checked before anything reaches the network.
+# ---------------------------------------------------------------------------
+
+#: Flavors that accept ``upload_type=resumable`` and a direct binary upload.
+RESUMABLE_FLAVORS: tuple[str, ...] = ("facebook_login",)
+
+#: Permissions per flavor. The names are not interchangeable: the
+#: ``instagram_business_*`` pair belongs to Instagram Login and means nothing
+#: to a Facebook Page token.
+PERMISSIONS_BY_FLAVOR: dict[str, tuple[str, ...]] = {
+    "instagram_login": ("instagram_business_basic",
+                        "instagram_business_content_publish"),
+    "facebook_login": ("instagram_basic", "instagram_content_publish",
+                       "pages_read_engagement"),
+}
+
+#: What kind of access token each flavor publishes with.
+TOKEN_KIND_BY_FLAVOR = {"instagram_login": "Instagram User access token",
+                        "facebook_login": "Facebook Page access token"}
+
+
+def supports_resumable(flavor: str) -> bool:
+    return flavor in RESUMABLE_FLAVORS
+
+
+def check_upload_method(flavor: str, upload_method: str) -> tuple[bool, str]:
+    """Is this (flavor, upload_method) pair one Meta actually implements?
+
+    Returns ``(ok, reason)``. Called by ``check-config`` and the preflight so
+    an impossible pairing is refused on this machine, in a sentence that says
+    what to do, rather than by Meta in the middle of a go-live.
+    """
+    if flavor not in API_HOSTS:
+        return False, (f"api_flavor {flavor!r} sconosciuto: attesi "
+                       f"{', '.join(sorted(API_HOSTS))}")
+    if upload_method == "resumable" and not supports_resumable(flavor):
+        return False, (
+            f"upload_method=resumable non è supportato con api_flavor="
+            f"{flavor}: il resumable upload esiste solo per le app che "
+            f"implementano Facebook Login for Business. Con {flavor} "
+            f"POST /media richiede video_url, quindi un media su host "
+            f"pubblico. Passa a api_flavor=facebook_login (nessun hosting) "
+            f"oppure a upload_method=hosted_url (serve hosting).")
+    if upload_method not in ("resumable", "hosted_url"):
+        return False, (f"upload_method {upload_method!r} sconosciuto: attesi "
+                       f"resumable, hosted_url")
+    return True, (f"{flavor} + {upload_method}: supportato "
+                  f"({'nessun hosting pubblico' if upload_method == 'resumable' else 'richiede hosting pubblico'})")

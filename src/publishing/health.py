@@ -29,7 +29,9 @@ from datetime import datetime, timedelta, timezone
 
 from ..accounts.models import PageConfig
 from ..core.errors import PublishError
-from ..core.meta_api import LONG_LIVED_TOKEN_DAYS, REQUIRED_PERMISSIONS
+from ..core.meta_api import (LONG_LIVED_TOKEN_DAYS, PERMISSIONS_BY_FLAVOR,
+                             REQUIRED_PERMISSIONS, TOKEN_KIND_BY_FLAVOR,
+                             check_upload_method)
 from ..core.settings import Settings
 
 #: A token with fewer days than this left does not start a go-live.
@@ -188,13 +190,21 @@ def _expiry_from_declared_date(page: PageConfig, warn_days: int,
     return True
 
 
-def _permissions_from(data: dict, health: PageHealth) -> bool:
-    """Permissions as ``debug_token`` lists them. False if it listed none."""
+def _permissions_from(data: dict, health: PageHealth,
+                      required: tuple[str, ...] = REQUIRED_PERMISSIONS) -> bool:
+    """Permissions as ``debug_token`` lists them. False if it listed none.
+
+    ``required`` is per flavor: the ``instagram_business_*`` pair belongs to
+    Instagram Login and means nothing to a Facebook Page token, which wants
+    ``instagram_basic`` and ``instagram_content_publish`` instead. Checking one
+    flavor's names against the other's token is how a green report gets written
+    about permissions nobody holds.
+    """
     scopes = tuple(data.get("scopes") or ())
     health.granted_scopes = scopes
     if not scopes:
         return False
-    missing = [p for p in REQUIRED_PERMISSIONS if p not in scopes]
+    missing = [p for p in required if p not in scopes]
     if missing:
         health.permissions = Verdict.MISSING
         health.permissions_source = "elenco degli scope"
@@ -245,9 +255,17 @@ def check_page(settings: Settings, page: PageConfig, *,
         return health
     health.credentials = Verdict.OK
 
+    # -- 0. is this configuration one Meta implements? ----------------------
+    flavor = page.instagram.api_flavor
+    supported, reason = check_upload_method(flavor,
+                                            page.publishing.upload_method)
+    if not supported:
+        health.failures.append(reason)
+        return health
+
     # -- 1. is this token alive? (token only, always available) -------------
     try:
-        me = target.client.verify_token() or {}
+        me = target.client.verify_token(target.ig_user_id) or {}
         health.token = Verdict.VALID
         health.username = str(me.get("username") or "")
         health.account_type = str(me.get("account_type") or "").lower()
@@ -275,7 +293,9 @@ def check_page(settings: Settings, page: PageConfig, *,
                 health.token = Verdict.INVALID
                 health.failures.append("debug_token: is_valid=false")
             got_expiry = _expiry_from(data, warn_days, health)
-            got_scopes = _permissions_from(data, health)
+            got_scopes = _permissions_from(
+                data, health,
+                PERMISSIONS_BY_FLAVOR.get(flavor, REQUIRED_PERMISSIONS))
         except PublishError as e:
             # Held, not raised yet. Whether this is a problem depends on
             # whether anything else answers the questions it was asked — and
@@ -326,7 +346,15 @@ def check_page(settings: Settings, page: PageConfig, *,
             f"tipo account {health.account_type!r}: le specifiche richiedono "
             f"un account professional business")
     elif not health.account_type:
-        health.warnings.append("tipo account non riportato")
+        if flavor == "facebook_login":
+            # This flavor does not report account_type, and does not need to:
+            # only a professional account can be linked to a Facebook Page, so
+            # reaching it through the Page is the evidence.
+            health.notes.append(
+                "tipo account non esposto da facebook_login; il collegamento "
+                "alla Pagina implica un account professionale")
+        else:
+            health.warnings.append("tipo account non riportato")
 
     # -- 4. informational ----------------------------------------------------
     try:

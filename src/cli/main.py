@@ -103,7 +103,8 @@ def validate():
     um = settings.publishing.upload_method
     needs_hosting = um == "hosted_url"
     row("Upload method", True,
-        f"{um}" + (" (serve hosting pubblico)" if needs_hosting else " — nessun hosting/porta richiesti"))
+        f"{um}" + (" (serve hosting pubblico)" if needs_hosting
+                   else " — nessun hosting, ma solo con api_flavor=facebook_login"))
     try:
         registry = load_pages(paths)
         row("Pages", len(registry) > 0, f"{len(registry)}: {', '.join(registry.ids())}")

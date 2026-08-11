@@ -157,6 +157,21 @@ if ($missingOptional.Count -gt 0) {
     Write-Host "  non è leggibile e il health check resta in avviso." -ForegroundColor DarkGray
 }
 
+# ---------------------------------------------------------------- flavor
+# Before anything reaches the network: is this (api_flavor, upload_method)
+# pair one Meta implements? instagram_login + resumable is not, and finding
+# that out from Meta halfway through a real upload cost a go-live.
+Write-Host "`n== Configurazione di pubblicazione ==" -ForegroundColor Cyan
+foreach ($p in $pages) {
+    $pageId = $p.ToLower()
+    Test-Step "flavor e metodo di upload ($pageId)" {
+        & $python -m src.cli instagram check-config --page $pageId | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            throw "combinazione api_flavor/upload_method non supportata: esegui 'python -m src.cli instagram check-config --page $pageId' per il dettaglio"
+        }
+    }
+}
+
 # ---------------------------------------------------------------- environment
 Write-Host "`n== Ambiente ==" -ForegroundColor Cyan
 Test-Step 'validate (ffmpeg, font, database, pagine)' {

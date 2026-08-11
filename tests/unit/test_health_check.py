@@ -16,7 +16,12 @@ import time
 import pytest
 
 from src.core.errors import PublishError
-from src.core.meta_api import REQUIRED_PERMISSIONS
+from src.core.meta_api import PERMISSIONS_BY_FLAVOR
+
+#: The canary page is facebook_login, so its scopes are the Facebook set.
+#: Checking one flavor's permission names against the other's token is
+#: exactly the mistake this project already made once.
+FLAVOR_SCOPES = PERMISSIONS_BY_FLAVOR["facebook_login"]
 from src.core.settings import load_settings
 from src.publishing.health import (ISSUED_AT_SUFFIX, Verdict, check_page,
                                    check_pages)
@@ -29,7 +34,7 @@ class FakeClient:
     """Only what the health check calls, and each answer independently set."""
 
     def __init__(self, *, me=None, me_error=None, days=59, valid=True,
-                 scopes=REQUIRED_PERMISSIONS, debug_error=None,
+                 scopes=FLAVOR_SCOPES, debug_error=None,
                  account_error=None, account_type="business", limit_error=None):
         self._limit_error = limit_error
         self._me = me if me is not None else {
@@ -42,7 +47,7 @@ class FakeClient:
         self._debug_error = debug_error
         self._account_error = account_error
 
-    def verify_token(self):
+    def verify_token(self, ig_user_id=None):
         if self._me_error:
             raise self._me_error
         return self._me
@@ -236,10 +241,9 @@ def test_debug_token_unavailable_is_a_warning_not_a_verdict(settings, page,
 
 # ---- permissions axis ------------------------------------------------------
 def test_a_missing_publishing_permission_fails(settings, page, with_app_credentials):
-    health = _check(settings, page,
-                    FakeClient(scopes=("instagram_business_basic",)))
+    health = _check(settings, page, FakeClient(scopes=("instagram_basic",)))
     assert health.permissions == Verdict.MISSING
-    assert any("instagram_business_content_publish" in f for f in health.failures)
+    assert any("instagram_content_publish" in f for f in health.failures)
 
 
 def test_without_a_scope_list_the_publishing_node_is_probed(settings, page,
@@ -298,7 +302,9 @@ def test_absent_credentials_fail_before_anything_else(settings, page):
 def test_exit_code_is_zero_one_or_two(settings, project_paths, with_app_credentials):
     from src.accounts import load_pages
 
-    pages = load_pages(project_paths).all()
+    # Only the migrated page: the other four are still on the pairing the
+    # matrix refuses, which is a different verdict being tested elsewhere.
+    pages = [load_pages(project_paths).get(PAGE_ID)]
 
     green = check_pages(settings, pages,
                         factory=lambda _s, _p: PublishTarget(FakeClient(), "ig"))
@@ -364,3 +370,49 @@ def test_the_report_says_where_the_expiry_came_from(settings, page, monkeypatch,
     measured = _check(settings, page, FakeClient(days=30)).as_dict()
     assert measured["expiry_source"] == "letta da debug_token"
     assert declared["days_left"] != measured["days_left"]
+
+
+# ---- the flavor matrix is checked before anything reaches the network ------
+def test_an_impossible_flavor_pairing_fails_before_the_first_call(settings,
+                                                                  project_paths):
+    """instagram_login + resumable: refused here, not by Meta mid-upload.
+
+    This is the configuration that shipped, passed every gate, and then got
+    "The parameter video_url is required" from Meta during a real upload.
+    """
+    from src.accounts import load_pages
+
+    page = load_pages(project_paths).get("curiosita_mondo_it")
+    assert page.instagram.api_flavor == "instagram_login"
+    assert page.publishing.upload_method == "resumable"
+
+    class Exploding:
+        def verify_token(self, *_a, **_k):
+            raise AssertionError("nessuna chiamata deve partire")
+
+    health = check_page(settings, page,
+                        target=PublishTarget(Exploding(), "ig"))
+    assert health.failures
+    assert any("resumable" in f and "facebook_login" in f
+               for f in health.failures)
+
+
+def test_the_canary_page_is_checked_against_the_facebook_permissions(
+        settings, page, with_app_credentials):
+    """The names must follow the flavor, not habit."""
+    assert page.instagram.api_flavor == "facebook_login"
+    health = _check(settings, page, FakeClient(
+        scopes=("instagram_basic", "instagram_content_publish",
+                "pages_read_engagement")))
+    assert health.permissions == Verdict.OK
+
+
+def test_facebook_login_does_not_invent_an_account_type(settings, page,
+                                                        monkeypatch,
+                                                        without_app_credentials):
+    """This flavor does not report it; the Page link is the evidence."""
+    _declare(monkeypatch, page, days_ago=1)
+    health = _check(settings, page, FakeClient(account_type=""))
+    assert health.account_type == ""
+    assert not health.warnings, health.warnings
+    assert any("Pagina" in n for n in health.notes)
