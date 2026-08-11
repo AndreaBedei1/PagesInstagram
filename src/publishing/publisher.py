@@ -25,6 +25,9 @@ from ..content.captions import build_caption
 from ..core.enums import (META_MEDIA_TYPE, JobStatus, MediaType, Mode,
                           UploadMethod, UploadStatus)
 from ..core.errors import PublishError
+from ..core.meta_api import (REEL_MAX_FILE_BYTES, REEL_MAX_SECONDS,
+                             REEL_MIN_SECONDS, STORY_MAX_SECONDS,
+                             STORY_MIN_SECONDS)
 from .arming import may_publish
 from ..core.logging_setup import get_logger
 from ..core.settings import Settings
@@ -202,18 +205,29 @@ class Publisher:
         if not str(file_path).lower().endswith((".mp4", ".mov")):
             raise PublishError("il resumable upload richiede MP4/MOV", retryable=False,
                                code="FILE_FORMAT")
+        if size > REEL_MAX_FILE_BYTES:
+            raise PublishError(
+                f"file di {size / 1_000_000:.0f} MB: il massimo documentato è "
+                f"{REEL_MAX_FILE_BYTES // 1_000_000} MB", retryable=False,
+                code="FILE_SIZE")
         try:
-            from ..video.ffmpeg import probe_media
-            dur = probe_media(str(file_path)).duration or 0.0
+            from ..video import ffmpeg as ffmpeg_mod
+            dur = ffmpeg_mod.probe_media(str(file_path)).duration or 0.0
         except Exception:  # noqa: BLE001 — probing must not block on odd ffmpeg output
             dur = 0.0
         if dur:
-            if media_type == MediaType.REEL and not (3 <= dur <= 90):
-                raise PublishError(f"durata Reel {dur:.1f}s fuori dai limiti 3–90s",
-                                   retryable=False, code="DURATION")
-            if media_type == MediaType.STORY_VIDEO and not (1 <= dur <= 60):
-                raise PublishError(f"durata Story {dur:.1f}s fuori dai limiti 1–60s",
-                                   retryable=False, code="DURATION")
+            if media_type == MediaType.REEL and not (
+                    REEL_MIN_SECONDS <= dur <= REEL_MAX_SECONDS):
+                raise PublishError(
+                    f"durata Reel {dur:.1f}s fuori dai limiti "
+                    f"{REEL_MIN_SECONDS}–{REEL_MAX_SECONDS}s",
+                    retryable=False, code="DURATION")
+            if media_type == MediaType.STORY_VIDEO and not (
+                    STORY_MIN_SECONDS <= dur <= STORY_MAX_SECONDS):
+                raise PublishError(
+                    f"durata Story {dur:.1f}s fuori dai limiti "
+                    f"{STORY_MIN_SECONDS}–{STORY_MAX_SECONDS}s",
+                    retryable=False, code="DURATION")
         return size
 
     # -- resumable (direct upload) path -----------------------------------

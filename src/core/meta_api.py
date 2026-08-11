@@ -31,6 +31,10 @@ DEFAULT_GRAPH_API_VERSION = "v25.0"
 #: official Meta documentation (ISO date, used by the docs and the tests).
 GRAPH_API_VERIFIED_AT = "2026-08-05"
 
+#: Date the Reel specifications and the credential requirements below were
+#: re-read on developers.facebook.com, one page at a time.
+META_SPECS_REVERIFIED_AT = "2026-08-11"
+
 #: Newest version listed in the official Graph API changelog on that date.
 LATEST_GRAPH_API_VERSION = "v26.0"
 
@@ -61,20 +65,85 @@ def version_tuple(value: str) -> tuple[int, int]:
 
 # ---------------------------------------------------------------------------
 # Reel specifications, as documented on the IG User /media reference.
-# Verified on GRAPH_API_VERIFIED_AT. The previous documentation claimed a
-# 90-second maximum, which the official reference does not state: the documented
-# limit is 15 minutes.
+# Verified on GRAPH_API_VERIFIED_AT and re-verified on META_SPECS_REVERIFIED_AT.
+# The reference states, verbatim: duration "Minimum of 3 seconds; maximum of
+# 15 mins", file size "300MB maximum", frame rate "23-60 FPS", audio "AAC,
+# 48khz sample rate maximum, 1 or 2 channels", video "HEVC or H264".
+#
+# The repository documentation used to claim a 90-second ceiling and
+# publisher.py enforced it in a literal of its own. The official reference does
+# not state 90 seconds anywhere. Nothing outside this module may hold a copy:
+# tests/unit/test_go_live_guards.py fails if a second one appears.
 # ---------------------------------------------------------------------------
 REEL_MIN_SECONDS = 3
 REEL_MAX_SECONDS = 15 * 60
+REEL_MAX_FILE_BYTES = 300 * 1_000_000
+REEL_MAX_HORIZONTAL_PIXELS = 1920
 REEL_VIDEO_CODECS = ("h264", "hevc")
 REEL_CONTAINERS = ("mp4", "mov")
 REEL_MIN_FPS, REEL_MAX_FPS = 23, 60
 REEL_MAX_AUDIO_SAMPLE_RATE = 48_000
 REEL_RECOMMENDED_ASPECT = "9:16"
 
+#: Stories are a different product with a different ceiling; kept here so the
+#: publisher has no numeric limit of its own for either media type.
+STORY_MIN_SECONDS = 1
+STORY_MAX_SECONDS = 60
+
 #: Published posts per 24-hour moving window, per Instagram account.
+#: "Instagram accounts are limited to 100 API-published posts within a 24-hour
+#: moving period."
 PUBLISHING_LIMIT_PER_24H = 100
 
 #: Long-lived access token lifetime, in days.
 LONG_LIVED_TOKEN_DAYS = 60
+
+
+# ---------------------------------------------------------------------------
+# Which credentials each operation actually needs.
+#
+# The repository disagreed with itself: .env.example said META_APP_ID and
+# META_APP_SECRET were "only needed to (re)generate / refresh tokens", while
+# preflight.ps1 refused to run without them. Re-read on
+# META_SPECS_REVERIFIED_AT, page by page:
+#
+#   publish        graph.instagram.com/{version}/{ig-user-id}/media[_publish]
+#                  Instagram User access token + the two instagram_business_*
+#                  permissions. No app id, no app secret.
+#   identity       GET graph.instagram.com/{version}/me?fields=user_id,username
+#                  The token authenticates itself. No app credentials.
+#   expiry/scopes  GET graph.facebook.com/{version}/debug_token
+#                  input_token = the token under examination; access_token must
+#                  be "an app access token or a developer user access token" —
+#                  i.e. app id AND app secret. There is no debug_token on
+#                  graph.instagram.com.
+#   refresh        GET graph.instagram.com/refresh_access_token
+#                  grant_type=ig_refresh_token + the long-lived token. No secret.
+#   short -> long  GET graph.instagram.com/access_token
+#                  grant_type=ig_exchange_token + client_secret. Secret needed.
+#
+# So: the app credentials are NOT required to publish, and are required to read
+# a token's expiry and scopes. That is the whole of it, and both statements are
+# enforced — the first by REQUIRED_TO_PUBLISH, the second by health.py.
+# ---------------------------------------------------------------------------
+
+#: Env variables without which no page can publish. Per page, prefixed.
+REQUIRED_TO_PUBLISH: tuple[str, ...] = ("IG_USER_ID", "ACCESS_TOKEN")
+
+#: Env variables needed only to read a token's expiry/scopes and to exchange a
+#: short-lived token for a long-lived one. Absent, publishing still works.
+OPTIONAL_APP_CREDENTIALS: tuple[str, ...] = ("META_APP_ID", "META_APP_SECRET")
+
+#: Permissions Instagram content publishing requires, as listed on the
+#: content-publishing page for the Instagram Login flavor.
+REQUIRED_PERMISSIONS: tuple[str, ...] = (
+    "instagram_business_basic",
+    "instagram_business_content_publish",
+)
+
+#: Host that serves ``debug_token``. It is *not* the Instagram host.
+TOKEN_DEBUG_HOST = "graph.facebook.com"
+
+#: Hosts per API flavor, so nothing else has to know the mapping.
+API_HOSTS = {"instagram_login": "graph.instagram.com",
+             "facebook_login": "graph.facebook.com"}
