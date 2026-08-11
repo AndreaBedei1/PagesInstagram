@@ -39,11 +39,16 @@ class ArmingState:
                 "armed_at": self.armed_at, "note": self.note}
 
 
-def _ensure_table(db) -> None:
+def ensure_runtime_flags(db) -> None:
+    """The one small key-value table used for switches that outlive a process."""
     db.conn.execute(
         "CREATE TABLE IF NOT EXISTS runtime_flags ("
         " key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TEXT NOT NULL)")
     db.conn.commit()
+
+
+#: Kept as the old private name so nothing in this module had to change.
+_ensure_table = ensure_runtime_flags
 
 
 def get_state(db, page_id: str) -> ArmingState:
