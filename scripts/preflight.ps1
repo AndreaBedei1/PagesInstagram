@@ -147,7 +147,20 @@ Test-Step 'versione Graph API coerente ovunque' {
     if ($LASTEXITCODE -ne 0) { throw "codice e documentazione divergono" }
 }
 Test-Step 'spazio su disco' {
-    $free = (Get-PSDrive -Name (Split-Path -Qualifier $root).TrimEnd(':')).Free / 1GB
+    # Split-Path -Qualifier wants a drive letter, and a path like
+    # /home/runner/work has none. The engine only runs on Windows, but this
+    # script is exercised by the test suite on the CI runners too, and a check
+    # that cannot apply must say so rather than fail the preflight.
+    $drive = $null
+    try {
+        $drive = Get-PSDrive -Name (Split-Path -Qualifier $root).TrimEnd(':') -ErrorAction Stop
+    } catch {
+        $drive = $null
+    }
+    if ($null -eq $drive -or $null -eq $drive.Free) {
+        return 'non misurabile su questa piattaforma'
+    }
+    $free = $drive.Free / 1GB
     if ($free -lt $MinFreeGb) { throw ("{0:N1} GB liberi, minimo {1}" -f $free, $MinFreeGb) }
     "{0:N1} GB liberi" -f $free
 }

@@ -1233,7 +1233,9 @@ def buffer_status(
     from datetime import timedelta
     from zoneinfo import ZoneInfo
 
-    from ..core.timeutils import now_in, parse_iso
+    from ..core.enums import MediaType
+    from ..core.timeutils import local_datetime, now_in, parse_iso, to_utc
+    from ..scheduling.planner import _media_types
 
     paths, settings, registry, db = _ctx()
     pages = [registry.get(page)] if page else list(registry.enabled())
@@ -1278,8 +1280,21 @@ def buffer_status(
                     with_media += 1
             if has_media and first_ready is None and status != JobStatus.PUBLISHED:
                 first_ready = {"job_id": jid, "scheduled_at": scheduled}
-        expected = days * len({m for m in ("reel", "story_video")
-                               if _plans(pcfg, m)})
+        # How many slots the window *should* contain, computed the way the
+        # planner computes them and counting only the ones still ahead. A
+        # today whose publication time has already gone by is not a hole in
+        # the buffer, and reporting it as one makes the number untrustworthy.
+        expected = 0
+        for offset in range(days):
+            day = start + timedelta(days=offset)
+            for media_type in _media_types(pcfg):
+                hh, mm = (pcfg.publishing.story_time_tuple()
+                          if media_type == MediaType.STORY_VIDEO
+                          else pcfg.publishing.feed_time_tuple())
+                when = to_utc(local_datetime(day.year, day.month, day.day,
+                                             hh, mm, tz))
+                if when.strftime("%Y-%m-%dT%H:%M:%SZ") > now_utc_iso:
+                    expected += 1
         page_ok = with_media >= expected and first_ready is not None
         covered = covered and page_ok
         report["pages"].append({
@@ -1344,12 +1359,6 @@ def buffer_status(
                       f"{report['pages'][0]['from'] if report['pages'] else '<data>'} "
                       f"--days {days} --all-pages --require-comfyui")
     raise typer.Exit(0 if covered else 1)
-
-
-def _plans(page, media_type: str) -> bool:
-    if media_type == "reel":
-        return bool(page.publishing.publish_feed or page.publishing.publish_reel)
-    return bool(page.publishing.publish_story)
 
 
 @app.command("prepare-buffer")
