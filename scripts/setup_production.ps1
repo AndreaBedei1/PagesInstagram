@@ -54,7 +54,11 @@ $gates = @(
     'security-check'
 )
 if (-not $SkipCorpus) {
-    $gates += 'production-readiness --from 2026-08-07 --days 1000 --all-pages'
+    # The start date is today, not a date frozen into the script: a fixed one
+    # goes stale, and a readiness run from a date already behind us proves
+    # nothing about the days ahead. CI pins a date of its own for determinism.
+    $today = Get-Date -Format 'yyyy-MM-dd'
+    $gates += "production-readiness --from $today --days 1000 --all-pages"
 }
 foreach ($gate in $gates) {
     $gateArgs = $gate.Split(' ')
@@ -78,5 +82,7 @@ Write-Host "`n== Armamento (tutte le pagine partono disarmate) ==" -ForegroundCo
 Write-Host "`nSetup completato. Passi successivi:" -ForegroundColor Green
 Write-Host "  1. compila .env con le credenziali Meta"
 Write-Host "  2. .\scripts\preflight.ps1"
-Write-Host "  3. .\scripts\go_live_canary.ps1"
-Write-Host "  4. .\scripts\arm_page.ps1 pensiero_essenziale_it"
+Write-Host "  3. .\scripts\go_live_canary.ps1 -WhatIf"
+Write-Host "  4. .\scripts\go_live_canary.ps1 -UploadOnly"
+Write-Host "  5. .\scripts\go_live_canary.ps1"
+Write-Host "  6. .\scripts\arm_page.ps1 pensiero_essenziale_it"

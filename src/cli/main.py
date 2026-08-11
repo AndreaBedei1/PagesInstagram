@@ -1202,9 +1202,160 @@ def arming_status():
     db.close()
 
 
+@app.command("buffer-status")
+def buffer_status(
+    from_: str = typer.Option(None, "--from",
+                              help="prima data locale; default: oggi nel fuso della pagina"),
+    days: int = typer.Option(30, help="giorni di copertura richiesti"),
+    page: str = typer.Option(None, help="una sola pagina"),
+    prune_stale: bool = typer.Option(
+        False, "--prune-stale",
+        help="cancella i soli file generati che nessun job referenzia"),
+    older_than_days: int = typer.Option(
+        1, help="con --prune-stale: non toccare nulla di più recente"),
+    as_json: bool = typer.Option(False, "--json"),
+):
+    """Is there enough media ahead of today, and what is left over behind it?
+
+    The buffer on this machine was built starting from a date that has since
+    gone by. Two different things follow from that and they must not be
+    confused: the jobs already behind us are history and stay where they are,
+    while the window that matters is the one starting today in each page's own
+    timezone.
+
+    ``--prune-stale`` removes only files under ``generated/`` that no job in the
+    database points at. A file a job still references is never touched, whatever
+    its date: deleting the media of a scheduled post to reclaim disk is how a
+    page goes silent.
+    """
+    import json as _json
+    from datetime import date as date_cls
+    from datetime import timedelta
+    from zoneinfo import ZoneInfo
+
+    from ..core.timeutils import now_in, parse_iso
+
+    paths, settings, registry, db = _ctx()
+    pages = [registry.get(page)] if page else list(registry.enabled())
+    now_utc_iso = __import__("datetime").datetime.now(
+        __import__("datetime").timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    referenced: set[str] = set()
+    for row in db.conn.execute(
+            "SELECT DISTINCT output_path FROM publication_jobs "
+            "WHERE output_path IS NOT NULL").fetchall():
+        if row[0]:
+            referenced.add(str(Path(row[0]).resolve()).lower())
+    for row in db.conn.execute(
+            "SELECT DISTINCT video_path FROM daily_content "
+            "WHERE video_path IS NOT NULL").fetchall():
+        if row[0]:
+            referenced.add(str(Path(row[0]).resolve()).lower())
+
+    report: dict = {"generated_at": now_utc_iso, "days": days, "pages": []}
+    covered = True
+    for pcfg in pages:
+        tz = pcfg.publishing.timezone
+        start = (date_cls.fromisoformat(from_) if from_
+                 else now_in(tz).date())
+        end = start + timedelta(days=days)
+        rows = db.conn.execute(
+            "SELECT id, scheduled_at, status, output_path FROM publication_jobs "
+            "WHERE page_id=? AND scheduled_at IS NOT NULL ORDER BY scheduled_at",
+            (pcfg.page_id,)).fetchall()
+        in_window = with_media = past_due = 0
+        first_ready = None
+        for jid, scheduled, status, out in rows:
+            local_date = parse_iso(scheduled).astimezone(ZoneInfo(tz)).date()
+            has_media = bool(out) and Path(out).exists()
+            if scheduled < now_utc_iso:
+                if status != JobStatus.PUBLISHED:
+                    past_due += 1
+                continue
+            if start <= local_date < end:
+                in_window += 1
+                if has_media:
+                    with_media += 1
+            if has_media and first_ready is None and status != JobStatus.PUBLISHED:
+                first_ready = {"job_id": jid, "scheduled_at": scheduled}
+        expected = days * len({m for m in ("reel", "story_video")
+                               if _plans(pcfg, m)})
+        page_ok = with_media >= expected and first_ready is not None
+        covered = covered and page_ok
+        report["pages"].append({
+            "page_id": pcfg.page_id, "from": start.isoformat(),
+            "jobs_in_window": in_window, "with_media": with_media,
+            "expected": expected, "past_due_unpublished": past_due,
+            "first_future_ready": first_ready, "ok": page_ok})
+
+    # Two conditions, not one: nothing points at the file *and* it has been
+    # sitting there for a day. A run in progress writes intermediates the
+    # database does not know about yet, and deleting those mid-generation
+    # produces a failure that looks like a bug in the renderer.
+    cutoff = __import__("time").time() - older_than_days * 86400
+    stale = [p for p in sorted(paths.generated.rglob("*"))
+             if p.is_file() and str(p.resolve()).lower() not in referenced
+             and p.stat().st_mtime < cutoff]
+    by_dir: dict[str, int] = {}
+    for p in stale:
+        key = str(p.parent.relative_to(paths.generated)) or "."
+        by_dir[key] = by_dir.get(key, 0) + 1
+    report["stale_files"] = len(stale)
+    report["stale_bytes"] = sum(p.stat().st_size for p in stale)
+    report["stale_by_directory"] = by_dir
+    if prune_stale:
+        removed = 0
+        for p in stale:
+            try:
+                p.unlink()
+                removed += 1
+            except OSError:
+                pass
+        report["stale_removed"] = removed
+
+    db.close()
+    if as_json:
+        console.print_json(_json.dumps(report))
+        raise typer.Exit(0 if covered else 1)
+
+    t = Table(title=f"Buffer — {days} giorni richiesti")
+    for col in ("pagina", "da", "job in finestra", "con media", "attesi",
+                "scaduti non pubblicati", "primo job futuro pronto"):
+        t.add_column(col)
+    for p in report["pages"]:
+        ready = p["first_future_ready"]
+        t.add_row(p["page_id"], p["from"], str(p["jobs_in_window"]),
+                  ("[green]" if p["ok"] else "[red]") + str(p["with_media"]) + "[/]",
+                  str(p["expected"]),
+                  ("[yellow]" + str(p["past_due_unpublished"]) + "[/]"
+                   if p["past_due_unpublished"] else "0"),
+                  f"{ready['job_id']} @ {ready['scheduled_at']}" if ready else "[red]nessuno[/]")
+    console.print(t)
+    console.print(f"file generati che nessun job referenzia, più vecchi di "
+                  f"{older_than_days} g: {report['stale_files']} "
+                  f"({report['stale_bytes'] / 1_000_000:.1f} MB)"
+                  + (f" — rimossi {report.get('stale_removed', 0)}"
+                     if prune_stale else " (usa --prune-stale per rimuoverli)"))
+    for directory, count in sorted(report["stale_by_directory"].items()):
+        console.print(f"  [dim]{directory}: {count}[/]")
+    if not covered:
+        console.print("[red]Buffer insufficiente.[/] Rigeneralo dalla data odierna:")
+        console.print("  python -m src.cli prepare-buffer --from "
+                      f"{report['pages'][0]['from'] if report['pages'] else '<data>'} "
+                      f"--days {days} --all-pages --require-comfyui")
+    raise typer.Exit(0 if covered else 1)
+
+
+def _plans(page, media_type: str) -> bool:
+    if media_type == "reel":
+        return bool(page.publishing.publish_feed or page.publishing.publish_reel)
+    return bool(page.publishing.publish_story)
+
+
 @app.command("prepare-buffer")
 def prepare_buffer(
-    from_: str = typer.Option(..., "--from", help="prima data locale, YYYY-MM-DD"),
+    from_: str = typer.Option(None, "--from",
+                              help="prima data locale; default: oggi nel fuso della pagina"),
     days: int = typer.Option(30, help="giorni di buffer"),
     all_pages: bool = typer.Option(True, "--all-pages/--enabled-only"),
     require_comfyui: bool = typer.Option(
@@ -1231,11 +1382,20 @@ def prepare_buffer(
             db.close()
             raise typer.Exit(code=1)
 
-    start = __import__("datetime").date.fromisoformat(from_)
-    planned = 0
+    from datetime import date as date_cls
+
+    from ..core.timeutils import now_in
+
+    planned = existing = 0
     for page in registry.enabled():
-        planned += plan_page(db, page, start=start, days=days).created
-    console.print(f"pianificati {planned} job su {days} giorni")
+        # Each page keeps its own timezone, and "today" is a local question.
+        start = (date_cls.fromisoformat(from_) if from_
+                 else now_in(page.publishing.timezone).date())
+        rep = plan_page(db, page, start=start, days=days)
+        planned += rep.created
+        existing += rep.existing
+    console.print(f"pianificati {planned} job su {days} giorni "
+                  f"({existing} già presenti: il comando è idempotente)")
 
     worker = Worker(settings, db, registry, try_comfyui=True,
                     plan_enabled=False, cleanup_enabled=False,
