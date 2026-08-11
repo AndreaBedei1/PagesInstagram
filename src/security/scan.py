@@ -157,6 +157,13 @@ def scan_text(text: str, path: str = "<memory>") -> list[SecretFinding]:
                     # An .env.example style empty assignment is fine.
                     if value.startswith(("${", "$(")):
                         continue
+                    # A call expression is code, not a literal: `app_id,
+                    # app_secret = app_credentials()` assigns the *result* of
+                    # reading the environment. A hard-coded credential cannot
+                    # contain a parenthesis, so this narrows the rule without
+                    # opening a hole — which a path or name exclusion would.
+                    if "(" in value:
+                        continue
                     # Ignore obviously non-secret literals used in docs/tests.
                     if value.lower() in {"none", "null", "true", "false", "test",
                                          "token", "secret", "mock-token",
