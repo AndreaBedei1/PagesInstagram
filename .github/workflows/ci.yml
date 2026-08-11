@@ -59,6 +59,7 @@ jobs:
           .venv/bin/python -m pytest -q
           tests/unit/test_reel_specs.py
           tests/unit/test_go_live_guards.py
+          tests/unit/test_health_check.py
           tests/unit/test_powershell_scripts.py
           tests/unit/test_powershell_behaviour.py
 
