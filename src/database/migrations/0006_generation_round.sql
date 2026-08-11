@@ -1,0 +1,20 @@
+-- A way out for a day whose media cannot be rescued by re-running the same
+-- generation.
+--
+-- The background seed is derived from page, content, scheduled date, cycle
+-- number, media type and background attempt. That determinism is deliberate and
+-- worth keeping: the same day must produce the same image across restarts, and
+-- a machine that reboots mid-buffer must not quietly publish something
+-- different from what was reviewed.
+--
+-- But it also meant a failed day was failed for good. Attempts 0, 1 and 2
+-- always recreate the same three backgrounds, so "regenerate" was a promise the
+-- pipeline could not keep — the operator could run it a hundred times and get
+-- the same three images and the same failure.
+--
+-- generation_round breaks the tie without breaking determinism. It is stored,
+-- not random: within a round every seed is reproducible, and only an explicit
+-- operator action on a *failed* media advances it. Media that already passed is
+-- never touched, so raising the round cannot ripple through a buffer that was
+-- already reviewed.
+ALTER TABLE daily_content ADD COLUMN generation_round INTEGER NOT NULL DEFAULT 0;

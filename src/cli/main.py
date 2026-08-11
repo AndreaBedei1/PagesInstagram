@@ -1202,6 +1202,133 @@ def arming_status():
     db.close()
 
 
+@app.command("regenerate-media")
+def regenerate_media(
+    job: int = typer.Option(None, help="job da rigenerare"),
+    page: str = typer.Option(None, help="pagina (con --date)"),
+    date: str = typer.Option(None, help="data locale YYYY-MM-DD (con --page)"),
+    max_rounds: int = typer.Option(4, help="round di generazione da provare"),
+    require_comfyui: bool = typer.Option(
+        True, "--require-comfyui/--allow-fallback",
+        help="fallire invece di ripiegare sullo sfondo deterministico"),
+):
+    """Regenerate the media of a day that failed the quality gate — only that day.
+
+    The background seed is deterministic on purpose: the same day must produce
+    the same image across restarts. The consequence was that a failed day stayed
+    failed, because the three background attempts always recreate the same three
+    images. ``generation_round`` is the stored escape from that, and this is the
+    only command that advances it.
+
+    Two refusals it will not negotiate: it will not touch a media that already
+    passed, and it will not lower the threshold. If every round still fails it
+    says so and leaves the day in review — a render below the bar is not
+    published because the operator ran out of patience.
+    """
+    from zoneinfo import ZoneInfo
+
+    from ..core.timeutils import parse_iso, utcnow_iso
+    from ..scheduling.pipeline import GenerationPipeline
+
+    paths, settings, registry, db = _ctx()
+    if require_comfyui:
+        settings.comfyui.allow_fallback_in_dry_run = False
+        settings.comfyui.allow_fallback_in_test = False
+
+    if job:
+        row = db.get_job(job)
+        if not row:
+            console.print(f"[red]Job {job} non trovato[/]")
+            db.close()
+            raise typer.Exit(2)
+        page_id = row["page_id"]
+        pcfg = registry.get(page_id)
+        local_date = parse_iso(row["scheduled_at"]).astimezone(
+            ZoneInfo(pcfg.publishing.timezone)).date().isoformat()
+    elif page and date:
+        page_id, local_date = page, date
+        pcfg = registry.get(page_id)
+    else:
+        console.print("[red]Serve --job N oppure --page X --date YYYY-MM-DD[/]")
+        db.close()
+        raise typer.Exit(2)
+
+    daily = db.get_daily_content(page_id, local_date)
+    if not daily:
+        console.print(f"[red]Nessun daily_content per {page_id} {local_date}[/]")
+        db.close()
+        raise typer.Exit(2)
+
+    jobs = [j for j in db.list_jobs(page_id=page_id)
+            if j.get("scheduled_at") and parse_iso(j["scheduled_at"]).astimezone(
+                ZoneInfo(pcfg.publishing.timezone)).date().isoformat() == local_date]
+    failing = [j for j in jobs if j["status"] in (JobStatus.NEEDS_REVIEW,
+                                                  JobStatus.FAILED)]
+    existing = daily.get("video_path")
+    if not failing and existing and Path(existing).exists():
+        console.print(f"[green]Il media di {page_id} {local_date} è già valido[/]: "
+                      f"non lo rigenero.")
+        console.print(f"  {existing}")
+        db.close()
+        raise typer.Exit(0)
+
+    content = db.get_content(daily["content_id"])
+    if not content:
+        console.print("[red]Il contenuto del giorno non esiste più[/]")
+        db.close()
+        raise typer.Exit(2)
+
+    pipeline = GenerationPipeline(settings, db)
+    start_round = int(daily.get("generation_round") or 0)
+    console.print(f"{page_id} {local_date} — round attuale {start_round}, "
+                  f"soglia {settings.quality.min_score}")
+
+    # Offset 0 first: retry the round the day is already on. With the repair
+    # escalation no longer truncated, the deterministic image often passes on
+    # the second look, and keeping it means the buffer stays reproducible from
+    # a clean checkout. Only if that still fails do new seeds come into play.
+    best_score = 0.0
+    for offset in range(0, max_rounds + 1):
+        attempt_round = start_round + offset
+        console.print(f"  [dim]round {attempt_round} …[/]")
+        try:
+            result = pipeline.generate_daily(
+                pcfg, content, music_track_id=daily.get("music_track_id"),
+                try_comfyui=True, scheduled_date=local_date,
+                cycle_number=int(daily.get("cycle_number") or 0),
+                generation_round=attempt_round)
+        except Exception as e:  # noqa: BLE001
+            console.print(f"  [red]round {attempt_round} fallito:[/] {e}")
+            continue
+        best_score = max(best_score, result.validation_score)
+        console.print(f"    score {result.validation_score:.4f} "
+                      f"{'[green]OK[/]' if result.ok else '[yellow]sotto soglia[/]'}")
+        if not result.ok:
+            continue
+
+        db.update_daily_content(
+            daily["id"], generation_round=attempt_round,
+            media_asset_id=result.media_asset_id, video_path=result.video_path,
+            music_track_id=result.music_track_id)
+        for j in jobs:
+            db.update_job(j["id"], content_id=content["id"],
+                          output_path=result.video_path, generated_at=utcnow_iso(),
+                          status=JobStatus.MEDIA_READY, last_error=None,
+                          upload_method=pcfg.publishing.upload_method)
+        console.print(f"[green]Rigenerato[/] al round {attempt_round}: "
+                      f"score {result.validation_score:.4f} ≥ "
+                      f"{settings.quality.min_score}")
+        console.print(f"  {result.video_path}")
+        db.close()
+        raise typer.Exit(0)
+
+    console.print(f"[red]Nessun round ha superato la soglia[/] "
+                  f"(migliore {best_score:.4f} < {settings.quality.min_score}).")
+    console.print("Il giorno resta in revisione: la soglia non si abbassa.")
+    db.close()
+    raise typer.Exit(1)
+
+
 @app.command("buffer-status")
 def buffer_status(
     from_: str = typer.Option(None, "--from",

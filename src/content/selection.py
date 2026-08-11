@@ -128,15 +128,28 @@ class Selection:
 
 
 def background_seed(*, page_id: str, content_id: int, scheduled_date: str,
-                    cycle_number: int, media_type: str, attempt: int = 0) -> int:
+                    cycle_number: int, media_type: str, attempt: int = 0,
+                    generation_round: int = 0) -> int:
     """Deterministic 31-bit seed for the day's background.
 
     Derived from page, content, scheduled date, cycle number and media type — so
     the same day always regenerates the same image, but the *next* cycle
     (1.000 days later) produces a different one for the same text.
+
+    ``generation_round`` is the one deliberate escape from that determinism, and
+    it is deliberate on both counts: it changes the seed, and it is *stored*
+    rather than drawn at random. Within a round every seed is reproducible
+    across restarts; a new round is only ever entered by an explicit operator
+    action on a media that failed, because without it a day whose three
+    background attempts all failed would regenerate the same three images
+    forever.
     """
     key = (f"{page_id}|{content_id}|{scheduled_date}|{cycle_number}|"
            f"{media_type}|{attempt}")
+    if generation_round:
+        # Appended rather than always present, so every seed computed before
+        # this existed keeps its value and no reviewed buffer shifts underfoot.
+        key = f"{key}|r{generation_round}"
     return int(hashlib.sha256(key.encode("utf-8")).hexdigest()[:12], 16) % (2**31)
 
 
