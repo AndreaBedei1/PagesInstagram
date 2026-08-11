@@ -87,6 +87,54 @@ def test_generation_round_is_stored_and_survives_a_reopen(tmp_path):
     reopened.close()
 
 
+def test_the_worker_hands_the_stored_round_to_the_pipeline(project_paths, tmp_db):
+    """The link that matters: a stored round has to reach the seed.
+
+    Without this the column could be written, read, and quietly dropped on the
+    way — which is roughly what happened to the fake pipelines in the test
+    suite when the signature changed.
+    """
+    from src.accounts import load_pages
+    from src.core.enums import ContentStatus, JobStatus
+    from src.core.settings import load_settings
+    from src.scheduling.pipeline import DailyMedia
+    from src.scheduling.worker import TickStats, Worker
+
+    settings = load_settings(project_paths, load_dotenv=False)
+    registry = load_pages(project_paths)
+    page = registry.get("curiosita_mondo_it")
+
+    cid, _ = tmp_db.insert_content(dict(
+        content_type="world_curiosity", text="Una curiosità verificata.",
+        normalized_text="una curiosita verificata", content_hash="h-worker-round",
+        caption="c", hashtags=["#a"], mood="calm", quality_score=0.9,
+        status=ContentStatus.APPROVED_FOR_PUBLICATION))
+    jid, _ = tmp_db.create_job(page_id=page.page_id, content_id=cid,
+                               media_type="reel", idempotency_key="round-key",
+                               scheduled_at="2000-01-01T09:00:00Z",
+                               status=JobStatus.SCHEDULED)
+    local_date = "2000-01-01"
+    daily_id, _ = tmp_db.create_daily_content(page.page_id, local_date, cid)
+    tmp_db.update_daily_content(daily_id, generation_round=5)
+
+    seen: list[int] = []
+
+    class SpyPipeline:
+        def generate_daily(self, page, content, **kwargs):
+            seen.append(kwargs.get("generation_round"))
+            return DailyMedia(content_id=content["id"], ok=True,
+                              video_path=str(project_paths.stories / "x.mp4"),
+                              validation_score=0.9)
+
+    worker = Worker(settings, tmp_db, registry, pipeline=SpyPipeline(),
+                    try_comfyui=False, plan_enabled=False, cleanup_enabled=False,
+                    prepare_ahead_minutes=10 ** 7)
+    worker._prepare_media(TickStats())
+
+    assert seen == [5], f"il worker non ha passato il round memorizzato: {seen}"
+    assert tmp_db.get_job(jid)["status"] == JobStatus.MEDIA_READY
+
+
 def test_the_pipeline_asks_for_the_round_it_was_given(project_paths, tmp_db,
                                                       monkeypatch):
     """The seed the pipeline computes must carry the round through."""

@@ -29,8 +29,9 @@ class _FakePipeline:
         self.calls = []
 
     def generate_daily(self, page, content, *, music_track_id=None, try_comfyui=True,
-                       scheduled_date=None, cycle_number=0):
-        self.calls.append((page.page_id, content["id"], music_track_id))
+                       scheduled_date=None, cycle_number=0, generation_round=0):
+        self.calls.append((page.page_id, content["id"], music_track_id,
+                           generation_round))
         return DailyMedia(content_id=content["id"], ok=True,
                           video_path=f"/fake/{page.page_id}_{content['id']}.mp4",
                           image_path="/fake/i.png", background_path="/fake/b.png",

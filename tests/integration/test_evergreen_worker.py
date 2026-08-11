@@ -32,8 +32,10 @@ class FakePipeline:
         self.out_dir = out_dir
 
     def generate_daily(self, page, content, *, music_track_id=None,
-                       try_comfyui=True, scheduled_date=None, cycle_number=0):
-        self.calls.append((page.page_id, content["id"], scheduled_date, cycle_number))
+                       try_comfyui=True, scheduled_date=None, cycle_number=0,
+                       generation_round=0):
+        self.calls.append((page.page_id, content["id"], scheduled_date, cycle_number,
+                           generation_round))
         path = self.out_dir / f"{page.page_id}_{scheduled_date}.mp4"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(b"\x00" * 2048)
