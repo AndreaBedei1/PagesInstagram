@@ -64,6 +64,9 @@ class PageHealth:
     expiry: str = Verdict.UNKNOWN
     expiry_source: str = ""
     days_left: int | None = None
+    #: Days until ``data_access_expires_at`` — a separate clock from the token's
+    #: own, and the one that actually runs out on a permanent Page token.
+    data_access_days: int | None = None
     permissions: str = Verdict.UNKNOWN
     permissions_source: str = ""
     granted_scopes: tuple[str, ...] = ()
@@ -86,7 +89,9 @@ class PageHealth:
         return {"page_id": self.page_id, "credentials": self.credentials,
                 "token": self.token, "expiry": self.expiry,
                 "expiry_source": self.expiry_source,
-                "days_left": self.days_left, "permissions": self.permissions,
+                "days_left": self.days_left,
+                "data_access_days": self.data_access_days,
+                "permissions": self.permissions,
                 "permissions_source": self.permissions_source,
                 "account": self.account, "account_type": self.account_type,
                 "username": self.username, "limit": self.limit,
@@ -142,13 +147,49 @@ def _classify_expiry(when: datetime, warn_days: int, health: PageHealth,
         health.expiry = Verdict.OK
 
 
+def _data_access_deadline(data: dict, warn_days: int,
+                          health: PageHealth) -> None:
+    """The other clock, which is easy to miss because nothing calls it expiry.
+
+    A Page token derived from a long-lived User token does not expire —
+    ``expires_at`` is 0 and means exactly that. But ``data_access_expires_at``
+    is a real deadline roughly ninety days out: past it the app loses access
+    until the user re-authorises, and the token still reports ``is_valid``.
+    Reporting only the first would be true and useless.
+    """
+    raw = data.get("data_access_expires_at")
+    if not raw:
+        return
+    when = datetime.fromtimestamp(int(raw), tz=timezone.utc)
+    days = (when - datetime.now(timezone.utc)).days
+    health.data_access_days = days
+    if days < 0:
+        health.failures.append(
+            f"accesso ai dati scaduto il {when.date().isoformat()}: serve una "
+            f"nuova autorizzazione dell'utente")
+    elif days <= warn_days:
+        health.warnings.append(
+            f"l'accesso ai dati scade fra {days} giorni "
+            f"({when.date().isoformat()}): riautorizza l'app prima")
+
+
 def _expiry_from(data: dict, warn_days: int, health: PageHealth) -> bool:
     """Expiry as ``debug_token`` reports it. False if it did not report one."""
     expires = data.get("expires_at")
-    if expires in (None, 0):
+    if expires is None:
         return False
+    if int(expires) == 0:
+        # Not "unknown": Meta is saying this token has no expiry. A Page token
+        # from a long-lived User token is documented as permanent, and falling
+        # back to a date somebody typed would replace a fact with a guess.
+        health.expiry = Verdict.OK
+        health.expiry_source = "letta da debug_token: non scade"
+        health.days_left = None
+        _data_access_deadline(data, warn_days, health)
+        return True
     _classify_expiry(datetime.fromtimestamp(int(expires), tz=timezone.utc),
                      warn_days, health, "letta da debug_token")
+    _data_access_deadline(data, warn_days, health)
     return True
 
 

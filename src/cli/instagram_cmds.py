@@ -15,7 +15,7 @@ from rich.table import Table
 from ..accounts import load_pages
 from ..core.enums import JobStatus, MediaType, Mode, UploadStatus
 from ..core.errors import PublishError
-from ..core.logging_setup import get_logger, setup_logging
+from ..core.logging_setup import get_logger, register_secret, setup_logging
 from ..core.paths import Paths
 from ..core.settings import load_settings
 from ..core.timeutils import utcnow_iso
@@ -114,6 +114,12 @@ def discover_facebook_login(
     user_token: str = typer.Option(
         None, "--user-token",
         help="token utente Facebook; se omesso viene chiesto senza eco"),
+    page_id: str = typer.Option(
+        None, "--page-id",
+        help="Page ID esplicito, se /me/accounts non la restituisce"),
+    long_lived: bool = typer.Option(
+        True, "--long-lived/--as-is",
+        help="scambia prima il token utente per uno a lunga durata"),
     write_env: bool = typer.Option(
         False, "--write-env",
         help="scrive Page ID, IG Business ID e Page token in .env"),
@@ -141,29 +147,75 @@ def discover_facebook_login(
     reg = load_pages(paths)
     pcfg = reg.get(page)
 
+    # Three ways in, in order of how much they expose the token: an env
+    # variable (nothing), a prompt (nothing), the command line (the process
+    # list, for as long as the command runs).
+    if not user_token:
+        user_token = (os.environ.get("ICE_FB_USER_TOKEN") or "").strip()
     if not user_token:
         import getpass
         user_token = getpass.getpass(
             "Token utente Facebook (non verrà mostrato): ").strip()
     if not user_token:
-        console.print("[red]Nessun token fornito.[/]")
+        console.print("[red]Nessun token fornito.[/] Passalo con "
+                      "ICE_FB_USER_TOKEN, o rispondi al prompt.")
         raise typer.Exit(2)
+    register_secret(user_token)
 
     client = GraphClient(user_token, flavor="facebook_login",
                          api_version=(settings.publishing.graph_api_version
                                       or DEFAULT_GRAPH_API_VERSION))
-    try:
-        pages = client.list_pages()
-    except PublishError as e:
-        console.print(f"[red]Impossibile elencare le Pagine:[/] {e}")
-        console.print("Serve un token UTENTE con i permessi pages_show_list e "
-                      "instagram_basic.")
-        raise typer.Exit(1)
+
+    if long_lived:
+        # A Page token lives exactly as long as the User token behind it. From
+        # the Graph API Explorer that is hours, so the first health check said
+        # "scade fra 0 giorni" — correctly. Exchanging first is what makes the
+        # Page token durable.
+        from ..publishing.health import app_credentials
+
+        app_id, app_secret = app_credentials()
+        if not (app_id and app_secret):
+            console.print("[red]--long-lived richiede META_APP_ID e "
+                          "META_APP_SECRET in .env[/]")
+            raise typer.Exit(2)
+        try:
+            exchanged = client.exchange_for_long_lived_user_token(app_id, app_secret)
+        except PublishError as e:
+            console.print(f"[red]Scambio del token non riuscito:[/] {e}")
+            raise typer.Exit(1)
+        seconds = int(exchanged.get("expires_in") or 0)
+        console.print(f"[green]Token utente esteso[/]: "
+                      f"{seconds // 86400} giorni" if seconds
+                      else "[green]Token utente esteso[/] (senza scadenza dichiarata)")
+        client = GraphClient(exchanged["access_token"], flavor="facebook_login",
+                             api_version=client.api_version)
+
+    if page_id:
+        # /me/accounts can come back empty for a Page that is perfectly
+        # readable by id — it happened on the first real migration, with every
+        # permission granted. The edge and the node do not always agree, so an
+        # explicit id is a documented way in rather than a workaround.
+        try:
+            pages = [client.page_with_token(page_id)]
+        except PublishError as e:
+            console.print(f"[red]Pagina {page_id} non leggibile:[/] {e}")
+            raise typer.Exit(1)
+    else:
+        try:
+            pages = client.list_pages()
+        except PublishError as e:
+            console.print(f"[red]Impossibile elencare le Pagine:[/] {e}")
+            console.print("Serve un token UTENTE con i permessi pages_show_list "
+                          "e instagram_basic.")
+            raise typer.Exit(1)
 
     if not pages:
-        console.print("[yellow]Nessuna Pagina Facebook amministrata da questo "
-                      "token.[/] Crea la Pagina e collegala all'account "
-                      "Instagram professionale, poi riprova.")
+        console.print("[yellow]Nessuna Pagina Facebook restituita da "
+                      "/me/accounts.[/]")
+        console.print("Se sai che la Pagina esiste, indicala esplicitamente: "
+                      "l'edge può essere vuoto per una Pagina che il nodo "
+                      "restituisce senza problemi.")
+        console.print("  [bold]--page-id <PAGE_ID>[/]")
         raise typer.Exit(1)
 
     t = Table(title="Pagine Facebook e account Instagram collegati")
@@ -356,6 +408,10 @@ def health_check(
         # the whole reason to print this line.
         if h.expiry_source:
             console.print(f"  [dim]{h.page_id}: scadenza {h.expiry_source}[/]")
+        if h.data_access_days is not None:
+            console.print(f"  [dim]{h.page_id}: accesso ai dati fra "
+                          f"{h.data_access_days} giorni (clock distinto dal "
+                          f"token)[/]")
         if h.permissions_source:
             console.print(f"  [dim]{h.page_id}: permessi da {h.permissions_source}[/]")
     console.print("[dim]Nessun token e nessun app secret viene stampato o "

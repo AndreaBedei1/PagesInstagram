@@ -416,3 +416,42 @@ def test_facebook_login_does_not_invent_an_account_type(settings, page,
     assert health.account_type == ""
     assert not health.warnings, health.warnings
     assert any("Pagina" in n for n in health.notes)
+
+
+# ---- the two clocks on a Page token ---------------------------------------
+def test_a_token_that_never_expires_is_a_fact_not_an_unknown(settings, page,
+                                                             monkeypatch,
+                                                             with_app_credentials):
+    """expires_at = 0 means "no expiry", and falling back to a declared date
+    would replace a fact with a guess."""
+    _declare(monkeypatch, page, days_ago=59)      # would otherwise say 1 day
+    health = _check(settings, page, FakeClient(days=None))
+    assert health.expiry == Verdict.OK
+    assert health.days_left is None
+    assert "non scade" in health.expiry_source
+    assert health.ok
+
+
+def test_data_access_is_the_clock_that_still_runs(settings, page,
+                                                  with_app_credentials):
+    """A permanent token still loses data access, and is_valid stays true."""
+    import time
+
+    client = FakeClient(days=None)
+    original = client.debug_token
+
+    def with_deadline(app_id, app_secret, days):
+        data = original(app_id, app_secret)
+        data["data"]["data_access_expires_at"] = int(time.time()) + days * 86400
+        return data
+
+    client.debug_token = lambda a, s: with_deadline(a, s, 80)
+    healthy = _check(settings, page, client)
+    assert healthy.data_access_days is not None and healthy.data_access_days > 70
+    assert healthy.ok
+
+    client.debug_token = lambda a, s: with_deadline(a, s, 4)
+    soon = _check(settings, page, client)
+    assert soon.data_access_days <= 4
+    assert any("accesso ai dati" in w for w in soon.warnings)
+    assert not soon.ok
