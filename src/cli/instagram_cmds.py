@@ -210,6 +210,15 @@ def health_check(
             console.print(f"  [red]{h.page_id}[/]: {problem}")
         for problem in h.warnings:
             console.print(f"  [yellow]{h.page_id}[/]: {problem}")
+        for note in h.notes:
+            console.print(f"  [dim]{h.page_id}: {note}[/]")
+        # Where each verdict came from. A date somebody typed and a date Meta
+        # returned are both "59 giorni" on the table, and the difference is
+        # the whole reason to print this line.
+        if h.expiry_source:
+            console.print(f"  [dim]{h.page_id}: scadenza {h.expiry_source}[/]")
+        if h.permissions_source:
+            console.print(f"  [dim]{h.page_id}: permessi da {h.permissions_source}[/]")
     console.print("[dim]Nessun token e nessun app secret viene stampato o "
                   "registrato.[/]")
     raise typer.Exit(report.exit_code)
@@ -410,8 +419,8 @@ def canary_plan(page: str = typer.Option(...),
         console.print(f"  [red]{p}[/]")
     console.print("\n[yellow]Didascalia che verrebbe pubblicata:[/]")
     console.print(caption or "[dim](nessuna)[/]")
-    console.print("\n[bold]Passi simulati:[/] create container → resumable upload → "
-                  "attesa FINISHED → conferma → media_publish")
+    console.print("\n[bold]Passi simulati:[/] create container -> resumable upload -> "
+                  "attesa FINISHED -> conferma -> media_publish")
     console.print("[green]Nessuna chiamata a Meta è stata effettuata: 0 container, "
                   "0 upload, 0 publish.[/]")
     db.close()

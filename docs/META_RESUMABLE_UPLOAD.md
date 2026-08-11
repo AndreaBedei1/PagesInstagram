@@ -41,6 +41,39 @@ pubblicare e il preflight non le pretende più. Restano necessarie per leggere
 scadenza e permessi: senza, il health check resta in avviso, e per il primo
 go-live un avviso sulle credenziali è bloccante.
 
+### Correzione dell'11 agosto 2026 — le coppie di credenziali sono due
+
+La tabella qui sopra era giusta sugli endpoint e sbagliata su *quali* app id e
+secret intendesse. Il Dashboard ne mostra due coppie, in due punti diversi:
+
+| dove | coppia | usata da |
+|---|---|---|
+| *App settings → Basic* | app id / secret **Meta** | `debug_token` (graph.facebook.com) |
+| *Instagram → API setup with Instagram login* | Instagram app id / secret | `ig_exchange_token` (graph.instagram.com) |
+
+Non sono intercambiabili. Passando l'**Instagram** app id a `debug_token`, su un
+account reale con un token valido:
+
+```
+GET /oauth/access_token?grant_type=client_credentials   400  code 101
+GET /debug_token?access_token=<ig-app-id>|<ig-secret>   400  code 190
+GET /<ig-app-id>                                        400  code 190
+    "Error validating application. Cannot get application info
+     due to a system error."
+GET /me                     (graph.instagram.com)       200
+GET /<ig-user-id>/content_publishing_limit              200
+```
+
+L'ID dell'app Instagram semplicemente non è un nodo di `graph.facebook.com`.
+Le ultime due righe sono la parte che conta per la produzione: **pubblicare non
+dipende da nessuna delle due coppie**, e il token risponde correttamente da
+solo.
+
+Nota secondaria della stessa prova: `/me` restituisce due identificatori,
+`user_id` (17841…, l'account professionale) e `id` (app-scoped). Gli endpoint di
+pubblicazione accettano entrambi; il progetto usa `user_id`, che è quello che la
+guida *get started* indica come `<IG_ID>` e non dipende dall'app.
+
 ### Specifiche Reel confermate lo stesso giorno
 
 Rilette letteralmente dal riferimento IG User `/media`:

@@ -64,7 +64,7 @@ if ($WhatIf -and $UploadOnly) {
 # ---------------------------------------------------------------------------
 if ($WhatIf) {
     Step "1/2 Controlli locali (nessuna chiamata a Meta)"
-    & (Join-Path $PSScriptRoot 'preflight.ps1') -SkipCorpus -NoNetwork -PythonPath $python
+    & (Join-Path $PSScriptRoot 'preflight.ps1') -SkipCorpus -NoNetwork -Page $Page -PythonPath $python
     if ($LASTEXITCODE -ne 0) { Fail "Preflight non superato: risolvi prima di procedere." }
 
     Step "2/2 Simulazione del canary"
@@ -93,7 +93,7 @@ Passo successivo, quando vuoi caricare davvero senza pubblicare:
 # Levels 2 and 3 both need credentials and a green account.
 # ---------------------------------------------------------------------------
 Step "1. Preflight"
-& (Join-Path $PSScriptRoot 'preflight.ps1') -SkipCorpus -PythonPath $python
+& (Join-Path $PSScriptRoot 'preflight.ps1') -SkipCorpus -Page $Page -PythonPath $python
 if ($LASTEXITCODE -ne 0) { Fail "Preflight non superato: risolvi prima di procedere." }
 
 Step "2. Che cosa verrebbe pubblicato"

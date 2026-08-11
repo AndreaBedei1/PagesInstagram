@@ -115,3 +115,34 @@ def test_arming_scripts_do_not_change_mode():
         assert not assignment.search(body), (
             f"{name} non deve impostare ICE_MODE: armare e passare in "
             f"produzione sono due decisioni distinte")
+
+
+def test_cli_output_survives_a_windows_console_code_page():
+    """A console code page must never turn a report into a traceback.
+
+    Windows PowerShell hands Python a cp1252 stdout. During a real go-live a
+    single arrow in the canary's summary line raised UnicodeEncodeError from
+    inside rich, and the operator saw a stack trace where the result should
+    have been. The CLI now reconfigures its streams; this checks both halves —
+    that it does, and that the strings it prints do not rely on it.
+    """
+    import re
+
+    from src.cli.main import _force_utf8_output
+
+    assert callable(_force_utf8_output)
+
+    printed = re.compile(r"console\.print\(|typer\.echo\(")
+    offenders = []
+    for path in sorted((ROOT / "src" / "cli").glob("*.py")):
+        for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            if not printed.search(line):
+                continue
+            for ch in line:
+                if ord(ch) > 127:
+                    try:
+                        ch.encode("cp1252")
+                    except UnicodeEncodeError:
+                        offenders.append(f"{path.name}:{lineno} {ch!r}")
+    assert not offenders, (
+        f"caratteri non rappresentabili in cp1252 su righe stampate: {offenders}")

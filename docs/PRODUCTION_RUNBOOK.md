@@ -50,8 +50,54 @@ ufficiale è esplicita su chi usa cosa:
 Quindi: senza di esse si pubblica benissimo, ma nessuno può dire quanti giorni
 di vita resti al token. `health-check` lo segnala come avviso, e per il primo
 go-live un avviso sulle credenziali è bloccante — quindi in pratica, per il
-primo avvio, mettile. Sono l'**Instagram** app ID/secret (App Dashboard →
-Instagram → *API setup with Instagram login*).
+primo avvio, mettile.
+
+> **Sono le credenziali dell'app *Meta*, non quelle Instagram.** Il Dashboard
+> ne mostra due coppie in due punti diversi, e non sono intercambiabili:
+>
+> | dove | quale | a che serve |
+> |---|---|---|
+> | *App settings → Basic* | App ID / App secret **Meta** | `debug_token` — scadenza e permessi |
+> | *Instagram → API setup with Instagram login* | Instagram app ID / secret | `ig_exchange_token` — da token breve a long-lived |
+>
+> Passare l'ID dell'app Instagram a `debug_token` risponde «Error validating
+> application. Cannot get application info due to a system error» (code 190):
+> quell'ID non è un nodo di `graph.facebook.com`. Verificato su un account reale
+> l'11 agosto 2026, insieme al fatto che `/me` e
+> `content_publishing_limit` rispondono comunque 200 — pubblicare non dipende da
+> nessuna delle due coppie.
+
+### E anche con le credenziali giuste, la scadenza non si legge
+
+Con le credenziali **Meta** corrette — `client_credentials` risponde 200, quindi
+app e secret sono validi — `debug_token` risponde comunque `(#2) Service
+temporarily unavailable`, su tentativi ripetuti e con entrambe le forme di
+autenticazione. Non è transitorio: quell'endpoint non introspeziona un token di
+Instagram Login.
+
+Quindi **la scadenza non è leggibile da nessun endpoint**, e il preflight non
+può pretenderla. L'unica fonte che resta sei tu: il Dashboard mostra la data in
+cui hai generato il token, e la durata documentata è di 60 giorni.
+
+```
+ICE_<PAGINA>_TOKEN_ISSUED_AT=2026-08-11
+```
+
+Il sistema calcola il countdown da lì e blocca sotto i 10 giorni rimanenti — la
+protezione che serviva resta intatta. Ma il dato è **dichiarato, non
+verificato**, e `health-check` lo scrive a ogni esecuzione accanto al numero:
+
+```
+scadenza  ok (59 gg)
+pensiero_essenziale_it: scadenza dichiarata, non verificata
+pensiero_essenziale_it: permessi da sonda: il nodo di pubblicazione risponde
+```
+
+Anche i permessi, senza `debug_token`, non si leggono come elenco di scope: il
+health check interroga `content_publishing_limit`, lo stesso nodo su cui vive
+`/media`. Se risponde, il token arriva dove deve arrivare; se rifiuta, è un
+fallimento, perché rifiuterebbe anche la pubblicazione. Anche questo è
+etichettato per quello che è — una sonda, non un elenco.
 
 Requisiti degli account: **Instagram professional Business**, collegati all'app
 Meta, con i permessi `instagram_business_basic` e

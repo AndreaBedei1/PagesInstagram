@@ -125,6 +125,26 @@ LONG_LIVED_TOKEN_DAYS = 60
 # So: the app credentials are NOT required to publish, and are required to read
 # a token's expiry and scopes. That is the whole of it, and both statements are
 # enforced — the first by REQUIRED_TO_PUBLISH, the second by health.py.
+#
+# THE TWO PAIRS ARE NOT THE SAME PAIR, and this cost a go-live an afternoon.
+# The App Dashboard shows an app id and secret in two different places:
+#
+#   App settings > Basic                      -> the *Meta* app credentials
+#   Instagram > API setup with Instagram login -> the *Instagram* app credentials
+#
+# `ig_exchange_token` wants the Instagram app secret; `debug_token` is a
+# Facebook Graph endpoint and wants a Meta app access token. Handing it the
+# Instagram app id produces, verified against a real account on 2026-08-11:
+#
+#   GET /oauth/access_token?grant_type=client_credentials -> 400 code 101
+#   GET /debug_token?access_token=<ig-app-id>|<ig-app-secret> -> 400 code 190
+#   GET /<ig-app-id> -> 400 code 190
+#       "Error validating application. Cannot get application info due to a
+#        system error."
+#
+# The Instagram app id is simply not a node on graph.facebook.com. So
+# META_APP_ID / META_APP_SECRET below mean the **Meta** pair; the Instagram
+# secret belongs to the token-exchange path and is not interchangeable with it.
 # ---------------------------------------------------------------------------
 
 #: Env variables without which no page can publish. Per page, prefixed.

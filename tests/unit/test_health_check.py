@@ -18,7 +18,8 @@ import pytest
 from src.core.errors import PublishError
 from src.core.meta_api import REQUIRED_PERMISSIONS
 from src.core.settings import load_settings
-from src.publishing.health import Verdict, check_page, check_pages
+from src.publishing.health import (ISSUED_AT_SUFFIX, Verdict, check_page,
+                                   check_pages)
 from src.publishing.publisher import PublishTarget
 
 PAGE_ID = "pensiero_essenziale_it"
@@ -29,7 +30,8 @@ class FakeClient:
 
     def __init__(self, *, me=None, me_error=None, days=59, valid=True,
                  scopes=REQUIRED_PERMISSIONS, debug_error=None,
-                 account_error=None, account_type="business"):
+                 account_error=None, account_type="business", limit_error=None):
+        self._limit_error = limit_error
         self._me = me if me is not None else {
             "user_id": "17841400000000000", "username": "pensiero.essenziale",
             "account_type": account_type}
@@ -58,6 +60,8 @@ class FakeClient:
         return self._me
 
     def get_publishing_limit(self, ig_user_id):
+        if self._limit_error:
+            raise self._limit_error
         return {"data": [{"quota_usage": 0,
                           "config": {"quota_total": 100, "quota_duration": 86400}}]}
 
@@ -83,6 +87,12 @@ def with_app_credentials(monkeypatch):
 def without_app_credentials(monkeypatch):
     monkeypatch.delenv("META_APP_ID", raising=False)
     monkeypatch.delenv("META_APP_SECRET", raising=False)
+
+
+@pytest.fixture(autouse=True)
+def no_declared_date(monkeypatch):
+    """The declared date is a fallback; tests opt into it explicitly."""
+    monkeypatch.delenv(f"ICE_{PAGE_ID.upper()}{ISSUED_AT_SUFFIX}", raising=False)
 
 
 def _check(settings, page, client, **kw):
@@ -127,16 +137,72 @@ def test_debug_token_saying_invalid_overrides_a_working_me(settings, page,
 
 
 # ---- expiry axis -----------------------------------------------------------
-def test_expiry_is_unknown_without_the_app_credentials(settings, page,
-                                                       without_app_credentials):
-    """Not a failure, but not a pass either: the go-live treats it as blocking."""
+def test_expiry_is_unknown_without_any_source(settings, page,
+                                              without_app_credentials):
+    """Not a failure, but not a pass either — and it says how to clear it."""
     health = _check(settings, page, FakeClient())
     assert health.token == Verdict.VALID
     assert health.expiry == Verdict.UNKNOWN
     assert health.days_left is None
     assert not health.failures
-    assert any("META_APP_ID" in w for w in health.warnings)
+    assert any(ISSUED_AT_SUFFIX in w for w in health.warnings), (
+        "l'avviso deve dire come risolverlo, non solo che non si sa")
     assert not health.ok
+
+
+# ---- the declared date, when the API will not answer -----------------------
+def _declare(monkeypatch, page, days_ago: int) -> None:
+    from datetime import date, timedelta as td
+    monkeypatch.setenv(f"{page.env_prefix()}{ISSUED_AT_SUFFIX}",
+                       (date.today() - td(days=days_ago)).isoformat())
+
+
+def test_a_declared_issue_date_gives_an_expiry(settings, page, monkeypatch,
+                                               without_app_credentials):
+    _declare(monkeypatch, page, days_ago=5)
+    health = _check(settings, page, FakeClient())
+    assert health.expiry == Verdict.OK
+    # .days truncates, so a partial day reads as one fewer. 60 documented
+    # days minus the five declared, give or take the hour of the run.
+    assert health.days_left in (54, 55)
+    assert health.expiry_source == "dichiarata, non verificata"
+    assert health.ok
+
+
+def test_a_declared_date_still_blocks_a_token_near_expiry(settings, page,
+                                                          monkeypatch,
+                                                          without_app_credentials):
+    """The protection survives the fallback — that was the whole point."""
+    _declare(monkeypatch, page, days_ago=55)
+    health = _check(settings, page, FakeClient())
+    assert health.expiry == Verdict.EXPIRING
+    assert not health.ok
+
+
+def test_a_declared_date_in_the_past_fails(settings, page, monkeypatch,
+                                           without_app_credentials):
+    _declare(monkeypatch, page, days_ago=70)
+    health = _check(settings, page, FakeClient())
+    assert health.expiry == Verdict.EXPIRED
+    assert health.failures
+
+
+def test_a_malformed_declared_date_is_ignored_not_guessed(settings, page,
+                                                          monkeypatch,
+                                                          without_app_credentials):
+    monkeypatch.setenv(f"{page.env_prefix()}{ISSUED_AT_SUFFIX}", "11/08/2026")
+    health = _check(settings, page, FakeClient())
+    assert health.expiry == Verdict.UNKNOWN
+    assert any("non è una data" in w for w in health.warnings)
+
+
+def test_debug_token_wins_over_the_declared_date(settings, page, monkeypatch,
+                                                 with_app_credentials):
+    """A measurement beats a declaration when both are available."""
+    _declare(monkeypatch, page, days_ago=59)          # would say 1 day left
+    health = _check(settings, page, FakeClient(days=40))
+    assert health.days_left in (39, 40)
+    assert health.expiry_source == "letta da debug_token"
 
 
 def test_a_token_close_to_expiry_warns(settings, page, with_app_credentials):
@@ -176,10 +242,30 @@ def test_a_missing_publishing_permission_fails(settings, page, with_app_credenti
     assert any("instagram_business_content_publish" in f for f in health.failures)
 
 
-def test_no_scopes_reported_is_unknown(settings, page, with_app_credentials):
+def test_without_a_scope_list_the_publishing_node_is_probed(settings, page,
+                                                            with_app_credentials):
+    """Evidence beats a shrug: ask the node the publish call would use."""
     health = _check(settings, page, FakeClient(scopes=()))
-    assert health.permissions == Verdict.UNKNOWN
-    assert not health.failures and health.warnings
+    assert health.permissions == Verdict.OK
+    assert "sonda" in health.permissions_source
+    assert not health.failures
+
+
+def test_a_probe_the_publishing_node_refuses_is_a_failure(settings, page,
+                                                          with_app_credentials):
+    """If that node says no, the publish call would say no too."""
+    health = _check(settings, page, FakeClient(
+        scopes=(), limit_error=PublishError("Graph API error [10]: no permission",
+                                            retryable=False, code="10")))
+    assert health.permissions == Verdict.MISSING
+    assert any("rifiuta questo token" in f for f in health.failures)
+
+
+def test_a_scope_list_is_preferred_to_the_probe(settings, page,
+                                                with_app_credentials):
+    health = _check(settings, page, FakeClient())
+    assert health.permissions == Verdict.OK
+    assert health.permissions_source == "elenco degli scope"
 
 
 # ---- account axis ----------------------------------------------------------
@@ -233,3 +319,48 @@ def test_no_token_or_secret_is_ever_returned(settings, page, with_app_credential
     payload = repr(_check(settings, page, FakeClient()).as_dict())
     assert "placeholder-not-a-secret" not in payload
     assert "access_token" not in payload
+
+
+# ---- notes never change the verdict ----------------------------------------
+def test_a_debug_token_failure_covered_by_the_fallback_is_a_note(
+        settings, page, monkeypatch, with_app_credentials):
+    """Instagram Login: the endpoint never answers, and a fallback does.
+
+    Reporting that as a warning would leave the preflight permanently blocked
+    on something no action can fix, while telling the operator nothing they can
+    do. It is still printed — as a note, which cannot change the exit code.
+    """
+    _declare(monkeypatch, page, days_ago=0)
+    health = _check(settings, page, FakeClient(
+        debug_error=PublishError("Graph API error [2]: (#2) Service temporarily "
+                                 "unavailable", retryable=True, code="2")))
+    assert health.expiry == Verdict.OK
+    assert health.permissions == Verdict.OK
+    assert not health.warnings and not health.failures
+    assert any("debug_token" in n for n in health.notes)
+    assert health.ok
+
+
+def test_a_debug_token_failure_with_nothing_to_fall_back_on_still_warns(
+        settings, page, without_app_credentials, monkeypatch):
+    """Remove the fallback and the warning must come back."""
+    monkeypatch.setenv("META_APP_ID", "1234567890")
+    monkeypatch.setenv("META_APP_SECRET", "placeholder-not-a-secret")
+    health = _check(settings, page, FakeClient(
+        debug_error=PublishError("boom", retryable=True, code="2")))
+    assert health.expiry == Verdict.UNKNOWN
+    assert health.warnings and not health.ok
+
+
+def test_the_report_says_where_the_expiry_came_from(settings, page, monkeypatch,
+                                                    without_app_credentials):
+    """A declared date and a measured one must never look the same."""
+    _declare(monkeypatch, page, days_ago=1)
+    declared = _check(settings, page, FakeClient()).as_dict()
+    assert declared["expiry_source"] == "dichiarata, non verificata"
+
+    monkeypatch.setenv("META_APP_ID", "1234567890")
+    monkeypatch.setenv("META_APP_SECRET", "placeholder-not-a-secret")
+    measured = _check(settings, page, FakeClient(days=30)).as_dict()
+    assert measured["expiry_source"] == "letta da debug_token"
+    assert declared["days_left"] != measured["days_left"]

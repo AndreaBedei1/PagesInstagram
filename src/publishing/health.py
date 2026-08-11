@@ -25,15 +25,19 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from ..accounts.models import PageConfig
 from ..core.errors import PublishError
-from ..core.meta_api import REQUIRED_PERMISSIONS
+from ..core.meta_api import LONG_LIVED_TOKEN_DAYS, REQUIRED_PERMISSIONS
 from ..core.settings import Settings
 
 #: A token with fewer days than this left does not start a go-live.
 DEFAULT_WARN_DAYS = 10
+
+#: Per-page env variable holding the date the token was generated, as ISO
+#: ``YYYY-MM-DD``. See :func:`_expiry_from_declared_date` for why it exists.
+ISSUED_AT_SUFFIX = "_TOKEN_ISSUED_AT"
 
 
 class Verdict:
@@ -56,8 +60,10 @@ class PageHealth:
     credentials: str = Verdict.ABSENT
     token: str = Verdict.UNVERIFIABLE
     expiry: str = Verdict.UNKNOWN
+    expiry_source: str = ""
     days_left: int | None = None
     permissions: str = Verdict.UNKNOWN
+    permissions_source: str = ""
     granted_scopes: tuple[str, ...] = ()
     account: str = Verdict.UNREACHABLE
     account_type: str = ""
@@ -66,6 +72,9 @@ class PageHealth:
     upload_method: str = ""
     failures: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
+    #: Things worth printing that are not problems. A note never changes the
+    #: exit code — the moment it could, it would be a warning.
+    notes: list[str] = field(default_factory=list)
 
     @property
     def ok(self) -> bool:
@@ -74,10 +83,13 @@ class PageHealth:
     def as_dict(self) -> dict:
         return {"page_id": self.page_id, "credentials": self.credentials,
                 "token": self.token, "expiry": self.expiry,
+                "expiry_source": self.expiry_source,
                 "days_left": self.days_left, "permissions": self.permissions,
+                "permissions_source": self.permissions_source,
                 "account": self.account, "account_type": self.account_type,
                 "username": self.username, "limit": self.limit,
-                "failures": list(self.failures), "warnings": list(self.warnings)}
+                "failures": list(self.failures), "warnings": list(self.warnings),
+                "notes": list(self.notes)}
 
 
 @dataclass
@@ -111,42 +123,107 @@ def app_credentials() -> tuple[str, str]:
             os.environ.get("META_APP_SECRET") or "")
 
 
-def _expiry_from(data: dict, warn_days: int, health: PageHealth) -> None:
-    expires = data.get("expires_at")
-    if expires in (None, 0):
-        # A never-expiring token exists (page tokens), but for the Instagram
-        # long-lived token it means the field was not returned. Say so.
-        health.expiry = Verdict.UNKNOWN
-        health.warnings.append(
-            "scadenza non riportata da debug_token: non posso dire quanto vive")
-        return
-    when = datetime.fromtimestamp(int(expires), tz=timezone.utc)
+def _classify_expiry(when: datetime, warn_days: int, health: PageHealth,
+                     source: str) -> None:
+    health.expiry_source = source
     health.days_left = (when - datetime.now(timezone.utc)).days
     if health.days_left < 0:
         health.expiry = Verdict.EXPIRED
-        health.failures.append(f"token scaduto il {when.date().isoformat()}")
+        health.failures.append(
+            f"token scaduto il {when.date().isoformat()} ({source})")
     elif health.days_left <= warn_days:
         health.expiry = Verdict.EXPIRING
         health.warnings.append(
             f"il token scade fra {health.days_left} giorni "
-            f"({when.date().isoformat()}): rinnovalo prima del go-live")
+            f"({when.date().isoformat()}, {source}): rinnovalo prima del go-live")
     else:
         health.expiry = Verdict.OK
 
 
-def _permissions_from(data: dict, health: PageHealth) -> None:
+def _expiry_from(data: dict, warn_days: int, health: PageHealth) -> bool:
+    """Expiry as ``debug_token`` reports it. False if it did not report one."""
+    expires = data.get("expires_at")
+    if expires in (None, 0):
+        return False
+    _classify_expiry(datetime.fromtimestamp(int(expires), tz=timezone.utc),
+                     warn_days, health, "letta da debug_token")
+    return True
+
+
+def _expiry_from_declared_date(page: PageConfig, warn_days: int,
+                               health: PageHealth) -> bool:
+    """Expiry computed from a date the operator wrote down. False if absent.
+
+    This exists because for the Instagram Login flavour the expiry is not
+    readable at all. ``debug_token`` is a Facebook Graph endpoint; handed a
+    valid Meta app access token and an Instagram user token it answers
+    ``(#2) Service temporarily unavailable`` every time, while
+    ``client_credentials`` on the same app returns 200 — so the app and the
+    secret are fine and the token type is what it will not introspect.
+    Verified against a real account on 2026-08-11.
+
+    That left a gate nobody could pass: the preflight blocks the first go-live
+    on any credential warning, and "expiry unknown" was a warning that no
+    action could clear. Lowering the gate would have thrown away the very
+    protection it exists for — a token with days left starting five accounts.
+
+    So the remaining source is the operator: the App Dashboard states the date
+    a long-lived token was generated, and its life is a documented 60 days. The
+    value is *declared*, not verified, and every report says which of the two
+    it is. A declared date is worth having; a declared date presented as a
+    measurement would not be.
+    """
+    raw = os.environ.get(f"{page.env_prefix()}{ISSUED_AT_SUFFIX}", "").strip()
+    if not raw:
+        return False
+    try:
+        issued = datetime.fromisoformat(raw).replace(tzinfo=timezone.utc)
+    except ValueError:
+        health.warnings.append(
+            f"{page.env_prefix()}{ISSUED_AT_SUFFIX}={raw!r} non è una data "
+            f"ISO (YYYY-MM-DD): la ignoro")
+        return False
+    _classify_expiry(issued + timedelta(days=LONG_LIVED_TOKEN_DAYS), warn_days,
+                     health, "dichiarata, non verificata")
+    return True
+
+
+def _permissions_from(data: dict, health: PageHealth) -> bool:
+    """Permissions as ``debug_token`` lists them. False if it listed none."""
     scopes = tuple(data.get("scopes") or ())
     health.granted_scopes = scopes
     if not scopes:
-        health.permissions = Verdict.UNKNOWN
-        health.warnings.append("debug_token non ha riportato gli scope")
-        return
+        return False
     missing = [p for p in REQUIRED_PERMISSIONS if p not in scopes]
     if missing:
         health.permissions = Verdict.MISSING
+        health.permissions_source = "elenco degli scope"
         health.failures.append(f"permessi mancanti: {', '.join(missing)}")
     else:
         health.permissions = Verdict.OK
+        health.permissions_source = "elenco degli scope"
+    return True
+
+
+def _permissions_by_probe(target, health: PageHealth) -> None:
+    """Ask the publishing node itself, when the scope list is out of reach.
+
+    ``content_publishing_limit`` hangs off the same node as ``/media`` and
+    creates nothing. It is not the scope list and is not reported as one — but
+    a token that reaches the publishing node is evidence of a different order
+    from "we could not check". If it refuses, that *is* a failure: the publish
+    call would refuse too.
+    """
+    try:
+        target.client.get_publishing_limit(target.ig_user_id)
+    except PublishError as e:
+        health.permissions = Verdict.MISSING
+        health.permissions_source = "sonda sul nodo di pubblicazione"
+        health.failures.append(
+            f"il nodo di pubblicazione rifiuta questo token: {e}")
+        return
+    health.permissions = Verdict.OK
+    health.permissions_source = "sonda: il nodo di pubblicazione risponde"
 
 
 def check_page(settings: Settings, page: PageConfig, *,
@@ -185,23 +262,48 @@ def check_page(settings: Settings, page: PageConfig, *,
             health.failures.append(f"token non verificabile: {e}")
         return health
 
-    # -- 2. expiry and scopes (need the app credentials) --------------------
+    # -- 2. expiry and scopes ------------------------------------------------
+    # Preferred source first, fallbacks after, and the report always says which
+    # one answered. Instagram Login usually falls all the way through.
     app_id, app_secret = app_credentials()
-    if not (app_id and app_secret):
-        health.warnings.append(
-            "scadenza e permessi non verificabili senza META_APP_ID e "
-            "META_APP_SECRET: sono facoltativi per pubblicare, necessari per "
-            "leggere debug_token")
-    else:
+    got_expiry = got_scopes = False
+    debug_failure = ""
+    if app_id and app_secret:
         try:
             data = (target.client.debug_token(app_id, app_secret) or {}).get("data", {})
             if not data.get("is_valid", True):
                 health.token = Verdict.INVALID
                 health.failures.append("debug_token: is_valid=false")
-            _expiry_from(data, warn_days, health)
-            _permissions_from(data, health)
+            got_expiry = _expiry_from(data, warn_days, health)
+            got_scopes = _permissions_from(data, health)
         except PublishError as e:
-            health.warnings.append(f"debug_token non disponibile: {e}")
+            # Held, not raised yet. Whether this is a problem depends on
+            # whether anything else answers the questions it was asked — and
+            # for Instagram Login it never answers, so reporting it as a
+            # warning after a fallback has succeeded would leave a gate nobody
+            # can pass while telling them nothing they can act on.
+            debug_failure = str(e)
+
+    if not got_expiry and not _expiry_from_declared_date(page, warn_days, health):
+        health.expiry = Verdict.UNKNOWN
+        health.warnings.append(
+            f"scadenza non determinabile: Instagram Login non la espone in "
+            f"lettura. Dichiara la data di generazione del token in "
+            f"{page.env_prefix()}{ISSUED_AT_SUFFIX} (YYYY-MM-DD) e verrà "
+            f"calcolata sui {LONG_LIVED_TOKEN_DAYS} giorni documentati")
+    if not got_scopes:
+        _permissions_by_probe(target, health)
+
+    if debug_failure:
+        answered = health.expiry != Verdict.UNKNOWN and health.permissions != Verdict.UNKNOWN
+        message = (f"debug_token non disponibile ({debug_failure}): con "
+                   f"Instagram Login questo endpoint non introspeziona il "
+                   f"token")
+        if answered:
+            health.notes.append(message + " — scadenza e permessi ricavati "
+                                          "altrimenti, vedi le fonti qui sotto")
+        else:
+            health.warnings.append(message)
 
     # -- 3. the account itself ----------------------------------------------
     try:
