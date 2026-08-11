@@ -16,7 +16,11 @@ class MockGraphClient:
                  create_fail_times: int = 0, rate_limited: bool = False,
                  container_error: bool = False, upload_fail_times: int = 0,
                  upload_partial_bytes: int | None = None, account_type: str = "business",
-                 already_published_on_publish: bool = False):
+                 already_published_on_publish: bool = False,
+                 token_days: int = 59, scopes: tuple[str, ...] | None = None):
+        from ..core.meta_api import REQUIRED_PERMISSIONS
+        self.token_days = token_days
+        self.scopes = REQUIRED_PERMISSIONS if scopes is None else scopes
         self.status_sequence = status_sequence or ["IN_PROGRESS", "FINISHED"]
         self.create_fail_times = create_fail_times
         self.rate_limited = rate_limited
@@ -69,8 +73,21 @@ class MockGraphClient:
         return {"data": [{"quota_usage": len(self.published),
                           "config": {"quota_total": 100, "quota_duration": 86400}}]}
 
-    def debug_token(self) -> dict:
-        return {"data": {"is_valid": True, "expires_at": 0, "scopes": []}}
+    def verify_token(self) -> dict:
+        self.calls.append(("verify_token",))
+        return {"user_id": "ig", "username": "mock_user",
+                "account_type": self.account_type.upper()}
+
+    def debug_token(self, app_id: str, app_secret: str) -> dict:
+        """Same signature as the real client: app credentials, or nothing."""
+        self.calls.append(("debug_token",))
+        if not (app_id and app_secret):
+            raise PublishError("debug_token richiede META_APP_ID e META_APP_SECRET",
+                               retryable=False, code="APP_CREDENTIALS")
+        import time
+        return {"data": {"is_valid": True,
+                         "expires_at": int(time.time()) + self.token_days * 86400,
+                         "scopes": list(self.scopes)}}
 
     # -- resumable ---------------------------------------------------------
     def create_resumable_container(self, ig_user_id: str, *, media_type: str,

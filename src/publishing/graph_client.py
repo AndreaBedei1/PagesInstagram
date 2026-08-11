@@ -21,7 +21,8 @@ import requests
 
 from ..core.errors import PublishError
 from ..core.logging_setup import get_logger, register_secret
-from ..core.meta_api import DEFAULT_GRAPH_API_VERSION
+from ..core.meta_api import (API_HOSTS, DEFAULT_GRAPH_API_VERSION,
+                             TOKEN_DEBUG_HOST)
 
 log = get_logger("publishing.graph")
 
@@ -39,7 +40,8 @@ class GraphClient:
         self.token = access_token
         register_secret(access_token)  # never let the token reach a log
         self.api_version = api_version
-        host = "graph.instagram.com" if flavor == "instagram_login" else "graph.facebook.com"
+        self.flavor = flavor
+        host = API_HOSTS.get(flavor, API_HOSTS["facebook_login"])
         self.base = f"https://{host}/{api_version}"
         self.timeout = timeout
         self.upload_timeout = upload_timeout
@@ -190,10 +192,47 @@ class GraphClient:
         return self._request("GET", f"{ig_user_id}/content_publishing_limit",
                              fields="config,quota_usage")
 
-    def debug_token(self) -> dict:
-        """Best-effort token info (validity/expiry). Non-fatal on error."""
+    # -- token inspection --------------------------------------------------
+    def verify_token(self) -> dict:
+        """Ask the API who this token belongs to. Raises on an invalid token.
+
+        The token authenticates itself here — this is the only token check that
+        works without app credentials, and it is the one the health check leans
+        on. It answers "valid / invalid / could not tell"; it does not answer
+        "when does it expire", because the endpoint does not carry that.
+        """
+        return self._request("GET", "me",
+                             fields="user_id,username,account_type")
+
+    def debug_token(self, app_id: str, app_secret: str) -> dict:
+        """Expiry and granted scopes, via ``GET /debug_token``.
+
+        Three things this had wrong before, all of them documented on
+        developers.facebook.com and none of them guessable:
+
+        * ``debug_token`` lives on graph.facebook.com. Calling it on
+          graph.instagram.com — which is where an Instagram-Login client points
+          — is a request to an endpoint that is not there.
+        * the ``access_token`` parameter must be an **app** access token or a
+          developer user token, not the token being examined. Passing the
+          subject token as its own authority is what the old code did.
+        * therefore the app id and secret are genuinely required *for this
+          call*, and for nothing else in this client.
+
+        The secret is registered with the log redactor before it is used and is
+        never returned, printed or stored.
+        """
+        if not (app_id and app_secret):
+            raise PublishError(
+                "debug_token richiede META_APP_ID e META_APP_SECRET: sono le "
+                "sole credenziali applicative necessarie, e servono solo qui",
+                retryable=False, code="APP_CREDENTIALS")
+        register_secret(app_secret)
+        url = f"https://{TOKEN_DEBUG_HOST}/{self.api_version}/debug_token"
+        params = {"input_token": self.token,
+                  "access_token": f"{app_id}|{app_secret}"}
         try:
-            return self._request("GET", "debug_token", input_token=self.token)
-        except PublishError as e:
-            log.warning("debug_token failed: %s", e)
-            return {}
+            r = self._s.get(url, params=params, timeout=self.timeout)
+        except requests.RequestException as e:
+            raise PublishError(f"network error: {e}", retryable=True) from e
+        return self._parse(r)
