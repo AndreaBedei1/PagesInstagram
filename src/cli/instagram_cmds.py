@@ -382,7 +382,9 @@ def canary_plan(page: str = typer.Option(...),
     state = canary.load_state(db, pcfg.page_id)
 
     if as_json:
-        console.print_json(_json.dumps({
+        # typer.echo, not console.print_json: this output is parsed by
+        # go_live_canary.ps1 and rich would decorate it.
+        typer.echo(_json.dumps({
             "page_id": pcfg.page_id, "job_id": j["id"],
             "scheduled_at": j.get("scheduled_at"),
             "output_path": j.get("output_path"), "audit_ok": audit_ok,
