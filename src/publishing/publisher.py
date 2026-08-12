@@ -165,8 +165,24 @@ class Publisher:
                               remote_media_id=fake_id, message="dry-run (no API call)")
 
     def _upload_method(self, job: dict, page: PageConfig) -> str:
-        return (job.get("upload_method") or page.publishing.upload_method
-                or self.s.publishing.upload_method or UploadMethod.RESUMABLE)
+        """Which transport this job uses now — not which one it was planned with.
+
+        The per-job column exists so an interrupted upload resumes the way it
+        started; it is not a record of intent. Letting it win unconditionally
+        meant a job planned days ago kept using the transport that was
+        configured then, and silently ignored a page that had since been
+        migrated. That is how the second canary went down the resumable path
+        and got ProcessingFailedError from a configuration nobody had asked for
+        any more.
+
+        So the stored value only decides while there is something in flight.
+        """
+        if job.get("container_id"):
+            stored = job.get("upload_method")
+            if stored:
+                return stored
+        return (page.publishing.upload_method or self.s.publishing.upload_method
+                or UploadMethod.RESUMABLE)
 
     def _do_publish(self, job: dict, page: PageConfig,
                     target: PublishTarget) -> PublishOutcome:
@@ -302,9 +318,82 @@ class Publisher:
         self._await_finished(client, container_id)
         return self._finalize_publish(job, page, target, container_id)
 
-    # -- hosted_url (legacy/optional) path --------------------------------
+    # -- hosted_url path ---------------------------------------------------
+    def hosted_url_provider(self, page: PageConfig) -> str:
+        return (getattr(page.publishing, "hosted_url_provider", "")
+                or self.s.publishing.hosted_url_provider or "public_base_url")
+
     def _publish_hosted(self, job: dict, page: PageConfig, target: PublishTarget,
                         media_type: MediaType, meta_type: str) -> PublishOutcome:
+        if self.hosted_url_provider(page) == "cloudflare_quick_tunnel":
+            return self._publish_via_quick_tunnel(job, page, target, media_type,
+                                                  meta_type)
+        return self._publish_hosted_static(job, page, target, media_type, meta_type)
+
+    def _publish_via_quick_tunnel(self, job: dict, page: PageConfig,
+                                  target: PublishTarget, media_type: MediaType,
+                                  meta_type: str) -> PublishOutcome:
+        """Publish through a tunnel that exists only for this publication.
+
+        The tunnel has to stay up until the container reports FINISHED, because
+        that is when Meta has finished *fetching* the file. Closing after the
+        POST would leave Meta downloading from an address that no longer
+        resolves. It stays up through the publish call too — a few extra
+        seconds against the risk of a half-completed publication.
+
+        A container left over from a previous attempt is a special case: its
+        ``video_url`` pointed at a tunnel that is now gone, so unless it already
+        reached FINISHED it can never complete, and reusing it would wait for
+        something that will not happen.
+        """
+        from .quick_tunnel import TunnelSession
+
+        jid = job["id"]
+        client = target.client
+        self._validate_video_file(job.get("output_path"), media_type)
+
+        existing = job.get("container_id")
+        if existing:
+            try:
+                status = client.get_container_status(existing)
+            except PublishError:
+                status = "UNKNOWN"
+            if status == "FINISHED":
+                log.info("job %s: container %s già pronto, pubblico senza tunnel",
+                         jid, existing)
+                return self._finalize_publish(job, page, target, existing)
+            log.info("job %s: container %s in stato %s con un tunnel ormai chiuso: "
+                     "lo scarto", jid, existing, status)
+            self.db.update_job(jid, container_id=None, upload_uri=None,
+                               upload_offset=0)
+            job = self.db.get_job(jid)
+
+        is_reel = media_type == MediaType.REEL
+        caption = self._caption_for(job, page) if is_reel else None
+        share = page.publishing.share_reel_to_feed if is_reel else None
+
+        with TunnelSession(job["output_path"], self.s.paths) as session:
+            kwargs: dict = {"media_type": meta_type, "video_url": session.public_url}
+            if caption is not None:
+                kwargs["caption"] = caption
+            if share is not None:
+                kwargs["share_to_feed"] = share
+            self.db.update_job(jid, status=JobStatus.UPLOADING,
+                               upload_method=UploadMethod.HOSTED_URL)
+            container_id = client.create_media_container(target.ig_user_id, **kwargs)
+            self.db.update_job(jid, container_id=container_id,
+                               status=JobStatus.CONTAINER_CREATED)
+            self.db.log_event(job_id=jid, page_id=page.page_id,
+                              event="container_create",
+                              request_summary=f"{meta_type} quick_tunnel "
+                                              f"share_to_feed={share}",
+                              response_summary=container_id)
+            self._await_finished(client, container_id)
+            return self._finalize_publish(job, page, target, container_id)
+
+    def _publish_hosted_static(self, job: dict, page: PageConfig,
+                               target: PublishTarget, media_type: MediaType,
+                               meta_type: str) -> PublishOutcome:
         jid = job["id"]
         client = target.client
         is_video = media_type in _VIDEO_TYPES

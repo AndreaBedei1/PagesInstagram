@@ -41,6 +41,8 @@ param(
     [switch]$Production,
     [switch]$SkipCorpus,
     [switch]$NoNetwork,
+    [string]$Page,
+    [string]$EnvFile,
     [int]$MinFreeGb = 5,
     [int]$BufferDays = 30,
     [string]$PythonPath
@@ -85,8 +87,25 @@ Write-Host "== Profilo: $profileName ==" -ForegroundColor Cyan
 # ---------------------------------------------------------------- credentials
 Write-Host "`n== Credenziali ==" -ForegroundColor Cyan
 
-$pages = @('PENSIERO_ESSENZIALE_IT', 'CURIOSITA_MONDO_IT', 'PAROLA_GIORNO_IT',
-           'OGGI_NELLA_STORIA_IT', 'DOMANDA_GIORNO_IT')
+$allPages = @('PENSIERO_ESSENZIALE_IT', 'CURIOSITA_MONDO_IT', 'PAROLA_GIORNO_IT',
+              'OGGI_NELLA_STORIA_IT', 'DOMANDA_GIORNO_IT')
+# -Page narrows the credential check to one account. The canary publishes one
+# post to one page, and demanding all five accounts before it can run defeats
+# the point of a canary: the other four are meant to stay unarmed, and their
+# tokens are meant to be generated later, after this one has proved the flow.
+# The scheduler is the case that genuinely needs all five, and that is what
+# -Production without -Page checks.
+if ($Page) {
+    $pages = @($Page.ToUpper())
+    if ($allPages -notcontains $pages[0]) {
+        Write-Host "Pagina sconosciuta: $Page" -ForegroundColor Red
+        Write-Host "Attese: $($allPages -join ', ')"
+        exit 2
+    }
+    Write-Host "Credenziali richieste solo per: $($pages[0])" -ForegroundColor DarkGray
+} else {
+    $pages = $allPages
+}
 # What publishing actually needs, per the official Instagram Platform docs:
 # an Instagram User access token and the account id. Nothing else.
 $required = @('META_GRAPH_API_VERSION')
@@ -101,7 +120,9 @@ foreach ($p in $pages) {
 $optional = @('META_APP_ID', 'META_APP_SECRET')
 
 # .env is read by the engine, not by PowerShell; load it here for the check only.
-$envFile = Join-Path $root '.env'
+# The tests point this at a temporary file: a suite whose result depends
+# on whether the operator has configured this machine is not a suite.
+if ($EnvFile) { $envFile = $EnvFile } else { $envFile = Join-Path $root '.env' }
 $present = @{}
 if (Test-Path $envFile) {
     Get-Content $envFile | ForEach-Object {
@@ -134,6 +155,21 @@ if ($missingOptional.Count -gt 0) {
     Write-Host "  facoltative non impostate: $($missingOptional -join ', ')" -ForegroundColor DarkGray
     Write-Host "  non servono per pubblicare; senza di esse la scadenza del token" -ForegroundColor DarkGray
     Write-Host "  non è leggibile e il health check resta in avviso." -ForegroundColor DarkGray
+}
+
+# ---------------------------------------------------------------- flavor
+# Before anything reaches the network: is this (api_flavor, upload_method)
+# pair one Meta implements? instagram_login + resumable is not, and finding
+# that out from Meta halfway through a real upload cost a go-live.
+Write-Host "`n== Configurazione di pubblicazione ==" -ForegroundColor Cyan
+foreach ($p in $pages) {
+    $pageId = $p.ToLower()
+    Test-Step "flavor e metodo di upload ($pageId)" {
+        & $python -m src.cli instagram check-config --page $pageId | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            throw "combinazione api_flavor/upload_method non supportata: esegui 'python -m src.cli instagram check-config --page $pageId' per il dettaglio"
+        }
+    }
 }
 
 # ---------------------------------------------------------------- environment
@@ -223,8 +259,19 @@ Write-Host "`n== Account Meta ==" -ForegroundColor Cyan
 if ($NoNetwork) {
     Write-Host "  saltato (-NoNetwork): nessuna chiamata a Meta" -ForegroundColor DarkGray
 } else {
-Test-Step 'health check delle cinque pagine' {
-    & $python -m src.cli instagram health-check --all
+$healthLabel = if ($Page) { "health check di $Page" } else { 'health check delle cinque pagine' }
+# [string[]] is load-bearing: PowerShell unwraps a one-element array to a
+# scalar on assignment, and splatting a string spreads its characters —
+# `health-check - - a l l`. The behaviour tests caught it; the type keeps
+# it caught.
+[string[]]$healthArgs = if ($Page) { @('--page', $Page) } else { @('--all') }
+Test-Step $healthLabel {
+    # Out-Host, not capture: Test-Step assigns a block's output to
+    # $detail and prints it on one line, which flattens the health
+    # table into an unreadable smear. This is the one step whose output
+    # the operator has to read.
+    Write-Host ''
+    & $python -m src.cli instagram health-check @healthArgs | Out-Host
     $code = $LASTEXITCODE
     if ($code -eq 1) {
         throw "almeno una pagina non è utilizzabile (token, permessi o account)"

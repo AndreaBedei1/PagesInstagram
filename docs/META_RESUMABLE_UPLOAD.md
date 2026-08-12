@@ -3,7 +3,59 @@
 > Fonte primaria: **solo** documentazione ufficiale Meta. Nessun blog / nessuna
 > implementazione non ufficiale usata come fonte.
 > Prima verifica: 2026‑07‑22 · riverifica: 2026‑08‑04 · riverifica dell'audit
-> di pre-produzione: 2026‑08‑05 · **riverifica pre-credenziali: 2026‑08‑11.**
+> di pre-produzione: 2026‑08‑05 · riverifica pre-credenziali: 2026‑08‑11 ·
+> **correzione dopo il primo canary reale: 2026‑08‑11.**
+
+## ⚠️ Il resumable upload dipende dal flavor — correzione fondamentale
+
+Questo documento, il README e i rapporti di questo progetto hanno affermato per
+settimane che l'architettura è «upload resumable diretto verso Meta, senza
+hosting pubblico». **È vero solo con Facebook Login for Business.** Il progetto
+era configurato `api_flavor: instagram_login`, e quella combinazione non esiste.
+
+Non è stata una deduzione: al primo `-UploadOnly` reale, con token valido,
+account business e tutti i cancelli verdi, Meta ha risposto
+
+```
+POST graph.instagram.com/v25.0/<ig-user-id>/media
+     upload_type=resumable&media_type=REELS
+-> Graph API error [100]: The parameter video_url is required
+```
+
+`upload_type=resumable` viene semplicemente ignorato e `/media` chiede quello
+che chiede sempre. Il riferimento sui resumable upload lo dice in una riga:
+«Only for apps that have implemented Facebook Login for Business». E la pagina
+di content publishing è altrettanto netta sull'alternativa: con Instagram Login
+«the media must be hosted on a publicly accessible server at the time of the
+attempt».
+
+### La matrice, verificata
+
+| flavor | upload_method | esito | hosting pubblico |
+|---|---|---|---|
+| `instagram_login` | `resumable` | **non esiste** | — |
+| `instagram_login` | `hosted_url` | valido | **sì** |
+| `facebook_login` | `resumable` | valido | **no** |
+| `facebook_login` | `hosted_url` | valido | sì |
+
+Vive in `src/core/meta_api.py::check_upload_method`, ed è controllata da
+`check-config` e dal preflight **prima** di qualunque chiamata: la coppia
+impossibile ora viene rifiutata su questa macchina, non da Meta a metà upload.
+
+### I due flavor non condividono niente
+
+| | Instagram Login | Facebook Login for Business |
+|---|---|---|
+| host | `graph.instagram.com` | `graph.facebook.com` + `rupload.facebook.com` |
+| token | Instagram User access token | **Facebook Page access token** |
+| permessi | `instagram_business_basic`, `instagram_business_content_publish` | `instagram_basic`, `instagram_content_publish`, `pages_read_engagement` |
+| resumable | no | **sì** |
+| id account | `GET /me?fields=user_id` | `GET /{page-id}?fields=instagram_business_account` |
+
+Nemmeno i token sono intercambiabili: passando quello Instagram a
+`graph.facebook.com` la risposta è `Invalid OAuth access token - Cannot parse
+access token` (190). Sono spazi di nomi distinti, non varianti dello stesso
+meccanismo — e i nomi dei permessi non vanno riusati per analogia.
 
 ## Riverifica del 2026‑08‑11 — chi usa quali credenziali
 
@@ -40,6 +92,39 @@ e `health-check` distingue *token non verificabile* da *token invalido*.
 pubblicare e il preflight non le pretende più. Restano necessarie per leggere
 scadenza e permessi: senza, il health check resta in avviso, e per il primo
 go-live un avviso sulle credenziali è bloccante.
+
+### Correzione dell'11 agosto 2026 — le coppie di credenziali sono due
+
+La tabella qui sopra era giusta sugli endpoint e sbagliata su *quali* app id e
+secret intendesse. Il Dashboard ne mostra due coppie, in due punti diversi:
+
+| dove | coppia | usata da |
+|---|---|---|
+| *App settings → Basic* | app id / secret **Meta** | `debug_token` (graph.facebook.com) |
+| *Instagram → API setup with Instagram login* | Instagram app id / secret | `ig_exchange_token` (graph.instagram.com) |
+
+Non sono intercambiabili. Passando l'**Instagram** app id a `debug_token`, su un
+account reale con un token valido:
+
+```
+GET /oauth/access_token?grant_type=client_credentials   400  code 101
+GET /debug_token?access_token=<ig-app-id>|<ig-secret>   400  code 190
+GET /<ig-app-id>                                        400  code 190
+    "Error validating application. Cannot get application info
+     due to a system error."
+GET /me                     (graph.instagram.com)       200
+GET /<ig-user-id>/content_publishing_limit              200
+```
+
+L'ID dell'app Instagram semplicemente non è un nodo di `graph.facebook.com`.
+Le ultime due righe sono la parte che conta per la produzione: **pubblicare non
+dipende da nessuna delle due coppie**, e il token risponde correttamente da
+solo.
+
+Nota secondaria della stessa prova: `/me` restituisce due identificatori,
+`user_id` (17841…, l'account professionale) e `id` (app-scoped). Gli endpoint di
+pubblicazione accettano entrambi; il progetto usa `user_id`, che è quello che la
+guida *get started* indica come `<IG_ID>` e non dipende dall'app.
 
 ### Specifiche Reel confermate lo stesso giorno
 

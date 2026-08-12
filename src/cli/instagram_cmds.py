@@ -15,7 +15,7 @@ from rich.table import Table
 from ..accounts import load_pages
 from ..core.enums import JobStatus, MediaType, Mode, UploadStatus
 from ..core.errors import PublishError
-from ..core.logging_setup import get_logger, setup_logging
+from ..core.logging_setup import get_logger, register_secret, setup_logging
 from ..core.paths import Paths
 from ..core.settings import load_settings
 from ..core.timeutils import utcnow_iso
@@ -62,7 +62,15 @@ def _ctx(page_id: str):
 
 @app.command("check-config")
 def check_config(page: str = typer.Option(..., help="page_id")):
-    """Validate a page's publishing configuration (no network)."""
+    """Validate a page's publishing configuration (no network).
+
+    Exits non-zero on a pairing Meta does not implement. This used to report
+    "richiede hosting pubblico: no (resumable)" for a configuration that could
+    never upload anything, and the truth only arrived from Meta, mid-go-live.
+    """
+    from ..core.meta_api import (API_HOSTS, PERMISSIONS_BY_FLAVOR,
+                                 TOKEN_KIND_BY_FLAVOR, check_upload_method)
+
     _, s, _, pcfg, db = _ctx(page)
     t = Table(title=f"Config publishing — {page}")
     t.add_column("chiave")
@@ -79,10 +87,209 @@ def check_config(page: str = typer.Option(..., help="page_id")):
     has_tok = bool(os.environ.get(f"{prefix}_ACCESS_TOKEN") or os.environ.get("META_ACCESS_TOKEN"))
     t.add_row("IG_USER_ID (env)", "[green]set[/]" if has_uid else "[red]missing[/]")
     t.add_row("ACCESS_TOKEN (env)", "[green]set[/]" if has_tok else "[red]missing[/]")
-    needs_hosting = pcfg.publishing.upload_method == "hosted_url"
-    t.add_row("richiede hosting pubblico", "sì" if needs_hosting else "[green]no (resumable)[/]")
+    flavor = pcfg.instagram.api_flavor
+    method = pcfg.publishing.upload_method
+    supported, reason = check_upload_method(flavor, method)
+    t.add_row("host", API_HOSTS.get(flavor, "?"))
+    t.add_row("tipo di token", TOKEN_KIND_BY_FLAVOR.get(flavor, "?"))
+    t.add_row("permessi richiesti",
+              ", ".join(PERMISSIONS_BY_FLAVOR.get(flavor, ())) or "?")
+    provider = (pcfg.publishing.hosted_url_provider
+                or s.publishing.hosted_url_provider or "public_base_url")
+    if method == "hosted_url":
+        t.add_row("hosted_url_provider", provider)
+        if provider == "cloudflare_quick_tunnel":
+            # "Requires public hosting" would be true and misleading: the URL
+            # exists for one publication and nothing is rented, registered or
+            # left running.
+            t.add_row("richiede hosting pubblico",
+                      "[green]no — tunnel effimero per singola pubblicazione[/]")
+            t.add_row("ICE_PUBLIC_MEDIA_BASE_URL",
+                      "[green]non necessario (URL generato)[/]")
+        else:
+            t.add_row("richiede hosting pubblico", "sì (URL statico)")
+    else:
+        t.add_row("richiede hosting pubblico", "[green]no (resumable)[/]")
+    t.add_row("combinazione flavor/upload",
+              "[green]supportata[/]" if supported else "[red]NON supportata[/]")
     console.print(t)
+    if method == "hosted_url" and provider == "cloudflare_quick_tunnel":
+        console.print("[bold]Trasporto attivo:[/] Facebook Login + hosted_url + "
+                      "Cloudflare Quick Tunnel")
+    if not supported:
+        console.print(f"[red]{reason}[/]")
+        db.close()
+        raise typer.Exit(1)
+    console.print(f"[dim]{reason}[/]")
     db.close()
+
+
+@app.command("discover-facebook-login")
+def discover_facebook_login(
+    page: str = typer.Option(..., help="page_id del progetto"),
+    user_token: str = typer.Option(
+        None, "--user-token",
+        help="token utente Facebook; se omesso viene chiesto senza eco"),
+    page_id: str = typer.Option(
+        None, "--page-id",
+        help="Page ID esplicito, se /me/accounts non la restituisce"),
+    long_lived: bool = typer.Option(
+        True, "--long-lived/--as-is",
+        help="scambia prima il token utente per uno a lunga durata"),
+    write_env: bool = typer.Option(
+        False, "--write-env",
+        help="scrive Page ID, IG Business ID e Page token in .env"),
+):
+    """Find the Page and the Instagram professional account behind it.
+
+    The facebook_login flavor needs three things the operator cannot guess: the
+    Facebook Page id, the Instagram Business Account id linked to it, and the
+    **Page** access token — which is not the User token you log in with, and not
+    the Instagram token from the other flavor.
+
+    This does the two documented calls: ``GET /me/accounts`` to list the Pages
+    the User token administers, then the ``instagram_business_account`` field of
+    each. Both are reads; nothing is created.
+
+    The Page tokens are never printed. ``--write-env`` puts the chosen one
+    straight into ``.env`` so it never crosses a terminal at all.
+    """
+    from ..core.meta_api import DEFAULT_GRAPH_API_VERSION
+    from ..publishing.graph_client import GraphClient
+
+    paths = Paths.create()
+    settings = load_settings(paths)
+    setup_logging(paths.logs, settings.logging.level, console=False)
+    reg = load_pages(paths)
+    pcfg = reg.get(page)
+
+    # Three ways in, in order of how much they expose the token: an env
+    # variable (nothing), a prompt (nothing), the command line (the process
+    # list, for as long as the command runs).
+    if not user_token:
+        user_token = (os.environ.get("ICE_FB_USER_TOKEN") or "").strip()
+    if not user_token:
+        import getpass
+        user_token = getpass.getpass(
+            "Token utente Facebook (non verrà mostrato): ").strip()
+    if not user_token:
+        console.print("[red]Nessun token fornito.[/] Passalo con "
+                      "ICE_FB_USER_TOKEN, o rispondi al prompt.")
+        raise typer.Exit(2)
+    register_secret(user_token)
+
+    client = GraphClient(user_token, flavor="facebook_login",
+                         api_version=(settings.publishing.graph_api_version
+                                      or DEFAULT_GRAPH_API_VERSION))
+
+    if long_lived:
+        # A Page token lives exactly as long as the User token behind it. From
+        # the Graph API Explorer that is hours, so the first health check said
+        # "scade fra 0 giorni" — correctly. Exchanging first is what makes the
+        # Page token durable.
+        from ..publishing.health import app_credentials
+
+        app_id, app_secret = app_credentials()
+        if not (app_id and app_secret):
+            console.print("[red]--long-lived richiede META_APP_ID e "
+                          "META_APP_SECRET in .env[/]")
+            raise typer.Exit(2)
+        try:
+            exchanged = client.exchange_for_long_lived_user_token(app_id, app_secret)
+        except PublishError as e:
+            console.print(f"[red]Scambio del token non riuscito:[/] {e}")
+            raise typer.Exit(1)
+        seconds = int(exchanged.get("expires_in") or 0)
+        console.print(f"[green]Token utente esteso[/]: "
+                      f"{seconds // 86400} giorni" if seconds
+                      else "[green]Token utente esteso[/] (senza scadenza dichiarata)")
+        client = GraphClient(exchanged["access_token"], flavor="facebook_login",
+                             api_version=client.api_version)
+
+    if page_id:
+        # /me/accounts can come back empty for a Page that is perfectly
+        # readable by id — it happened on the first real migration, with every
+        # permission granted. The edge and the node do not always agree, so an
+        # explicit id is a documented way in rather than a workaround.
+        try:
+            pages = [client.page_with_token(page_id)]
+        except PublishError as e:
+            console.print(f"[red]Pagina {page_id} non leggibile:[/] {e}")
+            raise typer.Exit(1)
+    else:
+        try:
+            pages = client.list_pages()
+        except PublishError as e:
+            console.print(f"[red]Impossibile elencare le Pagine:[/] {e}")
+            console.print("Serve un token UTENTE con i permessi pages_show_list "
+                          "e instagram_basic.")
+            raise typer.Exit(1)
+
+    if not pages:
+        console.print("[yellow]Nessuna Pagina Facebook restituita da "
+                      "/me/accounts.[/]")
+        console.print("Se sai che la Pagina esiste, indicala esplicitamente: "
+                      "l'edge può essere vuoto per una Pagina che il nodo "
+                      "restituisce senza problemi.")
+        console.print("  [bold]--page-id <PAGE_ID>[/]")
+        raise typer.Exit(1)
+
+    t = Table(title="Pagine Facebook e account Instagram collegati")
+    for col in ("#", "Pagina", "Page ID", "IG Business ID", "IG username",
+                "Page token"):
+        t.add_column(col)
+    for i, p in enumerate(pages, start=1):
+        ig = p.get("instagram_business_account") or {}
+        t.add_row(str(i), p.get("name", "?"), p.get("id", "?"),
+                  ig.get("id") or "[red]nessuno[/]",
+                  ig.get("username") or "—",
+                  "[green]presente[/]" if p.get("access_token") else "[red]assente[/]")
+    console.print(t)
+    console.print("[dim]I Page access token non vengono stampati.[/]")
+
+    linked = [p for p in pages if (p.get("instagram_business_account") or {}).get("id")]
+    if not linked:
+        console.print("[red]Nessuna Pagina risulta collegata a un account "
+                      "Instagram professionale.[/] Collegali dalle impostazioni "
+                      "della Pagina, poi riprova.")
+        raise typer.Exit(1)
+
+    if not write_env:
+        console.print("\nRilancia con [bold]--write-env[/] per scrivere in .env "
+                      "Page ID, Instagram Business ID e Page token della prima "
+                      "Pagina collegata.")
+        raise typer.Exit(0)
+
+    chosen = linked[0]
+    ig = chosen["instagram_business_account"]
+    prefix = pcfg.env_prefix()
+    updates = {
+        f"{prefix}_IG_USER_ID": ig["id"],
+        f"{prefix}_ACCESS_TOKEN": chosen["access_token"],
+        f"{prefix}_FB_PAGE_ID": chosen["id"],
+    }
+    env_path = paths.root / ".env"
+    lines = env_path.read_text(encoding="utf-8").splitlines() if env_path.exists() else []
+    seen = set()
+    out = []
+    for line in lines:
+        key = line.split("=", 1)[0] if "=" in line else ""
+        if key in updates:
+            out.append(f"{key}={updates[key]}")
+            seen.add(key)
+        else:
+            out.append(line)
+    for key, value in updates.items():
+        if key not in seen:
+            out.append(f"{key}={value}")
+    env_path.write_text("\n".join(out) + "\n", encoding="utf-8")
+
+    console.print(f"\n[green]Scritti in .env[/] per {pcfg.page_id}:")
+    console.print(f"  {prefix}_FB_PAGE_ID   = {chosen['id']}")
+    console.print(f"  {prefix}_IG_USER_ID   = {ig['id']}  (@{ig.get('username')})")
+    console.print(f"  {prefix}_ACCESS_TOKEN = [dim]<Page token, non mostrato>[/]")
+    console.print("\nOra: [bold]python -m src.cli instagram health-check "
+                  f"--page {pcfg.page_id}[/]")
 
 
 @app.command("token-status")
@@ -210,6 +417,19 @@ def health_check(
             console.print(f"  [red]{h.page_id}[/]: {problem}")
         for problem in h.warnings:
             console.print(f"  [yellow]{h.page_id}[/]: {problem}")
+        for note in h.notes:
+            console.print(f"  [dim]{h.page_id}: {note}[/]")
+        # Where each verdict came from. A date somebody typed and a date Meta
+        # returned are both "59 giorni" on the table, and the difference is
+        # the whole reason to print this line.
+        if h.expiry_source:
+            console.print(f"  [dim]{h.page_id}: scadenza {h.expiry_source}[/]")
+        if h.data_access_days is not None:
+            console.print(f"  [dim]{h.page_id}: accesso ai dati fra "
+                          f"{h.data_access_days} giorni (clock distinto dal "
+                          f"token)[/]")
+        if h.permissions_source:
+            console.print(f"  [dim]{h.page_id}: permessi da {h.permissions_source}[/]")
     console.print("[dim]Nessun token e nessun app secret viene stampato o "
                   "registrato.[/]")
     raise typer.Exit(report.exit_code)
@@ -410,8 +630,8 @@ def canary_plan(page: str = typer.Option(...),
         console.print(f"  [red]{p}[/]")
     console.print("\n[yellow]Didascalia che verrebbe pubblicata:[/]")
     console.print(caption or "[dim](nessuna)[/]")
-    console.print("\n[bold]Passi simulati:[/] create container → resumable upload → "
-                  "attesa FINISHED → conferma → media_publish")
+    console.print("\n[bold]Passi simulati:[/] create container -> resumable upload -> "
+                  "attesa FINISHED -> conferma -> media_publish")
     console.print("[green]Nessuna chiamata a Meta è stata effettuata: 0 container, "
                   "0 upload, 0 publish.[/]")
     db.close()

@@ -84,8 +84,16 @@ class PublishingSettings(BaseModel):
     # Single source of truth: src/core/meta_api.py (see docs/META_RESUMABLE_UPLOAD.md).
     graph_api_version: str = DEFAULT_GRAPH_API_VERSION
     api_flavor: str = "instagram_login"  # instagram_login | facebook_login
-    # Direct upload is the DEFAULT and needs no public hosting.
+    # Direct upload is the DEFAULT and needs no public hosting — with the
+    # facebook_login flavor. Meta does not implement resumable upload for
+    # instagram_login; check_upload_method() refuses that pairing.
     upload_method: str = "resumable"     # resumable | hosted_url
+    # Which hosting the hosted_url method uses. `cloudflare_quick_tunnel`
+    # needs no account, no card and no persistent host: it serves the one
+    # file from localhost behind a tunnel that lives for the length of a
+    # single publication. `public_base_url` is the classic case, and the
+    # only one that needs ICE_PUBLIC_MEDIA_BASE_URL.
+    hosted_url_provider: str = "public_base_url"
     feed_media_type: str = "REELS"       # main content -> Reel (share_to_feed)
     story_media_type: str = "STORIES"
     share_reel_to_feed: bool = True

@@ -98,9 +98,14 @@ def run_script(tmp_path: Path, script: str, *args: str, codes: str = "",
     env.update({"ICE_STUB_LOG": str(log), "ICE_STUB_CODES": codes,
                 "ICE_STUB_PLAN": plan})
 
+    # An empty .env, so the operator's real one is invisible to the test.
+    env_file = tmp_path / "dotenv"
+    env_file.write_text("", encoding="utf-8")
+    extra = ["-EnvFile", str(env_file)] if script == "preflight.ps1" else []
+
     result = subprocess.run(
         [_POWERSHELL, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
-         str(SCRIPTS / script), "-PythonPath", str(stub), *args],
+         str(SCRIPTS / script), "-PythonPath", str(stub), *extra, *args],
         input=stdin, capture_output=True, text=True, timeout=180, env=env,
         cwd=str(ROOT))
     calls = [line for line in log.read_text(encoding="utf-8").splitlines() if line]

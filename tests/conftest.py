@@ -1,6 +1,7 @@
 """Shared pytest fixtures."""
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -13,6 +14,38 @@ if str(ROOT) not in sys.path:
 
 from src.core.paths import Paths  # noqa: E402
 from src.database import Database  # noqa: E402
+
+
+@pytest.fixture(autouse=True, scope="session")
+def _isolate_from_the_operators_env():
+    """A test run must not depend on whether this machine is configured.
+
+    ``load_settings`` calls ``load_dotenv`` by default, so the moment a real
+    ``.env`` exists any test that goes through the CLI pulls the operator's
+    credentials into ``os.environ`` — and every test that runs afterwards sees
+    them. That is exactly what happened the first time credentials were filled
+    in for a go-live: five tests turned red on a machine where nothing had
+    changed but a file the suite is supposed to ignore.
+
+    So dotenv is neutered for the whole session and the credential variables
+    are cleared once at the start. A test that wants credentials sets them
+    itself; every other test gets the same empty environment CI has.
+    """
+    import dotenv
+
+    from src.core import settings as settings_mod
+
+    for key in [k for k in os.environ
+                if k.startswith(("ICE_", "META_")) and k != "ICE_MODE"]:
+        del os.environ[key]
+
+    original = dotenv.load_dotenv
+    dotenv.load_dotenv = lambda *a, **k: False
+    try:
+        yield
+    finally:
+        dotenv.load_dotenv = original
+        del settings_mod  # imported only to fail loudly if the module moves
 
 
 @pytest.fixture

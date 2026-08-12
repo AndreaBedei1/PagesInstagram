@@ -4,6 +4,31 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+
+def _force_utf8_output() -> None:
+    """Never let a console code page turn a report into a stack trace.
+
+    Windows PowerShell hands Python a cp1252 stdout. A single character outside
+    that page — an arrow in a summary line was enough — raises
+    UnicodeEncodeError from deep inside the rendering layer, and what the
+    operator sees is a traceback where a result should be. It happened during a
+    real go-live, on the line describing the canary's steps.
+
+    Fixing the offending characters one at a time treats the symptom: the next
+    one gets added by someone writing a perfectly reasonable message. This makes
+    the output layer unable to fail that way, whatever the caller's code page,
+    and ``errors="replace"`` means the worst case is a substituted glyph rather
+    than a lost command.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError, OSError):
+            pass  # already redirected, or not a real stream: nothing to do
+
+
+_force_utf8_output()
+
 import typer
 from rich.console import Console
 from rich.table import Table
@@ -78,7 +103,8 @@ def validate():
     um = settings.publishing.upload_method
     needs_hosting = um == "hosted_url"
     row("Upload method", True,
-        f"{um}" + (" (serve hosting pubblico)" if needs_hosting else " — nessun hosting/porta richiesti"))
+        f"{um}" + (" (serve hosting pubblico)" if needs_hosting
+                   else " — nessun hosting, ma solo con api_flavor=facebook_login"))
     try:
         registry = load_pages(paths)
         row("Pages", len(registry) > 0, f"{len(registry)}: {', '.join(registry.ids())}")
@@ -1316,7 +1342,7 @@ def regenerate_media(
                           status=JobStatus.MEDIA_READY, last_error=None,
                           upload_method=pcfg.publishing.upload_method)
         console.print(f"[green]Rigenerato[/] al round {attempt_round}: "
-                      f"score {result.validation_score:.4f} ≥ "
+                      f"score {result.validation_score:.4f} >= "
                       f"{settings.quality.min_score}")
         console.print(f"  {result.video_path}")
         db.close()

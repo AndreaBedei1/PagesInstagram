@@ -49,8 +49,15 @@ def test_smoke_test_is_idempotent(smoke_result):
     assert smoke_result.published_second_tick == 0
 
 
-def test_smoke_test_uses_resumable_upload_only(smoke_result):
-    assert {m["upload_method"] for m in smoke_result.media} == {"resumable"}
+def test_smoke_test_never_needs_public_hosting_it_has_not_got(smoke_result):
+    """Whatever the transport, the dry run must not depend on an outside host.
+
+    pensiero_essenziale_it publishes through a Quick Tunnel the engine raises
+    itself; the other four use resumable. Neither needs a URL configured in
+    advance, which is what this has always been guarding.
+    """
+    methods = {m["upload_method"] for m in smoke_result.media}
+    assert methods <= {"resumable", "hosted_url"}, methods
 
 
 def test_smoke_test_refuses_to_run_outside_dry_run():

@@ -17,14 +17,26 @@ publishing:
   timezone: "Europe/Rome"
   missed_job_policy: publish_within_window
   missed_job_window_minutes: 240
-  upload_method: resumable      # nessun hosting pubblico
+  # Facebook Login + hosted_url servito da un Cloudflare Quick Tunnel.
+  # Il resumable upload su questo account risponde ProcessingFailedError
+  # con qualunque file e qualunque client (verificato anche con curl nel
+  # formato documentato), mentre video_url funziona. Il tunnel vive solo
+  # per la durata di una pubblicazione: nessun account Cloudflare,
+  # nessuna carta, nessun hosting persistente, nessuna porta aperta.
+  upload_method: hosted_url
+  hosted_url_provider: cloudflare_quick_tunnel
   feed_media_type: REELS
   share_reel_to_feed: true
   story_media_type: STORIES
 
 instagram:
   account_type: business
-  api_flavor: instagram_login
+  # Facebook Login for Business, non Instagram Login: il resumable upload —
+  # il file locale che viaggia verso Meta senza hosting pubblico — esiste solo
+  # per questo flavor. Con instagram_login, POST /media risponde «The parameter
+  # video_url is required», come ha fatto al primo canary reale.
+  # Le altre quattro pagine seguiranno quando questa avra dimostrato il flusso.
+  api_flavor: facebook_login
 
 visual:
   style: minimal_warm
