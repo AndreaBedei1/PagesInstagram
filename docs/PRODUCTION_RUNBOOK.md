@@ -1,5 +1,47 @@
 # Runbook di produzione
 
+## Come esce un Reel, in pratica
+
+`pensiero_essenziale_it` pubblica con **Facebook Login + hosted_url + Cloudflare
+Quick Tunnel**. La sequenza è interamente automatica e dura quanto una singola
+pubblicazione:
+
+```
+MP4 locale
+ -> server HTTP che conosce UN file a UN path casuale, su 127.0.0.1
+ -> cloudflared tunnel --url http://127.0.0.1:<porta libera>
+ -> https://<random>.trycloudflare.com/media/<uuid>.mp4
+ -> verifiche: GET 200, HEAD 200, Range 206, video/mp4, dimensione esatta,
+    e 404 su /, /.env, /.git/, /database/content.sqlite, /stories/
+ -> POST /media  media_type=REELS  video_url=...  caption  share_to_feed
+ -> polling fino a FINISHED
+ -> UNA media_publish
+ -> cloudflared spento, server spento, URL morto
+```
+
+**A riposo non c'è niente acceso**: nessun tunnel, nessun server, nessuna porta.
+Il worker li apre solo nel momento in cui deve pubblicare.
+
+Perché non il resumable upload, che sarebbe più semplice: su questo account
+`rupload.facebook.com` risponde `ProcessingFailedError` con zero byte accettati,
+con qualunque file e qualunque client — provato anche con `curl` nel formato
+documentato, sul media originale e su uno ricodificato in modo conservativo.
+`video_url` invece funziona. La matrice in `src/core/meta_api.py` impedisce di
+riconfigurare per sbaglio una combinazione che Meta non implementa.
+
+Cosa **non** serve: account Cloudflare, carta di credito, dominio, DNS, hosting
+persistente, porte aperte sul router, `ICE_PUBLIC_MEDIA_BASE_URL`.
+
+`cloudflared` è un binario singolo scaricato una volta in `runtime/`
+(gitignored, mai committato, nessuna installazione di sistema).
+
+Due tempi tecnici che il codice attende di proposito: il nome DNS del tunnel
+non esiste per qualche secondo dopo l'annuncio — interrogarlo troppo presto fa
+memorizzare a Windows un NXDOMAIN che poi risponde a tutti i tentativi
+successivi — e l'edge Cloudflare restituisce 530 finché non ha una rotta.
+Complessivamente circa settanta secondi prima che l'URL sia utilizzabile.
+
+
 Da qui in avanti serve solo inserire le credenziali Meta ed eseguire il canary
 guidato. Tutto il resto è già fatto e verificabile con un comando.
 

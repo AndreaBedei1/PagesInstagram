@@ -89,3 +89,4 @@ Thumbs.db
 
 # ---- Buffer media index (rigenerabile da prepare-buffer) ----
 reports/buffer_index/
+runtime/

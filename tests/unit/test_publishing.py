@@ -37,12 +37,24 @@ def test_hashtag_rotation_deterministic_and_capped():
 
 
 # ---- helpers ---------------------------------------------------------------
-def _setup(project_paths, mode, *, public_url=""):
+def _setup(project_paths, mode, *, public_url="", upload_method="resumable"):
+    """Settings and pages, with the upload method stated rather than inherited.
+
+    The page YAML is live configuration: pensiero_essenziale_it publishes
+    through a Cloudflare Quick Tunnel now, and a test that reads whatever is on
+    disk asserts about the operator's current choices instead of about the code.
+    These tests are about the resumable path, so they say so.
+    """
     s = load_settings(project_paths, load_dotenv=False)
     s.mode = mode
     s.publishing.public_media_base_url = public_url
+    s.publishing.upload_method = upload_method
     from src.accounts import load_pages
-    return s, load_pages(project_paths)
+    registry = load_pages(project_paths)
+    for page in registry.all():
+        page.publishing.upload_method = upload_method
+        page.publishing.hosted_url_provider = "public_base_url"
+    return s, registry
 
 
 PAGE_ID = "pensiero_essenziale_it"
@@ -268,8 +280,9 @@ def test_production_missing_credentials_fails(tmp_db, project_paths, monkeypatch
 
 # ---- legacy hosted_url path still works ------------------------------------
 def test_hosted_url_path(tmp_db, project_paths):
-    s, reg = _setup(project_paths, Mode.TEST, public_url="https://cdn.example.com/media")
-    s.publishing.upload_method = UploadMethod.HOSTED_URL
+    s, reg = _setup(project_paths, Mode.TEST,
+                    public_url="https://cdn.example.com/media",
+                    upload_method=UploadMethod.HOSTED_URL)
     mock = MockGraphClient()
     jid, _ = _job(tmp_db, s, "hosted")
     tmp_db.update_job(jid, upload_method=UploadMethod.HOSTED_URL)

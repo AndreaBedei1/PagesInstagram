@@ -201,9 +201,22 @@ def run_smoke_test(settings: Settings, *, local_date: str, paths,
                 "size_bytes": path.stat().st_size if path and path.exists() else 0,
                 "remote_media_id": r[3], "upload_method": r[4],
             })
-        result.add("tutti_resumable",
-                   all(m["upload_method"] == "resumable" for m in result.media),
-                   f"metodi di upload: {sorted({m['upload_method'] for m in result.media})}")
+        # The check was "everything is resumable", which stopped being the
+        # question the day resumable stopped working on a real account:
+        # pensiero_essenziale_it publishes through a Quick Tunnel the engine
+        # raises and tears down itself. What still has to be true is that no
+        # page depends on hosting somebody has to rent, register and keep up.
+        methods = sorted({m["upload_method"] for m in result.media})
+        known = {"resumable", "hosted_url"}
+        result.add("trasporti_noti", set(methods) <= known,
+                   f"metodi di upload: {methods}")
+        static_hosting = [m for m in result.media
+                          if m["upload_method"] == "hosted_url"
+                          and m.get("hosted_url_provider") not in
+                          (None, "", "cloudflare_quick_tunnel")]
+        result.add("nessun_hosting_permanente", not static_hosting,
+                   f"pagine con hosting statico: "
+                   f"{[m['page_id'] for m in static_hosting] or 'nessuna'}")
         # Which content each page should carry. Making a job due rewrites its
         # scheduled_at to "now", so the day the worker resolves is today, not
         # the date that was planned — the check has to ask the policy about the

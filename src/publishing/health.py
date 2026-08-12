@@ -412,20 +412,31 @@ def check_page(settings: Settings, page: PageConfig, *,
         # the only path that works: resumable is documented for Facebook Login
         # and still answers ProcessingFailedError for every file and every
         # client, so this is a deliberate configuration, not a mistake.
-        base = (settings.publishing.public_media_base_url or "").strip()
-        if not base:
-            health.account = health.account  # unchanged; this is a config fault
-            health.failures.append(
-                "upload_method=hosted_url senza ICE_PUBLIC_MEDIA_BASE_URL: "
-                "Meta deve poter scaricare il media da un URL pubblico")
-        elif not base.startswith("https://"):
-            health.failures.append(
-                f"ICE_PUBLIC_MEDIA_BASE_URL non è https ({base!r}): Meta "
-                f"scarica il media solo da un URL sicuro")
-        else:
+        provider = (getattr(page.publishing, "hosted_url_provider", "")
+                    or settings.publishing.hosted_url_provider
+                    or "public_base_url")
+        if provider == "cloudflare_quick_tunnel":
+            # Nothing to configure: the URL is minted for one publication and
+            # dies with it. Demanding a base URL here would be asking for the
+            # hosting this provider exists to avoid.
             health.notes.append(
-                f"upload_method=hosted_url: il media viene scaricato da Meta "
-                f"da {base}")
+                "upload_method=hosted_url via Cloudflare Quick Tunnel: l'URL "
+                "viene generato per la singola pubblicazione, nessun hosting "
+                "persistente e nessun ICE_PUBLIC_MEDIA_BASE_URL")
+        else:
+            base = (settings.publishing.public_media_base_url or "").strip()
+            if not base:
+                health.failures.append(
+                    "upload_method=hosted_url senza ICE_PUBLIC_MEDIA_BASE_URL: "
+                    "Meta deve poter scaricare il media da un URL pubblico")
+            elif not base.startswith("https://"):
+                health.failures.append(
+                    f"ICE_PUBLIC_MEDIA_BASE_URL non è https ({base!r}): Meta "
+                    f"scarica il media solo da un URL sicuro")
+            else:
+                health.notes.append(
+                    f"upload_method=hosted_url: il media viene scaricato da "
+                    f"Meta da {base}")
 
     return health
 

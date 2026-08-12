@@ -49,7 +49,17 @@ def test_five_yaml_pages_load(project_paths):
     reg = load_pages(project_paths)
     assert set(reg.ids()) == FIVE_PAGES
     for page in reg.all():
-        assert page.publishing.upload_method == "resumable"
+        # pensiero_essenziale_it publishes through a Cloudflare Quick
+        # Tunnel: resumable is documented for Facebook Login but answers
+        # ProcessingFailedError on that account, so hosted_url is the
+        # method that was actually validated end to end. The other four
+        # keep the default until each has been through the same proof.
+        if page.page_id == "pensiero_essenziale_it":
+            assert page.publishing.upload_method == "hosted_url"
+            assert (page.publishing.hosted_url_provider
+                    == "cloudflare_quick_tunnel")
+        else:
+            assert page.publishing.upload_method == "resumable"
         assert page.publishing.feed_media_type == "REELS"
         assert page.publishing.share_reel_to_feed is True
 

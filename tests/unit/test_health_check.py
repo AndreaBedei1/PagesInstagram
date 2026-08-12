@@ -83,6 +83,7 @@ def page(project_paths):
 
     cfg = load_pages(project_paths).get(PAGE_ID)
     cfg.publishing.upload_method = "resumable"
+    cfg.publishing.hosted_url_provider = "public_base_url"
     return cfg
 
 
@@ -469,8 +470,14 @@ def test_data_access_is_the_clock_that_still_runs(settings, page,
 
 
 # ---- hosted_url: the risk is a missing host, not the method ----------------
-def _hosted(settings, page):
+def _hosted(settings, page, provider="public_base_url"):
+    """hosted_url with a *static* host, unless the test says otherwise.
+
+    The page ships configured for the Quick Tunnel, so a test about a missing
+    base URL has to say which provider it means.
+    """
     page.publishing.upload_method = "hosted_url"
+    page.publishing.hosted_url_provider = provider
     return page
 
 
@@ -494,4 +501,16 @@ def test_hosted_url_with_a_public_https_base_is_a_note(settings, page,
     health = _check(settings, _hosted(settings, page), FakeClient())
     assert not health.warnings and not health.failures
     assert any("hosted_url" in n for n in health.notes)
+    assert health.ok
+
+
+def test_the_quick_tunnel_provider_needs_no_base_url(settings, page,
+                                                     with_app_credentials):
+    """Demanding a host would be asking for what this provider exists to avoid."""
+    settings.publishing.public_media_base_url = ""
+    page.publishing.upload_method = "hosted_url"
+    page.publishing.hosted_url_provider = "cloudflare_quick_tunnel"
+    health = _check(settings, page, FakeClient())
+    assert not health.failures and not health.warnings
+    assert any("Quick Tunnel" in n for n in health.notes)
     assert health.ok

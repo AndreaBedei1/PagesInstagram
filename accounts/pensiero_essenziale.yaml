@@ -17,11 +17,14 @@ publishing:
   timezone: "Europe/Rome"
   missed_job_policy: publish_within_window
   missed_job_window_minutes: 240
-  # Il primo canary reale e' stato pubblicato via hosted_url con un tunnel
-  # effimero: su questo account il resumable upload risponde
-  # ProcessingFailedError con qualunque file e qualunque client, mentre
-  # video_url funziona. Serve un hosting stabile prima dell'uso continuativo.
-  upload_method: resumable
+  # Facebook Login + hosted_url servito da un Cloudflare Quick Tunnel.
+  # Il resumable upload su questo account risponde ProcessingFailedError
+  # con qualunque file e qualunque client (verificato anche con curl nel
+  # formato documentato), mentre video_url funziona. Il tunnel vive solo
+  # per la durata di una pubblicazione: nessun account Cloudflare,
+  # nessuna carta, nessun hosting persistente, nessuna porta aperta.
+  upload_method: hosted_url
+  hosted_url_provider: cloudflare_quick_tunnel
   feed_media_type: REELS
   share_reel_to_feed: true
   story_media_type: STORIES

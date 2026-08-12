@@ -88,6 +88,12 @@ class PublishingSettings(BaseModel):
     # facebook_login flavor. Meta does not implement resumable upload for
     # instagram_login; check_upload_method() refuses that pairing.
     upload_method: str = "resumable"     # resumable | hosted_url
+    # Which hosting the hosted_url method uses. `cloudflare_quick_tunnel`
+    # needs no account, no card and no persistent host: it serves the one
+    # file from localhost behind a tunnel that lives for the length of a
+    # single publication. `public_base_url` is the classic case, and the
+    # only one that needs ICE_PUBLIC_MEDIA_BASE_URL.
+    hosted_url_provider: str = "public_base_url"
     feed_media_type: str = "REELS"       # main content -> Reel (share_to_feed)
     story_media_type: str = "STORIES"
     share_reel_to_feed: bool = True

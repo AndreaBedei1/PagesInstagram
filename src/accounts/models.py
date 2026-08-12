@@ -23,6 +23,9 @@ class PublishingConfig(BaseModel):
     missed_job_window_minutes: int = 180
     # Direct-upload architecture (defaults; can be omitted in YAML)
     upload_method: str = "resumable"        # resumable | hosted_url
+    #: public_base_url | cloudflare_quick_tunnel. Empty means "use the
+    #: global setting", so a page only states it when it differs.
+    hosted_url_provider: str = ""
     feed_media_type: str = "REELS"
     story_media_type: str = "STORIES"
     share_reel_to_feed: bool = True

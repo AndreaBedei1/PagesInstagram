@@ -94,12 +94,28 @@ def check_config(page: str = typer.Option(..., help="page_id")):
     t.add_row("tipo di token", TOKEN_KIND_BY_FLAVOR.get(flavor, "?"))
     t.add_row("permessi richiesti",
               ", ".join(PERMISSIONS_BY_FLAVOR.get(flavor, ())) or "?")
-    needs_hosting = method == "hosted_url"
-    t.add_row("richiede hosting pubblico",
-              "sì" if needs_hosting else "[green]no (resumable)[/]")
+    provider = (pcfg.publishing.hosted_url_provider
+                or s.publishing.hosted_url_provider or "public_base_url")
+    if method == "hosted_url":
+        t.add_row("hosted_url_provider", provider)
+        if provider == "cloudflare_quick_tunnel":
+            # "Requires public hosting" would be true and misleading: the URL
+            # exists for one publication and nothing is rented, registered or
+            # left running.
+            t.add_row("richiede hosting pubblico",
+                      "[green]no — tunnel effimero per singola pubblicazione[/]")
+            t.add_row("ICE_PUBLIC_MEDIA_BASE_URL",
+                      "[green]non necessario (URL generato)[/]")
+        else:
+            t.add_row("richiede hosting pubblico", "sì (URL statico)")
+    else:
+        t.add_row("richiede hosting pubblico", "[green]no (resumable)[/]")
     t.add_row("combinazione flavor/upload",
               "[green]supportata[/]" if supported else "[red]NON supportata[/]")
     console.print(t)
+    if method == "hosted_url" and provider == "cloudflare_quick_tunnel":
+        console.print("[bold]Trasporto attivo:[/] Facebook Login + hosted_url + "
+                      "Cloudflare Quick Tunnel")
     if not supported:
         console.print(f"[red]{reason}[/]")
         db.close()
