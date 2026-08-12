@@ -48,6 +48,58 @@ def line_height(font: ImageFont.FreeTypeFont, spacing: float) -> float:
     return (ascent + descent) * spacing
 
 
+# --- letterspacing-aware helpers (used by the block templates) --------------
+
+def measure(draw: ImageDraw.ImageDraw, text: str, font: ImageFont.FreeTypeFont,
+            tracking_px: float = 0.0) -> float:
+    """Width of ``text`` including extra letterspacing between glyphs."""
+    base = draw.textlength(text, font=font)
+    if tracking_px and len(text) > 1:
+        base += tracking_px * (len(text) - 1)
+    return base
+
+
+def wrap_tracked(draw: ImageDraw.ImageDraw, text: str, font: ImageFont.FreeTypeFont,
+                 max_width: float, tracking_px: float = 0.0) -> list[str]:
+    """Greedy word wrap that accounts for letterspacing.
+
+    Falls back to :func:`wrap_text` when there is no tracking, so the untracked
+    path keeps its exact previous behaviour.
+    """
+    if not tracking_px:
+        return wrap_text(draw, text, font, max_width)
+    lines: list[str] = []
+    for paragraph in text.split("\n"):
+        words = paragraph.split()
+        if not words:
+            lines.append("")
+            continue
+        current = ""
+        for word in words:
+            trial = word if not current else f"{current} {word}"
+            if measure(draw, trial, font, tracking_px) <= max_width:
+                current = trial
+            else:
+                if current:
+                    lines.append(current)
+                current = word
+        if current:
+            lines.append(current)
+    return lines
+
+
+def draw_tracked(draw: ImageDraw.ImageDraw, xy: tuple[float, float], text: str,
+                 font: ImageFont.FreeTypeFont, fill, tracking_px: float = 0.0) -> None:
+    """Draw ``text`` glyph by glyph so letterspacing is honoured."""
+    if not tracking_px:
+        draw.text(xy, text, font=font, fill=fill)
+        return
+    x, y = xy
+    for ch in text:
+        draw.text((x, y), ch, font=font, fill=fill)
+        x += draw.textlength(ch, font=font) + tracking_px
+
+
 @dataclass
 class FitResult:
     font: ImageFont.FreeTypeFont

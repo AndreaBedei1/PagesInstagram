@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Register a Windows Scheduled Task that starts the worker at logon and keeps it
   running (auto-restart on failure, runs when the PC becomes available after
@@ -21,7 +21,13 @@ $action = New-ScheduledTaskAction -Execute "powershell.exe" `
   -Argument "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$startScript`" -Interval $Interval" `
   -WorkingDirectory $Root
 
-$trigger = New-ScheduledTaskTrigger -AtLogOn
+# Due trigger: all'accesso e ogni mattina. Con -StartWhenAvailable il task parte
+# anche se il PC era spento all'orario previsto; il worker applica poi la
+# missed_job_policy di ciascuna pagina (publish_within_window, 240 minuti).
+$trigger = @(
+  (New-ScheduledTaskTrigger -AtLogOn),
+  (New-ScheduledTaskTrigger -Daily -At 07:00)
+)
 
 $settings = New-ScheduledTaskSettingsSet `
   -StartWhenAvailable `

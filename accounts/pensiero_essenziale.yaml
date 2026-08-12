@@ -1,0 +1,69 @@
+# Pagina 1 — Pensiero Essenziale (pensieri filosofici originali, italiano).
+# Segreti (IG user id + token) SOLO da .env:
+#   ICE_PENSIERO_ESSENZIALE_IT_IG_USER_ID / ICE_PENSIERO_ESSENZIALE_IT_ACCESS_TOKEN
+page_id: pensiero_essenziale_it
+enabled: true
+display_name: Pensiero Essenziale
+content_type: philosophical_thought
+language: it
+
+publishing:
+  posts_per_day: 1
+  publish_feed: true            # contenuto principale -> Reel condiviso nel Feed
+  publish_story: false          # abilitabile senza toccare il codice
+  publish_reel: false
+  feed_time: "08:30"
+  story_time: "21:30"           # usato solo se publish_story: true
+  timezone: "Europe/Rome"
+  missed_job_policy: publish_within_window
+  missed_job_window_minutes: 240
+  # Facebook Login + hosted_url servito da un Cloudflare Quick Tunnel.
+  # Il resumable upload su questo account risponde ProcessingFailedError
+  # con qualunque file e qualunque client (verificato anche con curl nel
+  # formato documentato), mentre video_url funziona. Il tunnel vive solo
+  # per la durata di una pubblicazione: nessun account Cloudflare,
+  # nessuna carta, nessun hosting persistente, nessuna porta aperta.
+  upload_method: hosted_url
+  hosted_url_provider: cloudflare_quick_tunnel
+  # Post immagine 4:5, non Reel: queste pagine pubblicano testo, e
+  # un fermo immagine e' cio' che il testo vuole. Toglie anche di
+  # mezzo l'audio, che un post scritto non ha mai avuto motivo di
+  # avere.
+  feed_media_type: IMAGE
+  share_reel_to_feed: true
+  story_media_type: STORIES
+
+instagram:
+  account_type: business
+  # Facebook Login for Business, non Instagram Login: il resumable upload —
+  # il file locale che viaggia verso Meta senza hosting pubblico — esiste solo
+  # per questo flavor. Con instagram_login, POST /media risponde «The parameter
+  # video_url is required», come ha fatto al primo canary reale.
+  # Le altre quattro pagine seguiranno quando questa avra dimostrato il flusso.
+  api_flavor: facebook_login
+
+visual:
+  style: minimal_warm
+  template: philosophical_thought
+  show_author: false            # pensieri originali → mai un autore
+  font_family: default
+  background_profile: philosophy_warm_minimal
+  logo_enabled: true
+  logo_text: "@pensiero.essenziale"
+
+music:
+  enabled: false                # video silenzioso (traccia AAC muta di compatibilità)
+  profile: reflective
+
+content:
+  source: database
+  minimum_quality_score: 0.72
+  avoid_semantic_duplicates: true
+  selection_policy: cyclic_ordered
+  cycle_anchor_date: "2026-01-01"
+  cycle_length: 1000
+
+generation:
+  prepare_ahead_days: 30
+  planning_horizon_days: 60
+  published_media_retention_days: 45

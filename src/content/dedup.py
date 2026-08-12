@@ -68,14 +68,30 @@ class SimilarityIndex:
         norm = normalize_text(text)
         self._items.append((item_id, norm, _features(norm)))
 
+    @staticmethod
+    def _length_compatible(a: str, b: str, threshold: float) -> bool:
+        """Cheap pre-filter: texts of very different length cannot be near-dups.
+
+        ``token_sort_ratio`` is bounded above by ``2*min/(len_a+len_b)``, so a
+        pair failing that bound can be skipped without scoring it. This keeps the
+        O(n²) sweep practical on 1.000-item datasets.
+        """
+        la, lb = len(a), len(b)
+        if not la or not lb:
+            return False
+        return (2.0 * min(la, lb)) / (la + lb) >= threshold * 0.85
+
     def best_match(self, text: str) -> Match:
         """Return the most similar existing item (fuzzy or semantic)."""
         norm = normalize_text(text)
         feats = _features(norm)
         best = Match(id=None, kind="none", score=0.0)
+        floor = min(self.fuzzy_threshold, self.semantic_threshold)
         for item_id, other_norm, other_feats in self._items:
             if norm == other_norm:
                 return Match(id=item_id, kind="exact", score=1.0)
+            if not self._length_compatible(norm, other_norm, floor):
+                continue
             fz = fuzz.token_sort_ratio(norm, other_norm) / 100.0
             sem = _cosine(feats, other_feats)
             # pick whichever signal is strongest for this pair
@@ -119,6 +135,8 @@ class SimilarityIndex:
             _, ni, fi = self._items[i]
             for j in range(i + 1, n):
                 _, nj, fj = self._items[j]
+                if not self._length_compatible(ni, nj, thr):
+                    continue
                 fz = fuzz.token_sort_ratio(ni, nj) / 100.0
                 if fz >= thr or _cosine(fi, fj) >= thr:
                     union(i, j)

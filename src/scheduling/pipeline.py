@@ -1,11 +1,17 @@
 """Media generation pipeline: content -> background -> render -> validate -> video.
 
-For each requested aspect (feed 4:5, story 9:16):
-  1. generate a background (ComfyUI, or deterministic fallback),
+Direct-upload architecture: the daily *main* content is a single **9:16** video
+(Reel, shared to feed). The **Story** reuses the exact same 9:16 video, phrase,
+author and music — so feed and story never diverge. Only publish-time metadata
+differs (Reel gets a caption + share_to_feed; Story gets neither).
+
+For each generation:
+  1. generate a 9:16 background (ComfyUI, or fallback if the mode allows it),
   2. render the text and run the quality auto-repair loop,
-  3. if it still fails, regenerate the background (last-resort repair) up to N times,
-  4. build the video with baked-in, mood-matched music.
-Persists a media_assets row and returns per-aspect outputs.
+  3. if it still fails, regenerate the background up to N times,
+  4. build the 9:16 video with baked-in, mood-matched music.
+In production a ComfyUI failure with fallback disabled yields ok=False -> the
+worker routes the day to NEEDS_REVIEW instead of publishing degraded media.
 """
 from __future__ import annotations
 
@@ -15,22 +21,26 @@ from pathlib import Path
 from ..accounts.models import PageConfig
 from ..comfyui.backgrounds import BackgroundGenerator
 from ..core.enums import MediaType
+from ..core.errors import ComfyUIError
 from ..core.logging_setup import get_logger
 from ..core.settings import Settings
 from ..database import Database
+from ..content.selection import background_seed
 from ..music.selector import select_track
 from ..quality.validator import MediaValidator
 from ..rendering.renderer import RenderOptions, Renderer
+from ..rendering.templates import build_fields
 from ..video.builder import VideoBuilder
 
 log = get_logger("scheduling.pipeline")
 
+# All daily video jobs (Reel + Story) share the single 9:16 "reel" render.
 ASPECT_FOR_MEDIA = {
+    MediaType.REEL: "reel",
+    MediaType.STORY_VIDEO: "reel",
     MediaType.FEED_VIDEO: "feed",
     MediaType.FEED_IMAGE: "feed",
-    MediaType.STORY_VIDEO: "story",
     MediaType.STORY_IMAGE: "story",
-    MediaType.REEL: "story",
 }
 
 
@@ -40,12 +50,35 @@ class AspectOutput:
     background_path: str
     image_path: str
     video_path: str
+    has_audio: bool
     passed: bool
     score: float
 
 
 @dataclass
-class PipelineResult:
+class DailyMedia:
+    content_id: int
+    ok: bool
+    video_path: str | None = None       # the shared 9:16 video (Reel + Story)
+    image_path: str | None = None
+    background_path: str | None = None
+    music_track_id: str | None = None
+    validation_score: float = 0.0
+    media_asset_id: int | None = None
+    message: str = ""
+
+    @property
+    def media_path(self) -> str | None:
+        """The artefact to publish, whichever kind this page produces.
+
+        Callers used to read ``video_path`` directly, which quietly returned
+        None the moment a page started publishing stills.
+        """
+        return self.video_path or self.image_path
+
+
+@dataclass
+class PipelineResult:  # legacy multi-aspect result (CLI preview)
     content_id: int
     ok: bool
     outputs: dict[str, AspectOutput] = field(default_factory=dict)
@@ -54,14 +87,8 @@ class PipelineResult:
     message: str = ""
 
     def video_for(self, media_type: str) -> str | None:
-        aspect = ASPECT_FOR_MEDIA.get(MediaType(media_type))
-        out = self.outputs.get(aspect)
+        out = self.outputs.get(ASPECT_FOR_MEDIA.get(MediaType(media_type)))
         return out.video_path if out else None
-
-    def image_for(self, media_type: str) -> str | None:
-        aspect = ASPECT_FOR_MEDIA.get(MediaType(media_type))
-        out = self.outputs.get(aspect)
-        return out.image_path if out else None
 
 
 class GenerationPipeline:
@@ -80,107 +107,249 @@ class GenerationPipeline:
     def _stem(self, page: PageConfig, content_id: int, aspect: str) -> str:
         return f"{page.page_id}_{content_id}_{aspect}"
 
-    def generate(self, page: PageConfig, content: dict, *, aspects: list[str],
-                 max_bg_regens: int = 2, try_comfyui: bool = True) -> PipelineResult:
-        cid = content["id"]
+    # -- one 9:16 (or legacy) render+video --------------------------------
+    def _generate_one(self, page: PageConfig, content: dict, aspect: str,
+                      music_path: str | None, *, try_comfyui: bool,
+                      allow_fallback: bool, max_bg_regens: int = 2,
+                      scheduled_date: str | None = None,
+                      cycle_number: int = 0,
+                      generation_round: int = 0) -> AspectOutput:
         p = self.s.paths
-        result = PipelineResult(content_id=cid, ok=True)
+        stem = self._stem(page, content["id"], aspect)
+        img_dir = p.posts if aspect == "feed" else p.stories
+        template_id = page.template_id()
+        fields = build_fields(template_id, content,
+                             show_author=page.visual.show_author)
+        rres = val = None
+        bgres = None
+        for regen in range(max_bg_regens + 1):
+            suffix = f"_bg{regen}" if not generation_round \
+                else f"_r{generation_round}_bg{regen}"
+            bg_path = p.backgrounds / f"{stem}{suffix}.png"
+            seed = background_seed(
+                page_id=page.page_id, content_id=int(content["id"]),
+                scheduled_date=scheduled_date or "", cycle_number=cycle_number,
+                media_type=aspect, attempt=regen,
+                generation_round=generation_round)
+            bgres = self.bg.generate(
+                out_path=bg_path, background_prompt=content.get("background_prompt"),
+                mood=content.get("mood"), profile=page.visual.background_profile,
+                aspect=aspect, seed=seed, allow_fallback=allow_fallback,
+                try_comfyui=try_comfyui)
+            counter = {"n": 0}
 
-        # Music (shared across aspects for a coherent post/story pair).
-        need = max(self.s.video.feed_duration_seconds, self.s.video.story_duration_seconds)
-        choice = select_track(self.db, mood=content.get("mood"), page_id=page.page_id,
-                              duration_needed=need, avoid_last_n=self.s.music.avoid_reuse_last_n)
-        music_path = choice.track["file_path"] if choice else None
-        result.music_track_id = choice.track["track_id"] if choice else None
-        if not choice:
-            log.warning("No instagram-safe music for mood=%s (page %s); video will be silent",
-                        content.get("mood"), page.page_id)
+            def render_fn(opts, _bg=bgres.path, _dir=img_dir, _stem=stem, _c=counter,
+                          _aspect=aspect, _tpl=template_id, _fields=fields):
+                _c["n"] += 1
+                out = _dir / f"{_stem}_try{_c['n']}.png"
+                return self.renderer.render(
+                    background_path=_bg, out_path=out, text=content["text"],
+                    content_type=page.content_type, aspect=_aspect,
+                    template_id=_tpl, fields=_fields,
+                    author=content.get("author_display_name") or content.get("author"),
+                    show_author=page.visual.show_author,
+                    show_source_work=getattr(page.visual, "show_source_work", False),
+                    logo_text=(page.visual.logo_text if page.visual.logo_enabled else None),
+                    options=opts)
 
-        for aspect in aspects:
-            stem = self._stem(page, cid, aspect)
-            rres = None
-            val = None
-            best_opts = RenderOptions()
-            for regen in range(max_bg_regens + 1):
-                bg_path = p.backgrounds / f"{stem}_bg{regen}.png"
-                bgres = self.bg.generate(
-                    out_path=bg_path, background_prompt=content.get("background_prompt"),
-                    mood=content.get("mood"), profile=page.visual.background_profile,
-                    aspect=aspect, allow_fallback=True, try_comfyui=try_comfyui,
-                )
-                counter = {"n": 0}
-                img_dir = p.posts if aspect == "feed" else p.stories
+            rres, val, _ = self.validator.render_until_valid(render_fn)
+            if val.passed:
+                break
+            log.info("aspect=%s bg regen %s (score=%.2f)", aspect, regen, val.score)
 
-                def render_fn(opts, _bg=bgres.path, _dir=img_dir, _stem=stem, _c=counter,
-                              _aspect=aspect):
-                    _c["n"] += 1
-                    out = _dir / f"{_stem}_try{_c['n']}.png"
-                    return self.renderer.render(
-                        background_path=_bg, out_path=out, text=content["text"],
-                        content_type=page.content_type, aspect=_aspect,
-                        author=content.get("author_display_name") or content.get("author"),
-                        show_author=page.visual.show_author,
-                        show_source_work=getattr(page.visual, "show_source_work", False),
-                        logo_text=(page.visual.logo_text if page.visual.logo_enabled else None),
-                        options=opts,
-                    )
-
-                rres, val, best_opts = self.validator.render_until_valid(render_fn)
-                if val.passed:
-                    break
-                log.info("aspect=%s bg regen %s (score=%.2f)", aspect, regen, val.score)
-
-            # Canonical image path = the chosen best render.
-            final_img = p.posts / f"{stem}.png" if aspect == "feed" else p.stories / f"{stem}.png"
-            Path(rres.path).replace(final_img)
-            self._cleanup_tries(img_dir, stem)
-
-            duration = (self.s.video.story_duration_seconds if aspect == "story"
-                        else self.s.video.feed_duration_seconds)
-            vdir = p.posts if aspect == "feed" else p.stories
-            vpath = vdir / f"{stem}.mp4"
-            self.video.build(
-                image_path=final_img, out_path=vpath, aspect=aspect, duration=duration,
-                music_path=music_path,
-                volume_db=page.music.volume_db, fade_in=page.music.fade_in_seconds,
-                fade_out=page.music.fade_out_seconds,
-            )
-
-            out = AspectOutput(aspect=aspect, background_path=str(bgres.path),
-                               image_path=str(final_img), video_path=str(vpath),
-                               passed=bool(val and val.passed),
-                               score=float(val.score if val else 0.0))
-            result.outputs[aspect] = out
-            if not out.passed:
-                result.ok = False
-                result.message = f"aspect {aspect} non ha superato la qualità (score {out.score:.2f})"
-
-        result.media_asset_id = self._persist(page, content, result)
-        if result.music_track_id:
-            self.db.record_music_usage(result.music_track_id, page.page_id, None)
-        return result
-
-    def _cleanup_tries(self, img_dir: Path, stem: str) -> None:
+        final_img = img_dir / f"{stem}.png"
+        Path(rres.path).replace(final_img)
         for f in img_dir.glob(f"{stem}_try*.png"):
-            try:
-                f.unlink()
-            except OSError:
-                pass
+            f.unlink(missing_ok=True)
 
-    def _persist(self, page: PageConfig, content: dict, result: PipelineResult) -> int:
-        feed = result.outputs.get("feed")
-        story = result.outputs.get("story")
-        scores = [o.score for o in result.outputs.values()]
-        return self.db.insert_media(
-            content["id"], page.page_id,
-            background_path=(feed or story).background_path if result.outputs else None,
-            post_image_path=feed.image_path if feed else None,
-            story_image_path=story.image_path if story else None,
-            post_video_path=feed.video_path if feed else None,
-            story_video_path=story.video_path if story else None,
-            music_path=None,
-            render_metadata={"music_track_id": result.music_track_id,
-                             "outputs": {a: {"score": o.score, "passed": o.passed}
-                                         for a, o in result.outputs.items()}},
-            validation_score=min(scores) if scores else None,
-        )
+        vpath = img_dir / f"{stem}.mp4"
+        vres = self.video.build(
+            image_path=final_img, out_path=vpath, aspect=aspect, music_path=music_path,
+            volume_db=page.music.volume_db, fade_in=page.music.fade_in_seconds,
+            fade_out=page.music.fade_out_seconds)
+        return AspectOutput(aspect=aspect, background_path=str(bgres.path),
+                            image_path=str(final_img), video_path=str(vpath),
+                            has_audio=vres.has_audio, passed=bool(val and val.passed),
+                            score=float(val.score if val else 0.0))
+
+    # -- resolve the day's music ------------------------------------------
+    def _resolve_music(self, page: PageConfig, content: dict,
+                       music_track_id: str | None) -> tuple[str | None, str | None]:
+        if not page.music.enabled:
+            return None, None                       # enabled:false -> silent video
+        if music_track_id:
+            track = self.db.get_track(music_track_id)
+            if track and int(track.get("instagram_safe", 0)) == 1:
+                return track["track_id"], track["file_path"]
+        need = max(self.s.video.reel_duration_seconds, self.s.video.story_duration_seconds)
+        mood = page.music.profile or content.get("mood")
+        choice = select_track(self.db, mood=content.get("mood") or mood,
+                              page_id=page.page_id, duration_needed=need,
+                              avoid_last_n=self.s.music.avoid_reuse_last_n)
+        if not choice:
+            log.warning("No instagram-safe music for mood=%s (page %s); silent video",
+                        content.get("mood"), page.page_id)
+            return None, None
+        return choice.track["track_id"], choice.track["file_path"]
+
+    # -- MAIN: one 4:5 still, for pages that publish writing ---------------
+    def _generate_image_post(self, page: PageConfig, content: dict, *,
+                             try_comfyui: bool, allow_fallback: bool,
+                             scheduled_date: str | None, cycle_number: int,
+                             generation_round: int,
+                             max_bg_regens: int = 2) -> AspectOutput:
+        """Background, type, quality loop — and then it stops.
+
+        No music, no ffmpeg, no muxer, no silent audio track. The reverb that
+        prompted this migration lived in a component a still does not have, and
+        the way to be sure it is gone is for the code path not to contain it.
+        """
+        p = self.s.paths
+        aspect = "feed"
+        stem = self._stem(page, content["id"], aspect)
+        template_id = page.template_id()
+        fields = build_fields(template_id, content,
+                              show_author=page.visual.show_author)
+        rres = val = bgres = None
+        for regen in range(max_bg_regens + 1):
+            suffix = f"_bg{regen}" if not generation_round \
+                else f"_r{generation_round}_bg{regen}"
+            bg_path = p.backgrounds / f"{stem}{suffix}.png"
+            seed = background_seed(
+                page_id=page.page_id, content_id=int(content["id"]),
+                scheduled_date=scheduled_date or "", cycle_number=cycle_number,
+                media_type=aspect, attempt=regen,
+                generation_round=generation_round)
+            bgres = self.bg.generate(
+                out_path=bg_path, background_prompt=content.get("background_prompt"),
+                mood=content.get("mood"), profile=page.visual.background_profile,
+                aspect=aspect, seed=seed, allow_fallback=allow_fallback,
+                try_comfyui=try_comfyui)
+            counter = {"n": 0}
+
+            def render_fn(opts, _bg=bgres.path, _stem=stem, _c=counter,
+                          _tpl=template_id, _fields=fields):
+                _c["n"] += 1
+                out = p.posts / f"{_stem}_try{_c['n']}.png"
+                return self.renderer.render(
+                    background_path=_bg, out_path=out, text=content["text"],
+                    content_type=page.content_type, aspect="feed",
+                    template_id=_tpl, fields=_fields,
+                    author=content.get("author_display_name") or content.get("author"),
+                    show_author=page.visual.show_author,
+                    show_source_work=getattr(page.visual, "show_source_work", False),
+                    logo_text=(page.visual.logo_text if page.visual.logo_enabled else None),
+                    options=opts)
+
+            rres, val, _ = self.validator.render_until_valid(render_fn)
+            if val.passed:
+                break
+            log.info("image post: bg regen %s (score=%.2f)", regen, val.score)
+
+        final_img = p.posts / f"{stem}.png"
+        Path(rres.path).replace(final_img)
+        for f in p.posts.glob(f"{stem}_try*.png"):
+            f.unlink(missing_ok=True)
+
+        return AspectOutput(aspect=aspect, background_path=str(bgres.path),
+                            image_path=str(final_img), video_path="",
+                            has_audio=False, passed=bool(val and val.passed),
+                            score=float(val.score if val else 0.0))
+
+    def _publishes_image(self, page: PageConfig) -> bool:
+        return str(page.publishing.feed_media_type).upper() == "IMAGE"
+
+    # -- MAIN: the day's media, in the format the page publishes -----------
+    def generate_daily(self, page: PageConfig, content: dict, *,
+                       music_track_id: str | None = None,
+                       try_comfyui: bool = True,
+                       scheduled_date: str | None = None,
+                       cycle_number: int = 0,
+                       generation_round: int = 0) -> DailyMedia:
+        allow_fallback = self.s.comfyui_fallback_allowed()
+        if self._publishes_image(page):
+            try:
+                out = self._generate_image_post(
+                    page, content, try_comfyui=try_comfyui,
+                    allow_fallback=allow_fallback, scheduled_date=scheduled_date,
+                    cycle_number=cycle_number, generation_round=generation_round)
+            except ComfyUIError as e:
+                log.error("Background generation failed (fallback disabled): %s", e)
+                return DailyMedia(content_id=content["id"], ok=False,
+                                  message=f"ComfyUI non disponibile e fallback "
+                                          f"vietato: {e}")
+            # The still IS the post, so it goes in post_image_path. Writing it
+            # to story_image_path (as the reel path does, where the 4:5 frame
+            # doubles as the Story) would claim a Story asset that does not
+            # exist and leave the feed asset empty.
+            media_id = self.db.insert_media(
+                content["id"], page.page_id, background_path=out.background_path,
+                post_image_path=out.image_path, story_image_path=None,
+                post_video_path=None,
+                story_video_path=None, music_path=None,
+                render_metadata={"aspect": "feed(4:5)", "score": out.score,
+                                 "format": "image_post",
+                                 "template": page.template_id(),
+                                 "scheduled_date": scheduled_date,
+                                 "cycle_number": cycle_number},
+                validation_score=out.score)
+            return DailyMedia(
+                content_id=content["id"], ok=out.passed, video_path=None,
+                image_path=out.image_path, background_path=out.background_path,
+                music_track_id=None, validation_score=out.score,
+                media_asset_id=media_id,
+                message="" if out.passed
+                        else f"qualità non superata (score {out.score:.2f})")
+        track_id, music_path = self._resolve_music(page, content, music_track_id)
+        try:
+            out = self._generate_one(page, content, "reel", music_path,
+                                     try_comfyui=try_comfyui,
+                                     allow_fallback=allow_fallback,
+                                     scheduled_date=scheduled_date,
+                                     cycle_number=cycle_number,
+                                     generation_round=generation_round)
+        except ComfyUIError as e:
+            log.error("Background generation failed (fallback disabled): %s", e)
+            return DailyMedia(content_id=content["id"], ok=False,
+                              message=f"ComfyUI non disponibile e fallback vietato: {e}")
+
+        # Record music usage ONLY if it was actually embedded (§10).
+        used_track = track_id if (track_id and out.has_audio) else None
+        media_id = self.db.insert_media(
+            content["id"], page.page_id, background_path=out.background_path,
+            story_image_path=out.image_path, post_video_path=out.video_path,
+            story_video_path=out.video_path, music_path=music_path,
+            render_metadata={"music_track_id": used_track, "aspect": "reel(9:16)",
+                             "score": out.score, "shared_reel_and_story": True,
+                             "template": page.template_id(),
+                             "scheduled_date": scheduled_date,
+                             "cycle_number": cycle_number},
+            validation_score=out.score)
+        if used_track:
+            self.db.record_music_usage(used_track, page.page_id, None)
+
+        return DailyMedia(
+            content_id=content["id"], ok=out.passed, video_path=out.video_path,
+            image_path=out.image_path, background_path=out.background_path,
+            music_track_id=used_track, validation_score=out.score, media_asset_id=media_id,
+            message="" if out.passed else f"qualità non superata (score {out.score:.2f})")
+
+    # -- legacy multi-aspect (CLI preview) --------------------------------
+    def generate(self, page: PageConfig, content: dict, *, aspects: list[str],
+                 try_comfyui: bool = True) -> PipelineResult:
+        allow_fallback = self.s.comfyui_fallback_allowed() or True  # preview always allows
+        track_id, music_path = self._resolve_music(page, content, None)
+        res = PipelineResult(content_id=content["id"], ok=True, music_track_id=track_id)
+        for aspect in aspects:
+            try:
+                out = self._generate_one(page, content, aspect, music_path,
+                                         try_comfyui=try_comfyui, allow_fallback=True)
+            except ComfyUIError as e:
+                res.ok = False
+                res.message = str(e)
+                continue
+            res.outputs[aspect] = out
+            if not out.passed:
+                res.ok = False
+                res.message = f"aspect {aspect} score {out.score:.2f}"
+        return res

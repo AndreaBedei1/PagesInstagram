@@ -3,9 +3,10 @@ from __future__ import annotations
 
 from PIL import Image
 
-from src.comfyui.backgrounds import DIMS, BackgroundGenerator
+from src.comfyui.backgrounds import BackgroundGenerator
 from src.comfyui.client import ComfyUIClient
-from src.comfyui.workflow import patch_workflow, sd15_txt2img
+from src.comfyui.workflow import (build_graph, family_dims, patch_workflow,
+                                  sd15_txt2img, sdxl_txt2img)
 from src.core.settings import load_settings
 
 
@@ -90,7 +91,7 @@ def test_fallback_background_is_real_image(tmp_path, project_paths):
     assert res.source == "fallback"
     assert out.exists()
     with Image.open(out) as im:
-        assert im.size == DIMS["story"]
+        assert im.size == family_dims(s.comfyui.model_family, "story")
         assert im.mode == "RGB"
 
 

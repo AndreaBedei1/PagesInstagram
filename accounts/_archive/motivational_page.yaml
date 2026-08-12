@@ -8,7 +8,7 @@ language: it
 
 publishing:
   posts_per_day: 1
-  publish_feed: true
+  publish_feed: true            # main content -> Reel shared to feed
   publish_story: true
   publish_reel: false
   feed_time: "12:30"
@@ -16,6 +16,15 @@ publishing:
   timezone: "Europe/Rome"
   missed_job_policy: publish_within_window
   missed_job_window_minutes: 180
+  # Direct upload (no public hosting, no ports, no external storage)
+  upload_method: resumable
+  feed_media_type: REELS
+  share_reel_to_feed: true
+  story_media_type: STORIES
+
+instagram:
+  account_type: business       # Business required for Stories via API
+  api_flavor: instagram_login
 
 visual:
   style: minimal_warm

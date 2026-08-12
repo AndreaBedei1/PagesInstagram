@@ -18,24 +18,67 @@ class Mode(StrEnum):
 
 
 class MediaType(StrEnum):
-    """Internal media artifact kinds produced by the pipeline."""
+    """Internal media artifact kinds produced by the pipeline.
 
-    FEED_IMAGE = "feed_image"
-    FEED_VIDEO = "feed_video"
-    STORY_IMAGE = "story_image"
-    STORY_VIDEO = "story_video"
-    REEL = "reel"
+    The daily *main* content is a ``FEED_IMAGE``: a single 4:5 still, published
+    to the feed. These pages carry writing — a thought, a word, a date — and a
+    still is what writing wants. It also removes an entire class of problem
+    that had nothing to do with the words: an eight-second clip needs an audio
+    track, a silent AAC stream is still an audio stream, and the reverb it
+    picked up was a defect in a component the content never needed.
+
+    ``REEL`` and ``STORY_VIDEO`` remain for pages that genuinely want video;
+    nothing in the image path touches ffmpeg, music or a codec.
+    """
+
+    REEL = "reel"                 # 9:16 video, shared to feed
+    STORY_VIDEO = "story_video"   # same content as a 9:16 Story
+    FEED_IMAGE = "feed_image"     # 4:5 still image post — the main format now
+    FEED_VIDEO = "feed_video"     # legacy/optional (hosted_url)
+    STORY_IMAGE = "story_image"   # legacy/optional
 
 
-# Mapping from an internal MediaType to the Meta Graph API ``media_type`` value
-# and the aspect it is published as.
+# Mapping from an internal MediaType to the Meta Graph API ``media_type`` value.
 META_MEDIA_TYPE = {
+    MediaType.REEL: "REELS",
+    MediaType.STORY_VIDEO: "STORIES",
     MediaType.FEED_IMAGE: "IMAGE",
     MediaType.FEED_VIDEO: "VIDEO",
     MediaType.STORY_IMAGE: "STORIES",
-    MediaType.STORY_VIDEO: "STORIES",
-    MediaType.REEL: "REELS",
 }
+
+#: MediaTypes that are 9:16 vertical videos (Reel + Story).
+VERTICAL_VIDEO_TYPES = frozenset({MediaType.REEL, MediaType.STORY_VIDEO})
+
+#: MediaTypes that are stills. The publisher sends these as ``image_url`` and
+#: never opens a video probe, a muxer or an audio track for them.
+IMAGE_TYPES = frozenset({MediaType.FEED_IMAGE, MediaType.STORY_IMAGE})
+
+#: MediaTypes that are videos, whatever their shape.
+VIDEO_TYPES = frozenset({MediaType.REEL, MediaType.STORY_VIDEO,
+                         MediaType.FEED_VIDEO})
+
+
+class UploadMethod(StrEnum):
+    """How media bytes reach Meta."""
+
+    RESUMABLE = "resumable"   # direct local-file upload to rupload.facebook.com (default)
+    HOSTED_URL = "hosted_url"  # legacy: Meta downloads from a public https URL
+
+
+class UploadStatus(StrEnum):
+    """Resumable upload lifecycle (stored on the job)."""
+
+    PENDING = "pending"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+class AccountType(StrEnum):
+    BUSINESS = "business"
+    CREATOR = "creator"
+    PERSONAL = "personal"
 
 
 class JobStatus(StrEnum):

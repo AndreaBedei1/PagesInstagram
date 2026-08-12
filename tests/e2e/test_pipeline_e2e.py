@@ -24,7 +24,8 @@ pytestmark = pytest.mark.e2e
 def test_full_dry_run_pipeline(tmp_path, project_paths):
     s = load_settings(project_paths, load_dotenv=False)
     s.mode = Mode.DRY_RUN
-    s.video.feed_duration_seconds = 2.0
+    s.video.reel_duration_seconds = 2.0   # main content is a 9:16 Reel
+    s.video.story_duration_seconds = 2.0
     s.video.ken_burns = False  # keep the test fast
 
     db = Database.open(tmp_path / "e2e.sqlite")
@@ -72,5 +73,8 @@ def test_full_dry_run_pipeline(tmp_path, project_paths):
     # media asset persisted with a validation score
     media = db.latest_media_for(final["content_id"], "motivational_it")
     assert media is not None
-    assert media["post_video_path"] and Path(media["post_video_path"]).exists()
+    # an image post records the still as the feed asset, and no video at all
+    assert media["post_image_path"] and Path(media["post_image_path"]).exists()
+    assert media["post_video_path"] is None
+    assert media["story_video_path"] is None and media["music_path"] is None
     db.close()

@@ -44,6 +44,8 @@ generated/*.html
 # ---- Logs ----
 logs/*.log
 logs/*.jsonl
+logs/*.json
+logs/*.lock
 !logs/.gitkeep
 
 # ---- Assets that are large / licensed ----
@@ -61,9 +63,30 @@ assets/fonts/*.otf
 !assets/fonts/.gitkeep
 !assets/fonts/README.md
 
+# ---- Local generative models (multi-GB, licensed, never committed) ----
+*.safetensors
+*.safetensors.sha256
+*.ckpt
+*.pt
+*.pth
+models/
+
+# ---- Dataset validation / preview reports (regenerable) ----
+reports/*.json
+reports/*.html
+reports/previews*/
+!reports/.gitkeep
+
 # ---- OS / IDE ----
 .DS_Store
 Thumbs.db
 .idea/
 .vscode/
 *.swp
+
+# ---- Source-audit cache (runtime, regenerable, host-dependent) ----
+.cache/
+
+# ---- Buffer media index (rigenerabile da prepare-buffer) ----
+reports/buffer_index/
+runtime/

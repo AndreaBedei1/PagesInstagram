@@ -1,59 +1,26 @@
-<#
+﻿<#
 .SYNOPSIS
-  Fresh Windows install of the Instagram Content Engine (uv + .venv).
+    Fresh Windows install. Kept as the documented entry point; the work happens
+    in setup_production.ps1.
+
 .DESCRIPTION
-  Creates a clean virtual environment, installs dependencies, verifies the
-  toolchain, initializes the database and imports the seed datasets + music.
-  Re-runnable (idempotent).
+    The previous version of this file had an unterminated string and could not
+    be parsed at all — a defect nothing caught, because no check had ever parsed
+    the PowerShell scripts. tests/unit/test_powershell_scripts.py parses every
+    one of them now.
+
+    Rather than repair a script that duplicated setup_production.ps1, this
+    delegates to it. Behaviour is unchanged for anyone following the README.
+
+.EXAMPLE
+    .\scripts\install_windows.ps1
 #>
 [CmdletBinding()]
 param(
-  [switch]$SkipDatasets,
-  [switch]$SkipMusic
+    [switch]$SkipDatasets,
+    [switch]$SkipModel
 )
-$ErrorActionPreference = "Stop"
-$Root = Split-Path -Parent $PSScriptRoot
-Set-Location $Root
-Write-Host "== Instagram Content Engine — install ==" -ForegroundColor Cyan
-Write-Host "Repo: $Root"
 
-# 1) uv present?
-if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
-  Write-Host "uv non trovato: installalo (https://docs.astral.sh/uv/) e riesegui." -ForegroundColor Yellow
-  Write-Host "  Esempio: irm https://astral.sh/uv/install.ps1 | iex"
-  throw "uv mancante"
-}
-uv --version
-
-# 2) create venv (Python >= 3.11; uses the newest available)
-if (-not (Test-Path "$Root\.venv")) {
-  Write-Host "Creazione .venv..." -ForegroundColor Cyan
-  uv venv "$Root\.venv"
-}
-$Py = "$Root\.venv\Scripts\python.exe"
-
-# 3) install deps
-Write-Host "Installazione dipendenze..." -ForegroundColor Cyan
-uv pip install --python $Py -r "$Root\requirements.txt"
-
-# 4) .env
-if (-not (Test-Path "$Root\.env")) {
-  Copy-Item "$Root\.env.example" "$Root\.env"
-  Write-Host "Creato .env da .env.example (compila i token per la produzione)." -ForegroundColor Yellow
-}
-
-# 5) validate toolchain
-Write-Host "Validazione ambiente..." -ForegroundColor Cyan
-& $Py -m src.cli validate
-
-# 6) DB + datasets + music
-& $Py -m src.cli init-db
-if (-not $SkipDatasets) { & $Py -m src.cli import-content }
-if (-not $SkipMusic) {
-  & $Py -m src.cli music generate --per-mood 1
-  & $Py -m src.cli music sync
-}
-
-Write-Host "`nInstallazione completata." -ForegroundColor Green
-Write-Host "Prova la pipeline (dry-run):  $Py -m src.cli generate --page motivational_it --count 1"
-Write-Host "Registra l'avvio automatico:  scripts\register_task_scheduler.ps1"
+$ErrorActionPreference = 'Stop'
+& (Join-Path $PSScriptRoot 'setup_production.ps1') -SkipModel:$SkipModel
+exit $LASTEXITCODE

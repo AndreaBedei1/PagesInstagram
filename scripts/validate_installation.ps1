@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS Validate the installation: environment check + tests + dry-run pipeline.
 #>
 [CmdletBinding()]

@@ -1,7 +1,14 @@
-"""Compose background + deterministic typography into feed/story images.
+"""Compose background + deterministic typography into a finished 9:16 image.
 
-The renderer exposes knobs (:class:`RenderOptions`) that the quality validator
-varies to auto-repair low-contrast/overflowing layouts before ever touching the
+The renderer is a **block-stack engine**: a :class:`~src.rendering.templates.LayoutTemplate`
+describes an ordered list of typographic blocks (eyebrow, display, rule, body,
+caption…), and one binary search finds the largest *base* font size for which the
+whole stack fits the safe box. Each block's own size is ``base * scale``, so the
+five evergreen pages get genuinely different hierarchies from a single, testable
+fitting algorithm.
+
+:class:`RenderOptions` exposes the knobs the quality validator varies to
+auto-repair low-contrast or overflowing layouts before falling back to the
 (expensive) background regeneration.
 """
 from __future__ import annotations
@@ -14,37 +21,11 @@ from PIL import Image, ImageDraw
 
 from ..core.settings import Settings
 from .fonts import FontResolver
-from .layout import fit_text, wrap_text
+from .layout import draw_tracked, line_height, measure, wrap_tracked
+from .templates import Block, LayoutTemplate, build_fields, get_template
 
 DARK = (27, 27, 27)
 LIGHT = (250, 250, 250)
-
-
-@dataclass
-class Template:
-    """Typographic profile for a content type."""
-
-    family: str = "sans_semibold"
-    author_family: str = "sans"
-    quote_marks: bool = False
-    max_font: int = 116
-    min_font: int = 30
-    line_spacing: float = 1.22
-    author_ratio: float = 0.46      # author size relative to body size
-    show_author: bool = False
-
-
-TEMPLATES: dict[str, Template] = {
-    "motivational": Template(
-        family="sans_semibold", author_family="sans", quote_marks=False,
-        max_font=120, min_font=32, line_spacing=1.24, show_author=False,
-    ),
-    "famous_quote": Template(
-        family="serif", author_family="serif_italic", quote_marks=True,
-        max_font=104, min_font=30, line_spacing=1.3, author_ratio=0.5,
-        show_author=True,
-    ),
-}
 
 
 @dataclass
@@ -65,16 +46,40 @@ class RenderResult:
     path: Path
     size: tuple[int, int]
     text_color: tuple[int, int, int]
-    font_size: int
-    lines: list[str]
+    font_size: int                          # the *body* block size (validated)
+    lines: list[str]                        # the body block's wrapped lines
     scrim_strength: float
-    box: tuple[int, int, int, int]
-    background_luminance: float            # raw bg luminance (before scrim)
-    effective_bg_luminance: float          # bg luminance behind text (after scrim)
-    effective_bg_rgb: tuple[int, int, int]  # mean bg color behind text (for WCAG contrast)
-    text_zone_complexity: float            # stddev of luminance in the text band
+    box: tuple[int, int, int, int]          # the measured text bounding box
+    background_luminance: float             # raw bg luminance (before scrim)
+    effective_bg_luminance: float           # bg luminance behind text (after scrim)
+    effective_bg_rgb: tuple[int, int, int]  # mean bg color behind text (WCAG)
+    text_zone_complexity: float             # stddev of luminance in the text band
     options: "RenderOptions | None" = None
     metadata: dict = field(default_factory=dict)
+
+
+# --------------------------------------------------------------------------
+#  internal measurement types
+# --------------------------------------------------------------------------
+@dataclass
+class _Item:
+    block: Block
+    lines: list[str]
+    font: object | None
+    font_size: int
+    line_h: float
+    height: float
+    width: float
+    space_before: float
+
+
+@dataclass
+class _Stack:
+    items: list[_Item]
+    base: int
+    height: float
+    width: float
+    fits: bool
 
 
 def _cover_resize(img: Image.Image, size: tuple[int, int]) -> Image.Image:
@@ -122,123 +127,248 @@ class Renderer:
         out_path: str | Path,
         text: str,
         content_type: str,
-        aspect: str,                       # "feed" | "story"
+        aspect: str,                       # "feed" | "story" | "reel"
         author: str | None = None,
         source_work: str | None = None,
         show_author: bool | None = None,
         show_source_work: bool = False,
         logo_text: str | None = None,
         options: RenderOptions | None = None,
+        fields: dict[str, str] | None = None,
+        template_id: str | None = None,
     ) -> RenderResult:
         opt = options or RenderOptions()
-        tpl = TEMPLATES.get(content_type, TEMPLATES["motivational"])
-        size = tuple(self.settings.rendering.story_size if aspect == "story"
+        tpl = get_template(template_id or content_type)
+        vertical = aspect in ("story", "reel")
+        size = tuple(self.settings.rendering.story_size if vertical
                      else self.settings.rendering.post_size)
         W, H = size
 
-        canvas = _cover_resize(Image.open(background_path).convert("RGB"), size).convert("RGBA")
+        canvas = _cover_resize(Image.open(background_path).convert("RGB"),
+                               size).convert("RGBA")
 
-        # --- text-safe box --------------------------------------------------
-        m = int(min(W, H) * self.settings.rendering.safe_margin_ratio)
-        if aspect == "story":
-            top = int(H * self.settings.rendering.story_top_safe_ratio)
-            bottom = int(H * (1 - self.settings.rendering.story_bottom_safe_ratio))
-        else:
-            top, bottom = m, H - m
-        left, right = m, W - m
+        fields = dict(fields) if fields else self._legacy_fields(
+            tpl, text, author, source_work, show_author, show_source_work)
+        fields.setdefault("text", text)
 
-        # shrink width to force more wrapping when requested
-        if opt.box_shrink < 1.0:
-            cx = (left + right) / 2
-            half = (right - left) * opt.box_shrink / 2
-            left, right = int(cx - half), int(cx + half)
-
-        logo = logo_text
-        reserve_logo = int(H * 0.055) if logo else 0
-        want_author = tpl.show_author if show_author is None else show_author
-        has_author = bool(want_author and author)
-        reserve_author = int((bottom - top) * 0.16) if has_author else 0
-        text_bottom = bottom - reserve_logo - reserve_author
-        box = (left, top, right, text_bottom)
+        left, top, right, bottom = self._safe_box(W, H, aspect, vertical, opt)
+        reserve_logo = int(H * 0.055) if logo_text else 0
+        bottom -= reserve_logo
 
         draw = ImageDraw.Draw(canvas)
-        body = ('“' + text + '”') if tpl.quote_marks else text
-        fr = fit_text(
-            draw, body, self.resolver, tpl.family,
-            box_w=(right - left), box_h=(text_bottom - top),
-            max_font=int(tpl.max_font * opt.font_scale),
-            min_font=tpl.min_font,
-            line_spacing=tpl.line_spacing,
-            max_lines=self.settings.rendering.max_lines,
-        )
+        stack = self._fit_stack(draw, tpl, fields, right - left, bottom - top, opt)
 
-        # --- colors ---------------------------------------------------------
-        lum = region_luminance(canvas, box)
-        if opt.text_color is not None:
-            text_color = opt.text_color
+        # --- vertical placement of the whole stack -------------------------
+        avail = bottom - top
+        anchor = opt.vertical if opt.vertical != "center" else tpl.anchor
+        if anchor == "upper":
+            y0 = top + avail * 0.10
+        elif anchor == "lower":
+            y0 = top + avail * 0.90 - stack.height
         else:
-            text_color = DARK if lum > 0.55 else LIGHT
+            y0 = top + (avail - stack.height) / 2
+        y0 = max(top, min(y0, bottom - stack.height))
+
+        pad = max(12, int(min(W, H) * 0.028))
+        tbox = (max(0, left - pad), max(0, int(y0) - pad),
+                min(W, right + pad), min(H, int(y0 + stack.height) + pad))
+
+        # --- colours ------------------------------------------------------
+        lum = region_luminance(canvas, tbox)
+        text_color = opt.text_color if opt.text_color is not None else (
+            DARK if lum > 0.55 else LIGHT)
         scrim_color = DARK if text_color == LIGHT else LIGHT
 
-        # --- scrim / overlay to boost contrast -----------------------------
-        canvas = self._apply_scrim(canvas, box, scrim_color, opt.scrim_strength,
+        canvas = self._apply_scrim(canvas, tbox, scrim_color, opt.scrim_strength,
                                    opt.full_overlay)
-        draw = ImageDraw.Draw(canvas)
-        eff_lum = region_luminance(canvas, box)
-        eff_rgb = _region_mean_rgb(canvas, box)
-        complexity = _region_complexity(canvas, box)
+        eff_lum = region_luminance(canvas, tbox)
+        eff_rgb = _region_mean_rgb(canvas, tbox)
+        complexity = _region_complexity(canvas, tbox)
 
-        # --- vertical placement of the text block --------------------------
-        block_h = fr.text_height
-        avail = text_bottom - top
-        if opt.vertical == "upper":
-            y = top + avail * 0.12
-        elif opt.vertical == "lower":
-            y = top + avail * 0.88 - block_h
-        else:
-            y = top + (avail - block_h) / 2
+        # --- draw ----------------------------------------------------------
         cx = (left + right) / 2
+        self._draw_stack(canvas, stack, cx, y0, left, right, text_color,
+                         scrim_color, opt.shadow)
 
-        self._draw_lines(canvas, fr.lines, fr.font, cx, y, fr.line_h,
-                         text_color, scrim_color, opt.shadow)
-
-        # --- author ---------------------------------------------------------
-        if has_author:
-            a_size = max(24, int(fr.font_size * tpl.author_ratio))
-            a_font = self.resolver.get(tpl.author_family, a_size)
-            author_text = f"— {author}"
-            ay = text_bottom + reserve_author * 0.30
-            self._draw_center(canvas, author_text, a_font, cx, ay, text_color,
-                              scrim_color, opt.shadow)
-            if show_source_work and source_work:
-                s_font = self.resolver.get(tpl.author_family, max(20, int(a_size * 0.72)))
-                self._draw_center(canvas, source_work, s_font, cx,
-                                  ay + a_size * 1.4, text_color, scrim_color, opt.shadow)
-
-        # --- logo / handle --------------------------------------------------
-        if logo:
+        if logo_text:
             l_font = self.resolver.get("sans", max(22, int(min(W, H) * 0.022)))
             ly = H - reserve_logo * 0.72
-            self._draw_center(canvas, logo, l_font, cx, ly, text_color,
+            self._draw_center(canvas, logo_text, l_font, cx, ly, text_color,
                               scrim_color, shadow=False, alpha=170)
 
         out_path = Path(out_path)
         out_path.parent.mkdir(parents=True, exist_ok=True)
         canvas.convert("RGB").save(out_path, "PNG")
+
+        body = self._body_item(stack, tpl)
         return RenderResult(
-            path=out_path, size=size, text_color=text_color, font_size=fr.font_size,
-            lines=fr.lines, scrim_strength=opt.scrim_strength, box=box,
+            path=out_path, size=size, text_color=text_color,
+            font_size=body.font_size if body else stack.base,
+            lines=list(body.lines) if body else [],
+            scrim_strength=opt.scrim_strength, box=tbox,
             background_luminance=round(lum, 4),
             effective_bg_luminance=round(eff_lum, 4),
             effective_bg_rgb=eff_rgb,
             text_zone_complexity=round(complexity, 4),
             options=opt,
-            metadata={"aspect": aspect, "content_type": content_type,
-                      "has_author": has_author, "vertical": opt.vertical,
-                      "num_lines": len(fr.lines)},
+            metadata={
+                "aspect": aspect, "content_type": content_type,
+                "template": tpl.id, "vertical": anchor,
+                "has_author": bool(fields.get("author")),
+                "num_lines": len(body.lines) if body else 0,
+                "base_font": stack.base,
+                "blocks": [
+                    {"key": it.block.key, "size": it.font_size,
+                     "lines": len(it.lines)}
+                    for it in stack.items if it.block.kind == "text"
+                ],
+                "stack_fits": stack.fits,
+            },
         )
 
+    def render_content(self, *, content: dict, page, background_path, out_path,
+                       aspect: str = "reel",
+                       options: RenderOptions | None = None) -> RenderResult:
+        """Render straight from a ``contents`` row using the page's template."""
+        template_id = page.template_id()
+        fields = build_fields(template_id, content,
+                              show_author=page.visual.show_author)
+        return self.render(
+            background_path=background_path, out_path=out_path,
+            text=content.get("text") or "", content_type=page.content_type,
+            aspect=aspect, template_id=template_id, fields=fields,
+            logo_text=(page.visual.logo_text if page.visual.logo_enabled else None),
+            options=options,
+        )
+
+    # -- layout helpers ----------------------------------------------------
+    def _safe_box(self, W: int, H: int, aspect: str, vertical: bool,
+                  opt: RenderOptions) -> tuple[int, int, int, int]:
+        r = self.settings.rendering
+        m = int(min(W, H) * r.safe_margin_ratio)
+        if vertical:
+            top = int(H * r.story_top_safe_ratio)
+            bottom_ratio = r.story_bottom_safe_ratio
+            if aspect == "reel":
+                bottom_ratio = max(bottom_ratio, 0.20)   # Reel caption/CTA area
+            bottom = int(H * (1 - bottom_ratio))
+        else:
+            top, bottom = m, H - m
+        left, right = m, W - m
+        if opt.box_shrink < 1.0:
+            cx = (left + right) / 2
+            half = (right - left) * opt.box_shrink / 2
+            left, right = int(cx - half), int(cx + half)
+        return left, top, right, bottom
+
+    def _legacy_fields(self, tpl: LayoutTemplate, text: str, author: str | None,
+                       source_work: str | None, show_author: bool | None,
+                       show_source_work: bool) -> dict[str, str]:
+        fields = {"text": text}
+        want_author = (tpl.block("author") is not None
+                       if show_author is None else show_author)
+        if want_author and author:
+            fields["author"] = f"— {author}"
+            if show_source_work and source_work:
+                fields["author"] += f", {source_work}"
+        return fields
+
+    def _block_text(self, block: Block, fields: dict[str, str]) -> str:
+        raw = (fields.get(block.key) or "").strip()
+        if not raw:
+            return ""
+        if block.quote_marks:
+            raw = "“" + raw + "”"
+        return raw.upper() if block.uppercase else raw
+
+    def _measure_stack(self, draw, tpl: LayoutTemplate, fields: dict[str, str],
+                       box_w: float, base: int) -> _Stack:
+        items: list[_Item] = []
+        total = 0.0
+        widest = 0.0
+        fits = True
+        for block in tpl.blocks:
+            space = base * block.space_before
+            if block.kind == "rule":
+                h = max(2.0, base * block.rule_thickness)
+                items.append(_Item(block, [], None, 0, h, h,
+                                   box_w * block.rule_width, space))
+                total += space + h
+                continue
+            body = self._block_text(block, fields)
+            if not body:
+                if not block.optional:
+                    raise ValueError(
+                        f"template {tpl.id!r}: campo obbligatorio {block.key!r} vuoto")
+                continue
+            size = max(block.min_px, int(round(base * block.scale)))
+            font = self.resolver.get(block.family, size)
+            tracking = block.tracking * size
+            lines = wrap_tracked(draw, body, font, box_w, tracking)
+            if len(lines) > block.max_lines:
+                fits = False
+                lines = lines[: block.max_lines]
+            lh = line_height(font, block.line_spacing)
+            h = lh * len(lines)
+            w = max((measure(draw, ln, font, tracking) for ln in lines), default=0.0)
+            if w > box_w + 0.5:
+                fits = False
+            widest = max(widest, w)
+            items.append(_Item(block, lines, font, size, lh, h, w, space))
+            total += space + h
+        return _Stack(items=items, base=base, height=total, width=widest, fits=fits)
+
+    def _fit_stack(self, draw, tpl: LayoutTemplate, fields: dict[str, str],
+                   box_w: float, box_h: float, opt: RenderOptions) -> _Stack:
+        """Binary search the largest base size whose whole stack fits the box."""
+        lo = tpl.base_min
+        hi = max(tpl.base_min, int(tpl.base_max * opt.font_scale))
+        best = self._measure_stack(draw, tpl, fields, box_w, lo)
+        while lo <= hi:
+            mid = (lo + hi) // 2
+            stack = self._measure_stack(draw, tpl, fields, box_w, mid)
+            if stack.fits and stack.height <= box_h:
+                best = stack
+                lo = mid + 1
+            else:
+                hi = mid - 1
+        return best
+
+    def _body_item(self, stack: _Stack, tpl: LayoutTemplate) -> _Item | None:
+        for it in stack.items:
+            if it.block.key == tpl.body_key and it.block.kind == "text":
+                return it
+        for it in stack.items:
+            if it.block.kind == "text":
+                return it
+        return None
+
     # -- drawing helpers ---------------------------------------------------
+    def _draw_stack(self, img, stack: _Stack, cx: float, y0: float,
+                    left: int, right: int, color, shadow_color, shadow: bool) -> None:
+        draw = ImageDraw.Draw(img)
+        y = y0
+        for item in stack.items:
+            y += item.space_before
+            if item.block.kind == "rule":
+                half = item.width / 2
+                thick = max(2, int(item.height))
+                draw.rectangle([cx - half, y, cx + half, y + thick],
+                               fill=(*color, item.block.alpha))
+                y += item.height
+                continue
+            tracking = item.block.tracking * item.font_size
+            for line in item.lines:
+                w = measure(draw, line, item.font, tracking)
+                x = cx - w / 2
+                if shadow:
+                    off = max(1, item.font_size // 36)
+                    draw_tracked(draw, (x + off, y), line, item.font,
+                                 (*shadow_color, 90), tracking)
+                draw_tracked(draw, (x, y), line, item.font,
+                             (*color, item.block.alpha), tracking)
+                y += item.line_h
+
     def _apply_scrim(self, img: Image.Image, box, color, strength: float,
                      full: bool) -> Image.Image:
         """Feathered radial scrim (soft spotlight) centered on the text block.
@@ -269,14 +399,6 @@ class Renderer:
         overlay[..., 0], overlay[..., 1], overlay[..., 2] = color
         overlay[..., 3] = alpha
         return Image.alpha_composite(base, Image.fromarray(overlay, "RGBA"))
-
-    def _draw_lines(self, img, lines, font, cx, y, line_h, color, shadow_color,
-                    shadow: bool) -> None:
-        draw = ImageDraw.Draw(img)
-        for i, line in enumerate(lines):
-            ly = y + i * line_h
-            self._draw_center(img, line, font, cx, ly, color, shadow_color,
-                              shadow, draw=draw)
 
     def _draw_center(self, img, text, font, cx, y, color, shadow_color,
                      shadow: bool, alpha: int = 255, draw=None) -> None:
