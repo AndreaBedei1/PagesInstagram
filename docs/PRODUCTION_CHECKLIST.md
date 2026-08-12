@@ -143,7 +143,7 @@ python -m src.cli instagram publish-job --page pensiero_essenziale_it `
       che il repository sia sano.
 - [ ] Dry-run riproducibile delle cinque pagine
       → `python -m src.cli preproduction-smoke-test --date <YYYY-MM-DD>`
-      (cinque reel, zero Storie, cinque pagine, idempotente)
+      (cinque post immagine, zero Storie, cinque pagine, idempotente)
 - [ ] Video conformi alle specifiche Meta
       → `python -m src.cli media-audit`
 - [ ] Nessuna Story pianificata con la configurazione predefinita

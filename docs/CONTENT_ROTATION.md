@@ -104,7 +104,7 @@ viene scritto nella tabella `daily_content` insieme a `cycle_number` e
 
 È una **cache**, non la fonte di verità: per le policy deterministiche il valore
 ricalcolato coincide sempre con quello memorizzato. Serve a garantire che
-formati diversi dello stesso giorno (Reel e, se attivata, Story) usino lo stesso
+formati diversi dello stesso giorno (il post e, se attivata, la Story) usino lo stesso
 contenuto e lo stesso video.
 
 ## 6. Spostare la data iniziale

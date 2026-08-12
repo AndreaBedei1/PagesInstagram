@@ -18,9 +18,9 @@ datasets/*.json  ──import──►  SQLite (sequence_index / calendar_key)
                                    │
               qualità (WCAG, margini, righe) + auto-riparazione
                                    │
-                 FFmpeg → MP4 9:16 1080×1920, 8 s, H.264, faststart
+                    PNG 4:5 1080×1350 (nessun video, nessun audio)
                                    │
-     worker → Meta resumable upload → REELS con share_to_feed=true
+   worker → tunnel effimero → POST /media IMAGE con image_url → media_publish
 ```
 
 > Progettato e testato su Windows 11 + Python 3.14 + NVIDIA RTX 6000 Ada.
@@ -196,10 +196,15 @@ nessuna dipendenza dalla libreria audio di Instagram.
 
 ## Pubblicazione
 
-Upload **resumable diretto**: il file locale viaggia verso i server Meta
-(`rupload.facebook.com`). **Nessun hosting pubblico, nessuna porta aperta,
-nessuno storage esterno.** Il contenuto principale è un **Reel** con
-`share_to_feed=true`, quindi visibile sia nel Feed sia nella tab Reels.
+Il contenuto principale è un **post immagine 4:5 (1080×1350)**: queste pagine
+pubblicano testo, e una immagine ferma non ha traccia audio, codec o durata da
+sbagliare. Meta lo preleva da `image_url`.
+
+Quell'URL non richiede hosting: il motore serve **un solo file** da `127.0.0.1`
+dietro un **Cloudflare Quick Tunnel** che vive quanto la singola pubblicazione —
+nessun account, nessun dominio, nessuna carta, niente acceso a riposo. Il
+resumable upload (`rupload.facebook.com`) resta implementato per i video, ma è
+un protocollo per video: un'immagine non ha byte da caricare.
 
 Modalità: `dry_run` (default, nessuna rete) · `test` (pubblicazione solo manuale
 e confermata) · `production` (worker automatico, fallback dello sfondo vietato).
@@ -255,7 +260,7 @@ verify-corpus       Legge le fonti ed estrae la prova di ogni affermazione
 rebuild-unverified-corpus  Ricostruisce dai sorgenti ciò che non supera la verifica
 corpus-final-gate   Il cancello unico: 12 contatori, tutti a zero
 production-readiness Simula 1.000 giorni x 5 pagine con il gate di produzione
-prepare-buffer      Genera il buffer di Reel senza pubblicare (idempotente)
+prepare-buffer      Genera il buffer di media senza pubblicare (idempotente)
 buffer-status       Copertura dei giorni davanti + artefatti non referenziati
 arm-page / arming-status  Arma una pagina dopo il canary
 audit-sources       Verifica che gli URL delle fonti esistano davvero
