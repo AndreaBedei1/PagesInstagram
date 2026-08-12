@@ -407,9 +407,25 @@ def check_page(settings: Settings, page: PageConfig, *,
         health.limit = "n/d"
 
     if page.publishing.upload_method == "hosted_url":
-        health.warnings.append(
-            "upload_method=hosted_url richiede hosting pubblico: il progetto "
-            "usa resumable proprio per non averne bisogno")
+        # The risk here is a missing host, not the choice of method. Warning
+        # about the choice made the check unusable the moment hosted_url became
+        # the only path that works: resumable is documented for Facebook Login
+        # and still answers ProcessingFailedError for every file and every
+        # client, so this is a deliberate configuration, not a mistake.
+        base = (settings.publishing.public_media_base_url or "").strip()
+        if not base:
+            health.account = health.account  # unchanged; this is a config fault
+            health.failures.append(
+                "upload_method=hosted_url senza ICE_PUBLIC_MEDIA_BASE_URL: "
+                "Meta deve poter scaricare il media da un URL pubblico")
+        elif not base.startswith("https://"):
+            health.failures.append(
+                f"ICE_PUBLIC_MEDIA_BASE_URL non è https ({base!r}): Meta "
+                f"scarica il media solo da un URL sicuro")
+        else:
+            health.notes.append(
+                f"upload_method=hosted_url: il media viene scaricato da Meta "
+                f"da {base}")
 
     return health
 

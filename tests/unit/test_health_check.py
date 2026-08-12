@@ -73,8 +73,17 @@ class FakeClient:
 
 @pytest.fixture
 def page(project_paths):
+    """The canary page, pinned to the project default upload method.
+
+    The on-disk YAML is a live configuration that a canary may temporarily
+    change; a test that inherits it asserts about whatever state the operator
+    left behind. The hosted_url tests opt in explicitly instead.
+    """
     from src.accounts import load_pages
-    return load_pages(project_paths).get(PAGE_ID)
+
+    cfg = load_pages(project_paths).get(PAGE_ID)
+    cfg.publishing.upload_method = "resumable"
+    return cfg
 
 
 @pytest.fixture
@@ -302,9 +311,11 @@ def test_absent_credentials_fail_before_anything_else(settings, page):
 def test_exit_code_is_zero_one_or_two(settings, project_paths, with_app_credentials):
     from src.accounts import load_pages
 
-    # Only the migrated page: the other four are still on the pairing the
-    # matrix refuses, which is a different verdict being tested elsewhere.
-    pages = [load_pages(project_paths).get(PAGE_ID)]
+    # Only the migrated page, pinned to the project default upload method for
+    # the same reason as the `page` fixture: this test is about exit codes.
+    only = load_pages(project_paths).get(PAGE_ID)
+    only.publishing.upload_method = "resumable"
+    pages = [only]
 
     green = check_pages(settings, pages,
                         factory=lambda _s, _p: PublishTarget(FakeClient(), "ig"))
@@ -455,3 +466,32 @@ def test_data_access_is_the_clock_that_still_runs(settings, page,
     assert soon.data_access_days <= 4
     assert any("accesso ai dati" in w for w in soon.warnings)
     assert not soon.ok
+
+
+# ---- hosted_url: the risk is a missing host, not the method ----------------
+def _hosted(settings, page):
+    page.publishing.upload_method = "hosted_url"
+    return page
+
+
+def test_hosted_url_without_a_public_base_url_fails(settings, page, monkeypatch,
+                                                    with_app_credentials):
+    settings.publishing.public_media_base_url = ""
+    health = _check(settings, _hosted(settings, page), FakeClient())
+    assert any("ICE_PUBLIC_MEDIA_BASE_URL" in f for f in health.failures)
+
+
+def test_hosted_url_over_plain_http_fails(settings, page, with_app_credentials):
+    settings.publishing.public_media_base_url = "http://example.com"
+    health = _check(settings, _hosted(settings, page), FakeClient())
+    assert any("https" in f for f in health.failures)
+
+
+def test_hosted_url_with_a_public_https_base_is_a_note(settings, page,
+                                                       with_app_credentials):
+    """A configured host is a working configuration, not a warning."""
+    settings.publishing.public_media_base_url = "https://example.trycloudflare.com"
+    health = _check(settings, _hosted(settings, page), FakeClient())
+    assert not health.warnings and not health.failures
+    assert any("hosted_url" in n for n in health.notes)
+    assert health.ok

@@ -17,7 +17,11 @@ publishing:
   timezone: "Europe/Rome"
   missed_job_policy: publish_within_window
   missed_job_window_minutes: 240
-  upload_method: resumable      # nessun hosting pubblico
+  # Il primo canary reale e' stato pubblicato via hosted_url con un tunnel
+  # effimero: su questo account il resumable upload risponde
+  # ProcessingFailedError con qualunque file e qualunque client, mentre
+  # video_url funziona. Serve un hosting stabile prima dell'uso continuativo.
+  upload_method: resumable
   feed_media_type: REELS
   share_reel_to_feed: true
   story_media_type: STORIES
