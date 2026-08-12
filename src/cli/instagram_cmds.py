@@ -13,7 +13,8 @@ from rich.console import Console
 from rich.table import Table
 
 from ..accounts import load_pages
-from ..core.enums import JobStatus, MediaType, Mode, UploadStatus
+from ..core.enums import (IMAGE_TYPES, META_MEDIA_TYPE, JobStatus, MediaType,
+                          Mode, UploadStatus)
 from ..core.errors import PublishError
 from ..core.logging_setup import get_logger, register_secret, setup_logging
 from ..core.paths import Paths
@@ -68,7 +69,8 @@ def check_config(page: str = typer.Option(..., help="page_id")):
     "richiede hosting pubblico: no (resumable)" for a configuration that could
     never upload anything, and the truth only arrived from Meta, mid-go-live.
     """
-    from ..core.meta_api import (API_HOSTS, PERMISSIONS_BY_FLAVOR,
+    from ..core.meta_api import (API_HOSTS, IMAGE_POST_SIZE,
+                                 PERMISSIONS_BY_FLAVOR,
                                  TOKEN_KIND_BY_FLAVOR, check_upload_method)
 
     _, s, _, pcfg, db = _ctx(page)
@@ -77,8 +79,17 @@ def check_config(page: str = typer.Option(..., help="page_id")):
     t.add_column("valore")
     t.add_row("mode", str(s.mode))
     t.add_row("upload_method", pcfg.publishing.upload_method)
-    t.add_row("feed_media_type", pcfg.publishing.feed_media_type)
-    t.add_row("share_reel_to_feed", str(pcfg.publishing.share_reel_to_feed))
+    publishes_image = str(pcfg.publishing.feed_media_type).upper() == "IMAGE"
+    t.add_row("feed_media_type",
+              f"{pcfg.publishing.feed_media_type}"
+              + (f" — post immagine {IMAGE_POST_SIZE[0]}x{IMAGE_POST_SIZE[1]} (4:5)"
+                 if publishes_image else " — video 9:16"))
+    # share_reel_to_feed is a Reel parameter. Printing True next to an image
+    # post reads as a setting that is doing something, and it is not: the
+    # publisher never sends it on an IMAGE container.
+    t.add_row("share_reel_to_feed",
+              "[dim]non applicabile a un post immagine[/]" if publishes_image
+              else str(pcfg.publishing.share_reel_to_feed))
     t.add_row("story_media_type", pcfg.publishing.story_media_type)
     t.add_row("api_flavor", pcfg.instagram.api_flavor)
     t.add_row("account_type (atteso)", pcfg.instagram.account_type)
@@ -120,7 +131,10 @@ def check_config(page: str = typer.Option(..., help="page_id")):
         console.print(f"[red]{reason}[/]")
         db.close()
         raise typer.Exit(1)
-    console.print(f"[dim]{reason}[/]")
+    if not (method == "hosted_url" and provider == "cloudflare_quick_tunnel"):
+        # That reason ends in "richiede hosting pubblico", which is true of
+        # hosted_url in general and contradicts the line above for a tunnel.
+        console.print(f"[dim]{reason}[/]")
     db.close()
 
 
@@ -510,7 +524,16 @@ def create_container(page: str = typer.Option(...), job: int = typer.Option(...)
         console.print("[red]Credenziali mancanti[/].")
         raise typer.Exit(1)
     mt = MediaType(j["media_type"])
-    meta_type = "REELS" if mt == MediaType.REEL else "STORIES"
+    if mt in IMAGE_TYPES:
+        # The resumable upload is a video protocol. An image post has no bytes
+        # to stream: Meta fetches it from image_url. Saying so here beats
+        # creating a container Meta will never accept.
+        console.print(f"[red]{mt} è un post immagine[/]: il resumable upload "
+                      f"non si applica. Un'immagine viene pubblicata da "
+                      f"image_url (hosted_url).")
+        db.close()
+        raise typer.Exit(2)
+    meta_type = META_MEDIA_TYPE[mt]
     is_reel = mt == MediaType.REEL
     from ..content.captions import build_caption
     caption = None
@@ -547,11 +570,22 @@ def _canary_ctx(page_id: str):
     return paths, settings, reg, pcfg, db, canary
 
 
-def _audit(path: str, settings) -> tuple[bool, list[str]]:
-    from ..video.media_audit import probe_file
+def _audit(path: str, settings, media_type: MediaType) -> tuple[bool, list[str]]:
+    """Audit the file the way its own format can be wrong.
 
-    check = probe_file(path, page_id="canary",
-                       ffmpeg_path=settings.video.ffmpeg_path)
+    ffprobe asked about a PNG answers nonsense — and on a machine without
+    ffmpeg it answers nothing at all, which used to read as "non conforme"
+    and stopped the canary on a file that was perfectly fine.
+    """
+    if media_type in IMAGE_TYPES:
+        from ..publishing.image_audit import audit_image
+
+        check = audit_image(path, page_id="canary")
+    else:
+        from ..video.media_audit import probe_file
+
+        check = probe_file(path, page_id="canary",
+                           ffmpeg_path=settings.video.ffmpeg_path)
     return check.ok, list(check.problems)
 
 
@@ -568,6 +602,30 @@ def _resolve_job(db, canary, pcfg, job_id: int | None) -> dict | None:
     if job_id:
         return db.get_job(job_id)
     return canary.select_job(db, pcfg.page_id)
+
+
+def _transport_of(pcfg) -> str:
+    """How this page's media actually reaches Meta, in three words."""
+    if pcfg.publishing.upload_method != "hosted_url":
+        return "resumable"
+    provider = getattr(pcfg.publishing, "hosted_url_provider", "") or "public_base_url"
+    return f"hosted_url/{provider}"
+
+
+def _steps_for(pcfg) -> str:
+    """The steps the canary would take, for the transport this page uses.
+
+    Printing the resumable sequence for a page that publishes through a tunnel
+    would be a simulation of something that is not going to happen.
+    """
+    if pcfg.publishing.upload_method != "hosted_url":
+        return ("create container -> resumable upload -> attesa FINISHED -> "
+                "conferma -> media_publish")
+    if _transport_of(pcfg).endswith("cloudflare_quick_tunnel"):
+        return ("apertura tunnel -> verifica dell'URL pubblico -> create "
+                "container -> attesa FINISHED -> conferma -> media_publish -> "
+                "chiusura del tunnel")
+    return "create container -> attesa FINISHED -> conferma -> media_publish"
 
 
 @app.command("canary-plan")
@@ -593,7 +651,8 @@ def canary_plan(page: str = typer.Option(...),
         db.close()
         raise typer.Exit(1)
 
-    audit_ok, problems = _audit(j["output_path"], s)
+    audit_ok, problems = _audit(j["output_path"], s,
+                                MediaType(j["media_type"]))
     caption = _caption_for(db, j, pcfg)
     prefix = pcfg.env_prefix()
     uid = os.environ.get(f"{prefix}_IG_USER_ID") or ""
@@ -608,6 +667,7 @@ def canary_plan(page: str = typer.Option(...),
             "page_id": pcfg.page_id, "job_id": j["id"],
             "scheduled_at": j.get("scheduled_at"),
             "output_path": j.get("output_path"), "audit_ok": audit_ok,
+            "media_type": j.get("media_type"), "transport": _transport_of(pcfg),
             "problems": problems, "caption": caption,
             "ig_user_id_set": bool(uid), "access_token_set": has_token,
             "container_id": state.container_id,
@@ -621,6 +681,9 @@ def canary_plan(page: str = typer.Option(...),
     t.add_row("job", str(j["id"]))
     t.add_row("programmato", str(j.get("scheduled_at")))
     t.add_row("file", str(j.get("output_path")))
+    t.add_row("formato",
+              f"{j['media_type']} ({META_MEDIA_TYPE[MediaType(j['media_type'])]})")
+    t.add_row("trasporto", _transport_of(pcfg))
     t.add_row("specifiche Meta", "[green]conformi[/]" if audit_ok else "[red]NON conformi[/]")
     t.add_row("account (IG_USER_ID)", "[green]impostato[/]" if uid else "[red]assente[/]")
     t.add_row("token", "[green]impostato[/]" if has_token else "[red]assente[/]")
@@ -630,8 +693,7 @@ def canary_plan(page: str = typer.Option(...),
         console.print(f"  [red]{p}[/]")
     console.print("\n[yellow]Didascalia che verrebbe pubblicata:[/]")
     console.print(caption or "[dim](nessuna)[/]")
-    console.print("\n[bold]Passi simulati:[/] create container -> resumable upload -> "
-                  "attesa FINISHED -> conferma -> media_publish")
+    console.print(f"\n[bold]Passi simulati:[/] {_steps_for(pcfg)}")
     console.print("[green]Nessuna chiamata a Meta è stata effettuata: 0 container, "
                   "0 upload, 0 publish.[/]")
     db.close()
@@ -653,6 +715,17 @@ def canary_upload(page: str = typer.Option(...),
                       "Il canary imposta la modalità da sé; non modificare .env.")
         db.close()
         raise typer.Exit(2)
+    if pcfg.publishing.upload_method == "hosted_url":
+        # Not a limitation to work around: the container is created from a URL
+        # that exists only while the tunnel is open, so "upload now, publish
+        # later" would publish from an address that no longer resolves.
+        console.print(f"[red]{pcfg.page_id} pubblica con "
+                      f"{_transport_of(pcfg)}[/]: caricamento e pubblicazione "
+                      f"sono un atto solo, dentro un'unica sessione di tunnel.")
+        console.print("Usa [bold].\\scripts\\go_live_canary.ps1 -WhatIf[/] per la "
+                      "simulazione, poi [bold].\\scripts\\go_live_canary.ps1[/].")
+        db.close()
+        raise typer.Exit(2)
 
     from ..publishing.health import check_page
     health = check_page(s, pcfg)
@@ -668,7 +741,8 @@ def canary_upload(page: str = typer.Option(...),
         console.print(f"[red]Nessun job futuro con media pronto per {page}.[/]")
         db.close()
         raise typer.Exit(1)
-    audit_ok, problems = _audit(j["output_path"], s)
+    audit_ok, problems = _audit(j["output_path"], s,
+                                MediaType(j["media_type"]))
     if not audit_ok:
         for p in problems:
             console.print(f"  [red]{p}[/]")
@@ -719,9 +793,13 @@ def canary_status(page: str = typer.Option(...)):
     """What the canary has already done, so nothing is repeated by accident."""
     _, _, _, pcfg, db, canary = _canary_ctx(page)
     state = canary.load_state(db, pcfg.page_id)
-    used = canary.published_record(db)
-    attempted = canary.attempt_record(db)
-    t = Table(title=f"Canary — {pcfg.page_id}")
+    # Scoped to this page and to the format it publishes now: the Reel canary
+    # of a page that has since migrated is history, not a pending state.
+    media_type = str(pcfg.publishing.feed_media_type).upper()
+    media_type = "feed_image" if media_type == "IMAGE" else "reel"
+    used = canary.published_record(db, pcfg.page_id, media_type)
+    attempted = canary.attempt_record(db, pcfg.page_id, media_type)
+    t = Table(title=f"Canary — {pcfg.page_id} ({media_type})")
     t.add_column("voce"); t.add_column("valore")
     t.add_row("container caricato", state.container_id or "nessuno")
     t.add_row("job associato", str(state.job_id) if state.job_id else "—")
@@ -768,7 +846,8 @@ def publish_canary_cmd(
     j = db.get_job(job)
     audit_ok = False
     if j and j.get("output_path"):
-        audit_ok, problems = _audit(j["output_path"], s)
+        audit_ok, problems = _audit(j["output_path"], s,
+                                    MediaType(j["media_type"]))
         for p in problems:
             console.print(f"  [red]{p}[/]")
 
@@ -778,9 +857,20 @@ def publish_canary_cmd(
         db.close()
         raise typer.Exit(1)
 
-    outcome = canary.publish_canary(
-        db, target=target, page_id=pcfg.page_id, job_id=job, confirmation=confirm,
-        interactive=sys.stdin.isatty(), audit_ok=audit_ok, health_ok=health_ok)
+    # Which path depends on the transport, not on a preference: with a Quick
+    # Tunnel there is no container to publish after the fact, because the URL it
+    # was created from lives and dies inside one session.
+    if pcfg.publishing.upload_method == "hosted_url":
+        publisher = Publisher(s, db, load_pages(Paths.create()))
+        outcome = canary.publish_canary_hosted(
+            db, publisher=publisher, page=pcfg, job_id=job, target=target,
+            confirmation=confirm, interactive=sys.stdin.isatty(),
+            audit_ok=audit_ok, health_ok=health_ok)
+    else:
+        outcome = canary.publish_canary(
+            db, target=target, page_id=pcfg.page_id, job_id=job,
+            confirmation=confirm, interactive=sys.stdin.isatty(),
+            audit_ok=audit_ok, health_ok=health_ok)
 
     if not outcome.published:
         console.print(f"[red]Canary rifiutato:[/] {outcome.reason}")

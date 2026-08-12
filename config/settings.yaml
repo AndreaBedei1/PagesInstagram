@@ -75,7 +75,7 @@ publishing:
   # video_url is required". src/core/meta_api.py::check_upload_method
   # refuses the impossible pairing before anything reaches the network.
   upload_method: resumable      # resumable | hosted_url
-  feed_media_type: REELS        # main content published as a Reel...
+  feed_media_type: IMAGE        # post immagine 4:5 (era REELS)
   share_reel_to_feed: true      # ...visible in the Feed and Reels tabs
   story_media_type: STORIES
   upload_timeout_seconds: 600

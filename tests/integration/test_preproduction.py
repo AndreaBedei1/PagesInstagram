@@ -42,7 +42,7 @@ def test_smoke_test_publishes_exactly_five(smoke_result):
 
 
 def test_smoke_test_publishes_no_stories(smoke_result):
-    assert all(m["media_type"] == "reel" for m in smoke_result.media)
+    assert all(m["media_type"] == "feed_image" for m in smoke_result.media)
 
 
 def test_smoke_test_is_idempotent(smoke_result):

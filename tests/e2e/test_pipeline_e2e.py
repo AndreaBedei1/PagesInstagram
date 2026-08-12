@@ -73,5 +73,8 @@ def test_full_dry_run_pipeline(tmp_path, project_paths):
     # media asset persisted with a validation score
     media = db.latest_media_for(final["content_id"], "motivational_it")
     assert media is not None
-    assert media["post_video_path"] and Path(media["post_video_path"]).exists()
+    # an image post records the still as the feed asset, and no video at all
+    assert media["post_image_path"] and Path(media["post_image_path"]).exists()
+    assert media["post_video_path"] is None
+    assert media["story_video_path"] is None and media["music_path"] is None
     db.close()

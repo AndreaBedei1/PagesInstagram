@@ -122,8 +122,17 @@ class Worker:
             content, cycle_number = resolved
             daily = self.db.get_daily_content(page_id, local_date)
 
-            # Generate the shared 9:16 video once; reuse if already produced.
+            # Generate the day's media once; reuse it only if it is still the
+            # right kind. The recorded path survives a format migration — the
+            # buffer had an MP4 sitting in the day's slot — and reusing it
+            # would attach a video to a job that publishes a still, which the
+            # publisher then refuses one step before Meta.
             video_path = daily.get("video_path") if daily else None
+            if video_path and not self._media_matches(page, video_path):
+                log.info("%s %s: il media registrato (%s) non è del formato "
+                         "pubblicato ora: lo rigenero", page_id, local_date,
+                         os.path.basename(video_path))
+                video_path = None
             if not (video_path and os.path.exists(video_path)):
                 try:
                     result = self.pipeline.generate_daily(
@@ -141,7 +150,8 @@ class Worker:
                     self._route_to_review(group, page_id, result.message, stats,
                                           content_id=content["id"])
                     continue
-                video_path = result.video_path
+                # media_path, not video_path: an image post has no video.
+                video_path = result.media_path
                 self.db.update_daily_content(
                     daily["id"], content_id=content["id"],
                     music_track_id=result.music_track_id,
@@ -154,6 +164,18 @@ class Worker:
                                    status=JobStatus.MEDIA_READY,
                                    upload_method=page.publishing.upload_method)
                 stats.prepared += 1
+
+    @staticmethod
+    def _media_matches(page, path: str) -> bool:
+        """Is this file the kind of media the page publishes today?
+
+        Extension, not a probe: the question is which pipeline produced it, and
+        a still is a .png where a Reel is a .mp4. Cheap enough to ask on every
+        job of every tick.
+        """
+        wants_image = str(page.publishing.feed_media_type).upper() == "IMAGE"
+        is_image = str(path).lower().endswith((".png", ".jpg", ".jpeg"))
+        return is_image == wants_image
 
     def _route_to_review(self, group: list[dict], page_id: str, message: str,
                          stats: TickStats, content_id: int | None = None) -> None:

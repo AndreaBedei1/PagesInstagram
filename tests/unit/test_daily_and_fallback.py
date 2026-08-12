@@ -45,6 +45,12 @@ def _past(minutes=5):
 
 
 def test_reel_and_story_share_content_music_and_video(tmp_path, project_paths):
+    """The five live pages publish stills now, so this page asks for REELS.
+
+    The sharing rule — one content, one render, one music track for both
+    formats of the day — belongs to the video path, which still exists for any
+    page configured for it. Testing it needs a page that wants a Reel.
+    """
     s = load_settings(project_paths, load_dotenv=False)
     s.mode = Mode.DRY_RUN
     db = Database.open(tmp_path / "daily.sqlite")
@@ -52,7 +58,7 @@ def test_reel_and_story_share_content_music_and_video(tmp_path, project_paths):
                            normalized_text="x", content_hash="daily1", mood="calm",
                            caption="c", quality_score=0.95,
                            status=ContentStatus.APPROVED_FOR_PUBLICATION))
-    reg = AccountRegistry({"motivational_it": _page()})
+    reg = AccountRegistry({"motivational_it": _page(feed_media_type="REELS")})
     plan_jobs(db, reg, s, days=1)
     for j in db.list_jobs(page_id="motivational_it"):
         db.update_job(j["id"], scheduled_at=_past())

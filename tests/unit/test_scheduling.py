@@ -27,12 +27,12 @@ def test_planner_local_time_is_correct(tmp_db, project_paths):
     s = load_settings(project_paths, load_dotenv=False)
     plan_jobs(tmp_db, reg, s, days=1)
     jobs = tmp_db.list_jobs(page_id="pensiero_essenziale_it")
-    # main content is a REEL (shared to feed) at the page's feed_time slot
-    reel = next(j for j in jobs if j["media_type"] == "reel")
-    local = parse_iso(reel["scheduled_at"]).astimezone(ZoneInfo("Europe/Rome"))
+    # main content is a 4:5 image post at the page's feed_time slot
+    post = next(j for j in jobs if j["media_type"] == "feed_image")
+    local = parse_iso(post["scheduled_at"]).astimezone(ZoneInfo("Europe/Rome"))
     assert (local.hour, local.minute) == (8, 30)  # DST-safe
     # no Story is planned with the default configuration
-    assert {j["media_type"] for j in jobs} == {"reel"}
+    assert {j["media_type"] for j in jobs} == {"feed_image"}
 
 
 def test_missed_policy_within_window(tmp_db, project_paths):

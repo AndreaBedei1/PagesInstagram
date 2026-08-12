@@ -115,13 +115,70 @@ def clear_state(db, page_id: str) -> None:
     db.conn.commit()
 
 
-def published_record(db) -> dict | None:
-    """The one-shot marker. Present means a canary has already gone out."""
-    return _read(db, _USED_KEY)
+def _scoped(key: str, page_id: str | None, media_type: str | None) -> str:
+    if not page_id:
+        return key
+    return f"{key}:{page_id}:{media_type or 'any'}"
 
 
-def attempt_record(db) -> dict | None:
-    return _read(db, _ATTEMPT_KEY)
+def _legacy_matches(db, record: dict | None, page_id: str | None,
+                    media_type: str | None) -> bool:
+    """Does the old unscoped marker describe *this* page and format?
+
+    The first version of this module wrote one global marker, because there was
+    one go-live and one account. Read literally today it says every page and
+    every format has already had its canary, which would make the other four
+    pages impossible to start and this migration impossible to validate. So the
+    legacy record only blocks the page and the format it actually refers to —
+    the job it names still says which.
+    """
+    if not record:
+        return False
+    if page_id and record.get("page_id") != page_id:
+        return False
+    if not media_type:
+        return True
+    job = db.get_job(record.get("job_id")) if record.get("job_id") else None
+    return bool(job) and str(job.get("media_type")) == str(media_type)
+
+
+def published_record(db, page_id: str | None = None,
+                     media_type: str | None = None) -> dict | None:
+    """The one-shot marker. Present means that canary has already gone out.
+
+    "Once" is once **per page and per format**. A page that published its first
+    Reel has had its Reel canary; migrating it to image posts is a new first
+    post, and it deserves the same controlled publication rather than either an
+    unguarded one or none at all.
+    """
+    scoped = _read(db, _scoped(_USED_KEY, page_id, media_type))
+    if scoped:
+        return scoped
+    legacy = _read(db, _USED_KEY)
+    return legacy if _legacy_matches(db, legacy, page_id, media_type) else None
+
+
+def attempt_record(db, page_id: str | None = None,
+                   media_type: str | None = None) -> dict | None:
+    scoped = _read(db, _scoped(_ATTEMPT_KEY, page_id, media_type))
+    if scoped:
+        return scoped
+    legacy = _read(db, _ATTEMPT_KEY)
+    return legacy if _legacy_matches(db, legacy, page_id, media_type) else None
+
+
+def _media_type_of(db, job_id: int) -> str:
+    job = db.get_job(job_id)
+    return str((job or {}).get("media_type") or "")
+
+
+def _job_is_settled(db, job_id) -> bool:
+    """Nothing left in flight on that job: published, skipped or rejected."""
+    if job_id is None:
+        return False
+    job = db.get_job(job_id)
+    return bool(job) and (job.get("status") in TERMINAL_JOB_STATES
+                          or bool(job.get("remote_media_id")))
 
 
 # ------------------------------------------------------------- job selection
@@ -153,21 +210,37 @@ def select_job(db, page_id: str, *, now: str | None = None) -> dict | None:
 # -------------------------------------------------------------------- the gate
 def check_publish_allowed(db, *, page_id: str, job_id: int, confirmation: str,
                           interactive: bool, container_status: str,
-                          audit_ok: bool, health_ok: bool) -> tuple[bool, str]:
+                          audit_ok: bool, health_ok: bool,
+                          transport: str = "resumable") -> tuple[bool, str]:
     """Every condition, in one pure function, before anything reaches the network.
 
     Deliberately takes the container status, the audit verdict and the health
     verdict as arguments rather than fetching them: the caller does the I/O, and
     this decides. That is what makes the decision testable without a network and
     without a way to accidentally skip a check.
+
+    ``transport`` changes one condition and nothing else. With ``resumable`` the
+    bytes are uploaded first and the container waits on Meta in ``FINISHED``, so
+    the gate demands exactly that container. With ``hosted_url`` there is nothing
+    to wait on: the container is created *from* a URL that only exists while the
+    tunnel is up, and the tunnel closes with the publication. Demanding a
+    pre-existing container there would be demanding something impossible; a
+    *left-over* container is instead a reason to stop, because its URL is dead
+    and somebody should look at the account before another attempt.
+
+    Every other condition — once only, the attempt marker, an interactive
+    process, the exact word, the page and job matching, the audit, the health
+    check — is identical for both.
     """
-    used = published_record(db)
+    job_row = db.get_job(job_id)
+    media_type = str((job_row or {}).get("media_type") or "")
+    used = published_record(db, page_id, media_type)
     if used:
-        return False, (f"il canary è già stato eseguito il "
-                       f"{used.get('published_at', '?')} (media "
-                       f"{used.get('media_id', '?')}): è per definizione una "
-                       f"sola volta")
-    attempted = attempt_record(db)
+        return False, (f"il canary di {page_id} in formato {media_type} è già "
+                       f"stato eseguito il {used.get('published_at', '?')} "
+                       f"(media {used.get('media_id', '?')}): è per definizione "
+                       f"una sola volta")
+    attempted = attempt_record(db, page_id, media_type)
     if attempted and attempted.get("job_id") != job_id:
         return False, (f"un tentativo di canary è già registrato sul job "
                        f"{attempted.get('job_id')}: verifica sull'app prima di "
@@ -181,12 +254,24 @@ def check_publish_allowed(db, *, page_id: str, job_id: int, confirmation: str,
                        f"{CONFIRMATION!r}")
 
     state = load_state(db, page_id)
-    if not state.ready_to_publish:
-        return False, ("nessun container caricato per questa pagina: esegui "
-                       "prima go_live_canary.ps1 -UploadOnly")
-    if state.job_id != job_id:
-        return False, (f"il container caricato appartiene al job "
-                       f"{state.job_id}, non al job {job_id}")
+    if transport == "hosted_url":
+        # A container whose own job is finished is history, not an obstacle:
+        # the page published a Reel through one of these and the record stayed.
+        # What must stop the canary is a container left mid-flight, because its
+        # tunnel is gone and nobody knows what Meta did with it.
+        stale = state.container_id and not _job_is_settled(db, state.job_id)
+        if stale:
+            return False, (f"esiste già un container ({state.container_id}) sul "
+                           f"job {state.job_id}, non concluso: con hosted_url il "
+                           f"suo URL non è più raggiungibile, quindi non lo "
+                           f"riuso. Verifica sull'app prima di riprovare")
+    else:
+        if not state.ready_to_publish:
+            return False, ("nessun container caricato per questa pagina: esegui "
+                           "prima go_live_canary.ps1 -UploadOnly")
+        if state.job_id != job_id:
+            return False, (f"il container caricato appartiene al job "
+                           f"{state.job_id}, non al job {job_id}")
 
     job = db.get_job(job_id)
     if job is None:
@@ -196,7 +281,7 @@ def check_publish_allowed(db, *, page_id: str, job_id: int, confirmation: str,
     if job.get("status") == JobStatus.PUBLISHED or job.get("remote_media_id"):
         return False, f"il job {job_id} risulta già pubblicato"
 
-    if container_status != "FINISHED":
+    if transport != "hosted_url" and container_status != "FINISHED":
         return False, (f"container in stato {container_status or 'sconosciuto'!r}: "
                        f"pubblico solo un container FINISHED")
     if not audit_ok:
@@ -282,13 +367,14 @@ def publish_canary(db, *, target, page_id: str, job_id: int, confirmation: str,
         return CanaryOutcome(False, reason, container_id=state.container_id or "",
                              job_id=job_id)
 
-    _write(db, _ATTEMPT_KEY, {"page_id": page_id, "job_id": job_id,
-                              "container_id": state.container_id,
-                              "attempted_at": _now()})
+    _write(db, _scoped(_ATTEMPT_KEY, page_id, _media_type_of(db, job_id)),
+           {"page_id": page_id, "job_id": job_id,
+            "container_id": state.container_id, "attempted_at": _now()})
     media_id = target.client.publish_container(target.ig_user_id, state.container_id)
-    _write(db, _USED_KEY, {"page_id": page_id, "job_id": job_id,
-                           "container_id": state.container_id,
-                           "media_id": media_id, "published_at": _now()})
+    _write(db, _scoped(_USED_KEY, page_id, _media_type_of(db, job_id)),
+           {"page_id": page_id, "job_id": job_id,
+            "container_id": state.container_id, "media_id": media_id,
+            "published_at": _now()})
     db.update_job(job_id, status=JobStatus.PUBLISHED, remote_media_id=media_id,
                   published_at=_now())
     db.log_event(job_id=job_id, page_id=page_id, event="canary_publish",
@@ -296,3 +382,55 @@ def publish_canary(db, *, target, page_id: str, job_id: int, confirmation: str,
     log.info("canary pubblicato: media %s (pagina %s NON armata)", media_id, page_id)
     return CanaryOutcome(True, "pubblicato una sola volta", media_id=media_id,
                          container_id=state.container_id or "", job_id=job_id)
+
+
+def publish_canary_hosted(db, *, publisher, page, job_id: int, target,
+                          confirmation: str, interactive: bool, audit_ok: bool,
+                          health_ok: bool) -> CanaryOutcome:
+    """The same canary, for a page whose transport is a Quick Tunnel.
+
+    With ``hosted_url`` creating the container and publishing it cannot be two
+    commands: the container is created from a URL that lives inside one tunnel
+    session, and a session that ended has taken the URL with it. So the whole
+    thing happens here, in one call, behind the same gate — and the attempt
+    marker is still written *before* anything reaches Meta, which is the part
+    that matters if the process dies mid-flight.
+
+    Arming is untouched: this asks ``publisher`` for the publication directly
+    rather than going through ``publish_job``, exactly as the resumable canary
+    calls ``publish_container`` directly. The page stays disarmed afterwards.
+    """
+    allowed, reason = check_publish_allowed(
+        db, page_id=page.page_id, job_id=job_id, confirmation=confirmation,
+        interactive=interactive, container_status="", audit_ok=audit_ok,
+        health_ok=health_ok, transport="hosted_url")
+    if not allowed:
+        log.warning("canary rifiutato: %s", reason)
+        return CanaryOutcome(False, reason, job_id=job_id)
+
+    job = db.get_job(job_id)
+    _write(db, _scoped(_ATTEMPT_KEY, page.page_id, _media_type_of(db, job_id)),
+           {"page_id": page.page_id, "job_id": job_id, "container_id": None,
+            "attempted_at": _now()})
+    outcome = publisher.publish_canary_media(job, page, target)
+    media_id = outcome.remote_media_id or ""
+    if not media_id:
+        # The job row already carries the failure the publisher recorded; the
+        # attempt marker stays, deliberately, so a second run stops to look.
+        return CanaryOutcome(False, outcome.message or "pubblicazione non riuscita",
+                             container_id=outcome.container_id or "", job_id=job_id)
+
+    _write(db, _scoped(_USED_KEY, page.page_id, _media_type_of(db, job_id)),
+           {"page_id": page.page_id, "job_id": job_id,
+            "container_id": outcome.container_id, "media_id": media_id,
+            "published_at": _now()})
+    save_state(db, CanaryState(page_id=page.page_id, job_id=job_id,
+                               container_id=outcome.container_id,
+                               uploaded_at=_now()))
+    db.log_event(job_id=job_id, page_id=page.page_id, event="canary_publish",
+                 request_summary="hosted_url/quick_tunnel",
+                 response_summary=media_id)
+    log.info("canary pubblicato via tunnel: media %s (pagina %s NON armata)",
+             media_id, page.page_id)
+    return CanaryOutcome(True, "pubblicato una sola volta", media_id=media_id,
+                         container_id=outcome.container_id or "", job_id=job_id)

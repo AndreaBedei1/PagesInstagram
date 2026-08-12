@@ -78,6 +78,12 @@ def version_tuple(value: str) -> tuple[int, int]:
 REEL_MIN_SECONDS = 3
 REEL_MAX_SECONDS = 15 * 60
 REEL_MAX_FILE_BYTES = 300 * 1_000_000
+
+#: Feed image post: JPEG/PNG, 8 MB maximum, 4:5 recommended for a
+#: portrait still (1080x1350). The stills this project renders are
+#: well under a megabyte.
+IMAGE_MAX_FILE_BYTES = 8 * 1_000_000
+IMAGE_POST_SIZE = (1080, 1350)
 REEL_MAX_HORIZONTAL_PIXELS = 1920
 REEL_VIDEO_CODECS = ("h264", "hevc")
 REEL_CONTAINERS = ("mp4", "mov")

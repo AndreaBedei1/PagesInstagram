@@ -22,10 +22,11 @@ from typing import Callable
 from ..accounts.models import PageConfig
 from ..accounts.registry import AccountRegistry
 from ..content.captions import build_caption
-from ..core.enums import (META_MEDIA_TYPE, JobStatus, MediaType, Mode,
-                          UploadMethod, UploadStatus)
+from ..core.enums import (IMAGE_TYPES, META_MEDIA_TYPE, JobStatus,
+                          MediaType, Mode, UploadMethod, UploadStatus)
 from ..core.errors import PublishError
-from ..core.meta_api import (REEL_MAX_FILE_BYTES, REEL_MAX_SECONDS,
+from ..core.meta_api import (IMAGE_MAX_FILE_BYTES, REEL_MAX_FILE_BYTES,
+                             REEL_MAX_SECONDS,
                              REEL_MIN_SECONDS, STORY_MAX_SECONDS,
                              STORY_MIN_SECONDS)
 from .arming import may_publish
@@ -184,6 +185,26 @@ class Publisher:
         return (page.publishing.upload_method or self.s.publishing.upload_method
                 or UploadMethod.RESUMABLE)
 
+    def publish_canary_media(self, job: dict, page: PageConfig,
+                             target: PublishTarget) -> PublishOutcome:
+        """The publication itself, for the canary and for nothing else.
+
+        ``publish_job`` refuses an unarmed page, and a page is only armed after
+        its canary — the circular dependency ``publishing/canary.py`` exists to
+        break. The resumable canary breaks it by calling ``publish_container``
+        on the client directly; a Quick Tunnel publication cannot do that,
+        because container creation and publication are one indivisible act
+        inside one tunnel session. So it needs the publisher's own path.
+
+        This is not a bypass switch: it takes no flag, it reads no setting, and
+        the gate that replaces arming here (``canary.check_publish_allowed``) is
+        strictly stronger — an explicit page, an explicit job, an interactive
+        process, a typed word, a green audit, a green health check, and never
+        twice. ``tests/unit/test_go_live_guards.py`` fails if anything other
+        than ``canary.py`` calls this.
+        """
+        return self._do_publish(job, page, target)
+
     def _do_publish(self, job: dict, page: PageConfig,
                     target: PublishTarget) -> PublishOutcome:
         media_type = MediaType(job["media_type"])
@@ -210,6 +231,31 @@ class Publisher:
         if media_type == MediaType.STORY_VIDEO and atype and atype != "business":
             raise PublishError(f"le Stories via API richiedono un account business "
                                f"(trovato: {atype})", retryable=False, code="ACCOUNT_TYPE")
+
+    def _validate_image_file(self, file_path: str | None) -> int:
+        """A still has no duration, no codec and no audio to get wrong."""
+        if not file_path or not os.path.exists(file_path):
+            raise PublishError(f"file media mancante: {file_path}", retryable=False,
+                               code="FILE_MISSING")
+        size = os.path.getsize(file_path)
+        if size <= 0:
+            raise PublishError("file media vuoto", retryable=False, code="FILE_EMPTY")
+        if not str(file_path).lower().endswith((".jpg", ".jpeg", ".png")):
+            raise PublishError("un post immagine richiede JPEG o PNG",
+                               retryable=False, code="FILE_FORMAT")
+        if size > IMAGE_MAX_FILE_BYTES:
+            raise PublishError(
+                f"immagine di {size / 1_000_000:.0f} MB: il massimo documentato "
+                f"e {IMAGE_MAX_FILE_BYTES // 1_000_000} MB", retryable=False,
+                code="FILE_SIZE")
+        return size
+
+    def _validate_media_file(self, file_path: str | None,
+                             media_type: MediaType) -> int:
+        """Validate by kind. A PNG has no duration to be out of range."""
+        if media_type in IMAGE_TYPES:
+            return self._validate_image_file(file_path)
+        return self._validate_video_file(file_path, media_type)
 
     def _validate_video_file(self, file_path: str | None, media_type: MediaType) -> int:
         if not file_path or not os.path.exists(file_path):
@@ -350,7 +396,7 @@ class Publisher:
 
         jid = job["id"]
         client = target.client
-        self._validate_video_file(job.get("output_path"), media_type)
+        self._validate_media_file(job.get("output_path"), media_type)
 
         existing = job.get("container_id")
         if existing:
@@ -368,15 +414,22 @@ class Publisher:
                                upload_offset=0)
             job = self.db.get_job(jid)
 
-        is_reel = media_type == MediaType.REEL
-        caption = self._caption_for(job, page) if is_reel else None
-        share = page.publishing.share_reel_to_feed if is_reel else None
+        # A feed post carries a caption; a Story does not. share_to_feed is a
+        # Reel-only parameter and Meta rejects it on an IMAGE container.
+        captioned = media_type not in _STORY_TYPES
+        caption = self._caption_for(job, page) if captioned else None
+        share = (page.publishing.share_reel_to_feed
+                 if media_type == MediaType.REEL else None)
 
+        is_image = media_type in IMAGE_TYPES
         with TunnelSession(job["output_path"], self.s.paths) as session:
-            kwargs: dict = {"media_type": meta_type, "video_url": session.public_url}
+            kwargs: dict = {"media_type": meta_type}
+            # An image post is created with image_url and nothing about video:
+            # no REELS type, no share_to_feed, no duration, no codec.
+            kwargs["image_url" if is_image else "video_url"] = session.public_url
             if caption is not None:
                 kwargs["caption"] = caption
-            if share is not None:
+            if share is not None and not is_image:
                 kwargs["share_to_feed"] = share
             self.db.update_job(jid, status=JobStatus.UPLOADING,
                                upload_method=UploadMethod.HOSTED_URL)

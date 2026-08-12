@@ -84,6 +84,11 @@ def page(project_paths):
     cfg = load_pages(project_paths).get(PAGE_ID)
     cfg.publishing.upload_method = "resumable"
     cfg.publishing.hosted_url_provider = "public_base_url"
+    # Pinned together with the transport, and for the same reason: resumable is
+    # a video protocol, so a page pinned to it is a page that publishes Reels.
+    # Leaving the format to the live YAML made every test here fail the moment
+    # the account migrated to image posts.
+    cfg.publishing.feed_media_type = "REELS"
     return cfg
 
 
@@ -316,6 +321,7 @@ def test_exit_code_is_zero_one_or_two(settings, project_paths, with_app_credenti
     # the same reason as the `page` fixture: this test is about exit codes.
     only = load_pages(project_paths).get(PAGE_ID)
     only.publishing.upload_method = "resumable"
+    only.publishing.feed_media_type = "REELS"
     pages = [only]
 
     green = check_pages(settings, pages,
@@ -514,3 +520,25 @@ def test_the_quick_tunnel_provider_needs_no_base_url(settings, page,
     assert not health.failures and not health.warnings
     assert any("Quick Tunnel" in n for n in health.notes)
     assert health.ok
+
+
+# ---- the format and the transport have to agree ---------------------------
+def test_an_image_post_cannot_use_the_resumable_upload(settings, page,
+                                                       with_app_credentials):
+    """Meta's resumable upload is a video protocol; a still has nothing to stream."""
+    page.publishing.feed_media_type = "IMAGE"
+    page.publishing.upload_method = "resumable"
+    health = _check(settings, page, FakeClient())
+    assert any("resumable" in f and "IMAGE" in f for f in health.failures)
+    assert not health.ok
+
+
+def test_an_image_post_over_a_tunnel_says_what_it_publishes(settings, page,
+                                                            with_app_credentials):
+    page.publishing.feed_media_type = "IMAGE"
+    page.publishing.upload_method = "hosted_url"
+    page.publishing.hosted_url_provider = "cloudflare_quick_tunnel"
+    health = _check(settings, page, FakeClient())
+    assert not health.failures and not health.warnings
+    assert any("1080x1350" in n and "nessuna traccia audio" in n
+               for n in health.notes)

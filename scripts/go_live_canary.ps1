@@ -5,18 +5,27 @@
 .DESCRIPTION
     Three levels, and the difference between them is stated rather than implied:
 
-      -WhatIf      zero Meta calls. Chooses the job, probes the file against the
-                   published Reel specifications, shows the caption and the
-                   target account, prints the steps it would take, and stops.
-                   No container, no upload, no publication.
+      -WhatIf      zero Meta calls. Chooses the job, measures the file against
+                   the specifications published for its own format, shows the
+                   caption and the target account, prints the steps it would
+                   take, and stops. No container, no upload, no publication.
 
       -UploadOnly  a real container and a real resumable upload, and no
                    media_publish. Ends with the container FINISHED on Meta and
                    recorded against the job. Nothing appears on the account.
+                   Only for a page configured for the resumable transport — see
+                   below.
 
       (default)    reuses the container -UploadOnly left — or creates it if you
                    skipped that step — shows you exactly what will go out, and
                    publishes once, after you type PUBBLICA.
+
+    A page publishing through a Cloudflare Quick Tunnel has two levels, not
+    three, and this refuses -UploadOnly there rather than pretending. The
+    container is created from a URL that exists only while the tunnel is open,
+    so an upload that stops before the publication would leave Meta holding an
+    address that no longer resolves. Creation, fetch and publication are one
+    act; the confirmation still comes first.
 
     The old version had -WhatIf uploading a real file and stopping one call
     short of publishing, which is a surprising thing for a parameter with that
@@ -73,6 +82,17 @@ if ($WhatIf) {
     & $python @planArgs
     if ($LASTEXITCODE -ne 0) { Fail "La simulazione ha trovato un problema: risolvilo prima del canary reale." }
 
+    # Same command again, in JSON, only to know which next step to suggest.
+    # It makes no network call either — that is the whole point of this level.
+    $planJson = & $python @planArgs --json
+    $hosted = $false
+    if ($planJson) { $hosted = "$(($planJson | ConvertFrom-Json).transport)".StartsWith('hosted_url') }
+
+    $next = if ($hosted) {
+        "Passo successivo, quando vuoi pubblicare davvero (una sola volta):`n`n    .\scripts\go_live_canary.ps1`n`nNon esiste un livello intermedio per questo trasporto: il contenitore nasce`ndall'URL del tunnel, quindi caricare senza pubblicare non è possibile."
+    } else {
+        "Passo successivo, quando vuoi caricare davvero senza pubblicare:`n`n    .\scripts\go_live_canary.ps1 -UploadOnly"
+    }
     Write-Host @"
 
 -WhatIf completato.
@@ -82,9 +102,7 @@ if ($WhatIf) {
   0 upload
   0 pubblicazioni
 
-Passo successivo, quando vuoi caricare davvero senza pubblicare:
-
-    .\scripts\go_live_canary.ps1 -UploadOnly
+$next
 "@ -ForegroundColor Green
     exit 0
 }
@@ -105,11 +123,27 @@ if ($LASTEXITCODE -ne 0 -or -not $planJson) {
 }
 $plan = $planJson | ConvertFrom-Json
 $jobId = $plan.job_id
+$hosted = "$($plan.transport)".StartsWith('hosted_url')
 Write-Host "  job         : $jobId"
 Write-Host "  programmato : $($plan.scheduled_at)"
 Write-Host "  file        : $($plan.output_path)"
+Write-Host "  formato     : $($plan.media_type)"
+Write-Host "  trasporto   : $($plan.transport)"
 Write-Host "  specifiche  : $(if ($plan.audit_ok) { 'conformi' } else { 'NON conformi' })"
 Write-Host "  container   : $(if ($plan.container_id) { $plan.container_id } else { 'ancora nessuno' })"
+
+if ($UploadOnly -and $hosted) {
+    Write-Host ""
+    Write-Host "-UploadOnly non esiste per $($plan.transport)." -ForegroundColor Yellow
+    Write-Host "Il container nasce da un URL che vive solo dentro la sessione del tunnel:"
+    Write-Host "caricare adesso e pubblicare dopo significherebbe pubblicare da un"
+    Write-Host "indirizzo che non risponde piu'. Creazione, prelievo e pubblicazione"
+    Write-Host "sono un atto solo, e la conferma resta prima di tutto."
+    Write-Host ""
+    Write-Host "Simulazione senza rete :  .\scripts\go_live_canary.ps1 -WhatIf"
+    Write-Host "Pubblicazione singola  :  .\scripts\go_live_canary.ps1"
+    exit 2
+}
 
 # ICE_MODE stays dry_run in .env. It is raised for this process only, and put
 # back in the finally below, so a crash cannot leave the machine armed to talk
@@ -117,7 +151,10 @@ Write-Host "  container   : $(if ($plan.container_id) { $plan.container_id } els
 $previousMode = $env:ICE_MODE
 $env:ICE_MODE = 'test'
 try {
-    if ($plan.already_uploaded) {
+    if ($hosted) {
+        Step "3. Nessun upload separato"
+        Write-Host "  $($plan.transport): il file viene prelevato da Meta durante la pubblicazione." -ForegroundColor DarkGray
+    } elseif ($plan.already_uploaded) {
         Step "3. Container già caricato: lo riuso"
         Write-Host "  $($plan.container_id) — non ne creo un secondo e non ricarico il file." -ForegroundColor DarkGray
     } else {
@@ -150,10 +187,18 @@ Il container resta pronto sul job $jobId. Quando vuoi pubblicarlo:
     Step "4. Conferma esplicita"
     Write-Host "Sto per pubblicare UN post reale su $Page." -ForegroundColor Yellow
     Write-Host "Non è annullabile dall'API: potrai solo eliminarlo dall'app."
-    Write-Host "Il container è già caricato: questa conferma esegue una sola media_publish."
+    if ($hosted) {
+        Write-Host "Questa conferma apre il tunnel, crea UN container e fa UNA media_publish."
+    } else {
+        Write-Host "Il container è già caricato: questa conferma esegue una sola media_publish."
+    }
     $answer = Read-Host "Scrivi PUBBLICA per procedere, qualsiasi altra cosa per annullare"
     if ($answer -cne 'PUBBLICA') {
-        Write-Host "Annullato. Nessuna pubblicazione; il container resta pronto." -ForegroundColor Green
+        if ($hosted) {
+            Write-Host "Annullato. Nessun tunnel aperto, nessun container, nessuna pubblicazione." -ForegroundColor Green
+        } else {
+            Write-Host "Annullato. Nessuna pubblicazione; il container resta pronto." -ForegroundColor Green
+        }
         exit 0
     }
 

@@ -544,7 +544,11 @@ def sample_review(
 def generate(page: str = typer.Option(..., help="page_id"),
              count: int = typer.Option(1),
              comfyui: bool = typer.Option(True, help="use ComfyUI if available")):
-    """Generate media (background + post/story images + videos) for N approved contents."""
+    """Generate the day's media for N approved contents, in the page's format.
+
+    A page configured for IMAGE gets a 4:5 still and nothing else — no MP4, no
+    music track. One configured for REELS gets the 9:16 video it always did.
+    """
     from ..scheduling.pipeline import GenerationPipeline
 
     paths, settings, registry, db = _ctx()
@@ -558,12 +562,17 @@ def generate(page: str = typer.Option(..., help="page_id"),
         if not content or content["id"] in seen:
             break
         seen.add(content["id"])
-        # Produces the single 9:16 Reel video (shared by Reel + Story).
         res = pipeline.generate_daily(pcfg, content, try_comfyui=comfyui)
         made += 1
         status = "[green]OK[/]" if res.ok else "[yellow]REVIEW[/]"
-        console.print(f"{status} content {content['id']} — reel/story 9:16: {res.video_path}"
-                      + (f"  music={res.music_track_id}" if res.music_track_id else " (no audio)"))
+        if res.video_path:
+            console.print(f"{status} content {content['id']} — reel/story 9:16: "
+                          f"{res.video_path}"
+                          + (f"  music={res.music_track_id}" if res.music_track_id
+                             else " (no audio)"))
+        else:
+            console.print(f"{status} content {content['id']} — post 4:5: "
+                          f"{res.image_path} (nessun video, nessun audio)")
     console.print(f"[green]Generati {made} contenuti[/] (media in generated/)")
     db.close()
 
@@ -571,7 +580,12 @@ def generate(page: str = typer.Option(..., help="page_id"),
 @app.command()
 def render(page: str = typer.Option(...), count: int = typer.Option(3),
            comfyui: bool = typer.Option(True)):
-    """Render only images (no video) for a quick visual check."""
+    """Render the still, without the rest of the pipeline, for a visual check.
+
+    The aspect follows the page: 4:5 for a page that publishes image posts,
+    9:16 for one that still publishes Reels. Rendering the wrong shape here is
+    a quiet way to approve a layout nobody will ever see.
+    """
     from ..comfyui.backgrounds import BackgroundGenerator
     from ..quality.validator import MediaValidator
     from ..rendering.renderer import Renderer
@@ -583,8 +597,10 @@ def render(page: str = typer.Option(...), count: int = typer.Option(3),
     validator = MediaValidator(settings)
     contents = db.list_contents(content_type=pcfg.content_type,
                                 status="approved_for_publication")[:count]
+    aspects = (["feed"] if str(pcfg.publishing.feed_media_type).upper() == "IMAGE"
+               else ["reel"])
     for content in contents:
-        for aspect in ["reel"]:   # main content is a 9:16 Reel (shared with Story)
+        for aspect in aspects:
             stem = f"{page}_{content['id']}_{aspect}"
             bgres = bg.generate(out_path=paths.backgrounds / f"{stem}_bg.png",
                                 background_prompt=content.get("background_prompt"),
@@ -876,7 +892,7 @@ def preproduction_smoke_test(
 
 @app.command("media-audit")
 def media_audit_cmd(
-    per_page: int = typer.Option(1, help="video da controllare per pagina"),
+    per_page: int = typer.Option(1, help="media da controllare per pagina"),
     buffer: bool = typer.Option(False, "--buffer",
                                 help="controlla tutto il buffer generato"),
     all_files: bool = typer.Option(False, "--all",
@@ -884,7 +900,14 @@ def media_audit_cmd(
     file: str = typer.Option(None, "--file", help="controlla un singolo file"),
     report: str = typer.Option(None, help="percorso del report JSON"),
 ):
-    """Probe generated videos with ffprobe against Meta's Reel specifications."""
+    """Measure every generated medium against the specs for its own format.
+
+    Videos go to ffprobe and the Reel specifications; stills go to Pillow and
+    the image-post specifications. Sending a PNG to ffprobe produced either
+    nonsense or, on a machine without ffmpeg, a failure that said nothing about
+    the file.
+    """
+    from ..publishing.image_audit import IMAGE_EXTENSIONS, audit_image
     from ..video.media_audit import audit_files, safe_area_box, write_report
 
     paths, settings, registry, db = _ctx()
@@ -908,9 +931,32 @@ def media_audit_cmd(
                       "Esegui prima 'worker --once' o 'preproduction-smoke-test'.[/]")
         raise typer.Exit(code=1)
 
-    checks = audit_files(files, ffmpeg_path=settings.video.ffmpeg_path)
+    stills = [(pid, f) for pid, f in files
+              if Path(f).suffix.lower() in IMAGE_EXTENSIONS]
+    videos = [(pid, f) for pid, f in files if (pid, f) not in stills]
+    checks = audit_files(videos, ffmpeg_path=settings.video.ffmpeg_path)
+    image_checks = [audit_image(f, page_id=pid) for pid, f in stills]
     out = write_report(checks, Path(report) if report
-                       else paths.root / "reports" / "media_audit.json")
+                       else paths.root / "reports" / "media_audit.json",
+                       images=image_checks)
+
+    if image_checks:
+        ti = Table(title="Audit dei post immagine")
+        for col in ("pagina", "file", "formato", "dimensioni", "peso", "esito"):
+            ti.add_column(col)
+        for c in image_checks:
+            ti.add_row(c.page_id, c.file[:26], c.image_format or "?",
+                       f"{c.width}×{c.height}",
+                       f"{c.size_bytes / 1024:.0f} KB",
+                       "[green]OK[/]" if c.ok else "[red]FAIL[/]")
+        console.print(ti)
+        for c in image_checks:
+            for p in c.problems:
+                console.print(f"  [red]{c.file}[/]: {p}")
+
+    if not checks:
+        console.print(f"Report: {out}")
+        raise typer.Exit(code=0 if all(c.ok for c in image_checks) else 1)
 
     t = Table(title="Audit dei media")
     for col in ("pagina", "file", "contenitore", "video", "audio", "risoluzione",
@@ -933,7 +979,7 @@ def media_audit_cmd(
                   f"y {box['top']}–{box['bottom']} "
                   f"({box['usable_width']}×{box['usable_height']} px utilizzabili)")
     console.print(f"Report: {out}")
-    raise typer.Exit(code=0 if all(c.ok for c in checks) else 1)
+    raise typer.Exit(code=0 if all(c.ok for c in checks + image_checks) else 1)
 
 
 @app.command("verify-corpus")
@@ -1332,19 +1378,22 @@ def regenerate_media(
         if not result.ok:
             continue
 
+        # daily_content.video_path predates the image format and is the column
+        # that holds the day's media whatever it is; media_path is whichever
+        # artefact the page's format produced.
         db.update_daily_content(
             daily["id"], generation_round=attempt_round,
-            media_asset_id=result.media_asset_id, video_path=result.video_path,
+            media_asset_id=result.media_asset_id, video_path=result.media_path,
             music_track_id=result.music_track_id)
         for j in jobs:
             db.update_job(j["id"], content_id=content["id"],
-                          output_path=result.video_path, generated_at=utcnow_iso(),
+                          output_path=result.media_path, generated_at=utcnow_iso(),
                           status=JobStatus.MEDIA_READY, last_error=None,
                           upload_method=pcfg.publishing.upload_method)
         console.print(f"[green]Rigenerato[/] al round {attempt_round}: "
                       f"score {result.validation_score:.4f} >= "
                       f"{settings.quality.min_score}")
-        console.print(f"  {result.video_path}")
+        console.print(f"  {result.media_path}")
         db.close()
         raise typer.Exit(0)
 

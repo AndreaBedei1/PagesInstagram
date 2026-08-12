@@ -29,9 +29,9 @@ from datetime import datetime, timedelta, timezone
 
 from ..accounts.models import PageConfig
 from ..core.errors import PublishError
-from ..core.meta_api import (LONG_LIVED_TOKEN_DAYS, PERMISSIONS_BY_FLAVOR,
-                             REQUIRED_PERMISSIONS, TOKEN_KIND_BY_FLAVOR,
-                             check_upload_method)
+from ..core.meta_api import (IMAGE_POST_SIZE, LONG_LIVED_TOKEN_DAYS,
+                             PERMISSIONS_BY_FLAVOR, REQUIRED_PERMISSIONS,
+                             TOKEN_KIND_BY_FLAVOR, check_upload_method)
 from ..core.settings import Settings
 
 #: A token with fewer days than this left does not start a go-live.
@@ -405,6 +405,21 @@ def check_page(settings: Settings, page: PageConfig, *,
         health.limit = str(quota.get("quota_usage", quota.get("config", "?")))
     except PublishError:
         health.limit = "n/d"
+
+    # The format and the transport have to agree. Meta's resumable upload is a
+    # video protocol — an image post is created from image_url and there is
+    # nothing to stream. The pairing is refused here rather than by Meta, at the
+    # end of a publication that already looked fine.
+    if str(page.publishing.feed_media_type).upper() == "IMAGE":
+        if page.publishing.upload_method == "resumable":
+            health.failures.append(
+                "feed_media_type=IMAGE con upload_method=resumable: il "
+                "resumable upload esiste solo per i video. Un post immagine si "
+                "pubblica da image_url (upload_method=hosted_url)")
+        else:
+            health.notes.append(
+                f"formato: post immagine {IMAGE_POST_SIZE[0]}x{IMAGE_POST_SIZE[1]} "
+                f"(4:5), nessun video e nessuna traccia audio")
 
     if page.publishing.upload_method == "hosted_url":
         # The risk here is a missing host, not the choice of method. Warning

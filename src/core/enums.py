@@ -20,15 +20,20 @@ class Mode(StrEnum):
 class MediaType(StrEnum):
     """Internal media artifact kinds produced by the pipeline.
 
-    The daily *main* content is a ``REEL`` published with ``share_to_feed=true``
-    (i.e. REEL_WITH_FEED_SHARE — visible in the Feed and Reels tabs). The
-    ``STORY_VIDEO`` is the same 9:16 content published as a Story. The 4:5
-    ``FEED_*`` kinds are legacy/optional (hosted_url provider only).
+    The daily *main* content is a ``FEED_IMAGE``: a single 4:5 still, published
+    to the feed. These pages carry writing — a thought, a word, a date — and a
+    still is what writing wants. It also removes an entire class of problem
+    that had nothing to do with the words: an eight-second clip needs an audio
+    track, a silent AAC stream is still an audio stream, and the reverb it
+    picked up was a defect in a component the content never needed.
+
+    ``REEL`` and ``STORY_VIDEO`` remain for pages that genuinely want video;
+    nothing in the image path touches ffmpeg, music or a codec.
     """
 
-    REEL = "reel"                 # main content, 9:16, shared to feed
+    REEL = "reel"                 # 9:16 video, shared to feed
     STORY_VIDEO = "story_video"   # same content as a 9:16 Story
-    FEED_IMAGE = "feed_image"     # legacy/optional (hosted_url)
+    FEED_IMAGE = "feed_image"     # 4:5 still image post — the main format now
     FEED_VIDEO = "feed_video"     # legacy/optional (hosted_url)
     STORY_IMAGE = "story_image"   # legacy/optional
 
@@ -44,6 +49,14 @@ META_MEDIA_TYPE = {
 
 #: MediaTypes that are 9:16 vertical videos (Reel + Story).
 VERTICAL_VIDEO_TYPES = frozenset({MediaType.REEL, MediaType.STORY_VIDEO})
+
+#: MediaTypes that are stills. The publisher sends these as ``image_url`` and
+#: never opens a video probe, a muxer or an audio track for them.
+IMAGE_TYPES = frozenset({MediaType.FEED_IMAGE, MediaType.STORY_IMAGE})
+
+#: MediaTypes that are videos, whatever their shape.
+VIDEO_TYPES = frozenset({MediaType.REEL, MediaType.STORY_VIDEO,
+                         MediaType.FEED_VIDEO})
 
 
 class UploadMethod(StrEnum):

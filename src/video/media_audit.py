@@ -22,7 +22,8 @@ import subprocess
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
-from ..core.meta_api import (REEL_CONTAINERS, REEL_MAX_AUDIO_SAMPLE_RATE,
+from ..core.meta_api import (IMAGE_MAX_FILE_BYTES, IMAGE_POST_SIZE,
+                             REEL_CONTAINERS, REEL_MAX_AUDIO_SAMPLE_RATE,
                              REEL_MAX_FPS, REEL_MAX_SECONDS, REEL_MIN_FPS,
                              REEL_MIN_SECONDS, REEL_VIDEO_CODECS)
 from .ffmpeg import resolve_ffmpeg
@@ -267,14 +268,24 @@ def safe_area_box(width: int = TARGET_WIDTH, height: int = TARGET_HEIGHT,
             "usable_height": height - top - bottom}
 
 
-def write_report(checks: list[MediaCheck], out_path: str | Path) -> Path:
+def write_report(checks: list[MediaCheck], out_path: str | Path,
+                 images: list | None = None) -> Path:
+    """One report for both kinds of media.
+
+    ``images`` holds :class:`~src.publishing.image_audit.ImageCheck` results.
+    They are kept in their own list with their own targets rather than merged
+    into ``files``: a still has no frame rate to report, and a report that
+    prints "fps: 0" for something that cannot have one invites the reader to
+    treat it as a fault.
+    """
     from datetime import datetime, timezone
 
+    images = list(images or [])
     out = Path(out_path)
     out.parent.mkdir(parents=True, exist_ok=True)
     payload = {
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "ok": all(c.ok for c in checks),
+        "ok": all(c.ok for c in checks) and all(c.ok for c in images),
         "targets": {
             "resolution": f"{TARGET_WIDTH}x{TARGET_HEIGHT}",
             "pixel_format": TARGET_PIXEL_FORMAT,
@@ -286,6 +297,12 @@ def write_report(checks: list[MediaCheck], out_path: str | Path) -> Path:
         },
         "safe_area": safe_area_box(),
         "files": [c.as_dict() for c in checks],
+        "image_targets": {
+            "size": f"{IMAGE_POST_SIZE[0]}x{IMAGE_POST_SIZE[1]}",
+            "max_file_bytes": IMAGE_MAX_FILE_BYTES,
+            "formats": ["JPEG", "PNG"],
+        },
+        "images": [c.as_dict() for c in images],
     }
     out.write_text(json.dumps(payload, ensure_ascii=False, indent=2),
                    encoding="utf-8")

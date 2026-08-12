@@ -67,6 +67,15 @@ class DailyMedia:
     media_asset_id: int | None = None
     message: str = ""
 
+    @property
+    def media_path(self) -> str | None:
+        """The artefact to publish, whichever kind this page produces.
+
+        Callers used to read ``video_path`` directly, which quietly returned
+        None the moment a page started publishing stills.
+        """
+        return self.video_path or self.image_path
+
 
 @dataclass
 class PipelineResult:  # legacy multi-aspect result (CLI preview)
@@ -183,7 +192,74 @@ class GenerationPipeline:
             return None, None
         return choice.track["track_id"], choice.track["file_path"]
 
-    # -- MAIN: one shared 9:16 daily video --------------------------------
+    # -- MAIN: one 4:5 still, for pages that publish writing ---------------
+    def _generate_image_post(self, page: PageConfig, content: dict, *,
+                             try_comfyui: bool, allow_fallback: bool,
+                             scheduled_date: str | None, cycle_number: int,
+                             generation_round: int,
+                             max_bg_regens: int = 2) -> AspectOutput:
+        """Background, type, quality loop — and then it stops.
+
+        No music, no ffmpeg, no muxer, no silent audio track. The reverb that
+        prompted this migration lived in a component a still does not have, and
+        the way to be sure it is gone is for the code path not to contain it.
+        """
+        p = self.s.paths
+        aspect = "feed"
+        stem = self._stem(page, content["id"], aspect)
+        template_id = page.template_id()
+        fields = build_fields(template_id, content,
+                              show_author=page.visual.show_author)
+        rres = val = bgres = None
+        for regen in range(max_bg_regens + 1):
+            suffix = f"_bg{regen}" if not generation_round \
+                else f"_r{generation_round}_bg{regen}"
+            bg_path = p.backgrounds / f"{stem}{suffix}.png"
+            seed = background_seed(
+                page_id=page.page_id, content_id=int(content["id"]),
+                scheduled_date=scheduled_date or "", cycle_number=cycle_number,
+                media_type=aspect, attempt=regen,
+                generation_round=generation_round)
+            bgres = self.bg.generate(
+                out_path=bg_path, background_prompt=content.get("background_prompt"),
+                mood=content.get("mood"), profile=page.visual.background_profile,
+                aspect=aspect, seed=seed, allow_fallback=allow_fallback,
+                try_comfyui=try_comfyui)
+            counter = {"n": 0}
+
+            def render_fn(opts, _bg=bgres.path, _stem=stem, _c=counter,
+                          _tpl=template_id, _fields=fields):
+                _c["n"] += 1
+                out = p.posts / f"{_stem}_try{_c['n']}.png"
+                return self.renderer.render(
+                    background_path=_bg, out_path=out, text=content["text"],
+                    content_type=page.content_type, aspect="feed",
+                    template_id=_tpl, fields=_fields,
+                    author=content.get("author_display_name") or content.get("author"),
+                    show_author=page.visual.show_author,
+                    show_source_work=getattr(page.visual, "show_source_work", False),
+                    logo_text=(page.visual.logo_text if page.visual.logo_enabled else None),
+                    options=opts)
+
+            rres, val, _ = self.validator.render_until_valid(render_fn)
+            if val.passed:
+                break
+            log.info("image post: bg regen %s (score=%.2f)", regen, val.score)
+
+        final_img = p.posts / f"{stem}.png"
+        Path(rres.path).replace(final_img)
+        for f in p.posts.glob(f"{stem}_try*.png"):
+            f.unlink(missing_ok=True)
+
+        return AspectOutput(aspect=aspect, background_path=str(bgres.path),
+                            image_path=str(final_img), video_path="",
+                            has_audio=False, passed=bool(val and val.passed),
+                            score=float(val.score if val else 0.0))
+
+    def _publishes_image(self, page: PageConfig) -> bool:
+        return str(page.publishing.feed_media_type).upper() == "IMAGE"
+
+    # -- MAIN: the day's media, in the format the page publishes -----------
     def generate_daily(self, page: PageConfig, content: dict, *,
                        music_track_id: str | None = None,
                        try_comfyui: bool = True,
@@ -191,6 +267,39 @@ class GenerationPipeline:
                        cycle_number: int = 0,
                        generation_round: int = 0) -> DailyMedia:
         allow_fallback = self.s.comfyui_fallback_allowed()
+        if self._publishes_image(page):
+            try:
+                out = self._generate_image_post(
+                    page, content, try_comfyui=try_comfyui,
+                    allow_fallback=allow_fallback, scheduled_date=scheduled_date,
+                    cycle_number=cycle_number, generation_round=generation_round)
+            except ComfyUIError as e:
+                log.error("Background generation failed (fallback disabled): %s", e)
+                return DailyMedia(content_id=content["id"], ok=False,
+                                  message=f"ComfyUI non disponibile e fallback "
+                                          f"vietato: {e}")
+            # The still IS the post, so it goes in post_image_path. Writing it
+            # to story_image_path (as the reel path does, where the 4:5 frame
+            # doubles as the Story) would claim a Story asset that does not
+            # exist and leave the feed asset empty.
+            media_id = self.db.insert_media(
+                content["id"], page.page_id, background_path=out.background_path,
+                post_image_path=out.image_path, story_image_path=None,
+                post_video_path=None,
+                story_video_path=None, music_path=None,
+                render_metadata={"aspect": "feed(4:5)", "score": out.score,
+                                 "format": "image_post",
+                                 "template": page.template_id(),
+                                 "scheduled_date": scheduled_date,
+                                 "cycle_number": cycle_number},
+                validation_score=out.score)
+            return DailyMedia(
+                content_id=content["id"], ok=out.passed, video_path=None,
+                image_path=out.image_path, background_path=out.background_path,
+                music_track_id=None, validation_score=out.score,
+                media_asset_id=media_id,
+                message="" if out.passed
+                        else f"qualità non superata (score {out.score:.2f})")
         track_id, music_path = self._resolve_music(page, content, music_track_id)
         try:
             out = self._generate_one(page, content, "reel", music_path,

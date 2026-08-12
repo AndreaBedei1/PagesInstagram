@@ -36,12 +36,14 @@ class MockGraphClient:
         self._upload_fails = 0
         self._interrupted = False
         self.calls: list[tuple] = []
+        self.last_create_extra: dict = {}
 
     def create_media_container(self, ig_user_id: str, *, media_type: str,
                                image_url: str | None = None,
                                video_url: str | None = None,
                                caption: str | None = None, **extra) -> str:
         self.calls.append(("create", media_type, image_url or video_url))
+        self.last_create_extra = dict(extra)
         if self.rate_limited:
             raise PublishError("mock rate limit", retryable=True, code="4")
         if self._create_fails < self.create_fail_times:

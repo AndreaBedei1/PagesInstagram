@@ -96,7 +96,7 @@ def test_seven_day_plan_creates_exactly_35_main_jobs(env):
 def test_no_story_is_planned_with_the_default_configuration(env):
     s, reg, db, _ = env
     plan_jobs(db, reg, s, days=7)
-    assert {j["media_type"] for j in db.list_jobs()} == {"reel"}
+    assert {j["media_type"] for j in db.list_jobs()} == {"feed_image"}
 
 
 def test_planning_is_idempotent(env):

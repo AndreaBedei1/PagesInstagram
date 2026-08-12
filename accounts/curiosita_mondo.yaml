@@ -18,7 +18,11 @@ publishing:
   missed_job_policy: publish_within_window
   missed_job_window_minutes: 240
   upload_method: resumable
-  feed_media_type: REELS
+  # Post immagine 4:5, non Reel: queste pagine pubblicano testo, e
+  # un fermo immagine e' cio' che il testo vuole. Toglie anche di
+  # mezzo l'audio, che un post scritto non ha mai avuto motivo di
+  # avere.
+  feed_media_type: IMAGE
   share_reel_to_feed: true
   story_media_type: STORIES
 

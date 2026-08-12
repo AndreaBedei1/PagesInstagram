@@ -25,7 +25,11 @@ publishing:
   # nessuna carta, nessun hosting persistente, nessuna porta aperta.
   upload_method: hosted_url
   hosted_url_provider: cloudflare_quick_tunnel
-  feed_media_type: REELS
+  # Post immagine 4:5, non Reel: queste pagine pubblicano testo, e
+  # un fermo immagine e' cio' che il testo vuole. Toglie anche di
+  # mezzo l'audio, che un post scritto non ha mai avuto motivo di
+  # avere.
+  feed_media_type: IMAGE
   share_reel_to_feed: true
   story_media_type: STORIES
 

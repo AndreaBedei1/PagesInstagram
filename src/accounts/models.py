@@ -26,7 +26,7 @@ class PublishingConfig(BaseModel):
     #: public_base_url | cloudflare_quick_tunnel. Empty means "use the
     #: global setting", so a page only states it when it differs.
     hosted_url_provider: str = ""
-    feed_media_type: str = "REELS"
+    feed_media_type: str = "IMAGE"
     story_media_type: str = "STORIES"
     share_reel_to_feed: bool = True
 

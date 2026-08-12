@@ -14,7 +14,8 @@ from pydantic import BaseModel, Field
 
 from .enums import Mode
 from .errors import ConfigError
-from .meta_api import DEFAULT_GRAPH_API_VERSION, valid_version
+from .meta_api import (DEFAULT_GRAPH_API_VERSION, IMAGE_POST_SIZE,
+                       valid_version)
 from .paths import Paths
 
 
@@ -48,7 +49,10 @@ class ComfyUISettings(BaseModel):
 
 
 class RenderingSettings(BaseModel):
-    post_size: tuple[int, int] = (1080, 1350)  # 4:5
+    # The size the renderer draws and the size the audit demands are the same
+    # number by construction. Two copies would let the pipeline produce stills
+    # the publisher then refuses — the drift only shows up mid-publication.
+    post_size: tuple[int, int] = IMAGE_POST_SIZE  # 4:5
     story_size: tuple[int, int] = (1080, 1920)  # 9:16
     safe_margin_ratio: float = 0.08  # fraction of the shorter side
     story_top_safe_ratio: float = 0.14  # Instagram UI reserves top/bottom
@@ -94,7 +98,7 @@ class PublishingSettings(BaseModel):
     # single publication. `public_base_url` is the classic case, and the
     # only one that needs ICE_PUBLIC_MEDIA_BASE_URL.
     hosted_url_provider: str = "public_base_url"
-    feed_media_type: str = "REELS"       # main content -> Reel (share_to_feed)
+    feed_media_type: str = "IMAGE"        # IMAGE (4:5 still) | REELS
     story_media_type: str = "STORIES"
     share_reel_to_feed: bool = True
     # Resumable upload tuning

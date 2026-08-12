@@ -1,33 +1,45 @@
 # Runbook di produzione
 
-## Come esce un Reel, in pratica
+## Come esce un post, in pratica
+
+Queste pagine pubblicano **testo**, quindi il formato è un **post immagine 4:5
+(1080×1350)**: nessun MP4, nessuna traccia audio, nessun ffmpeg nel percorso di
+pubblicazione. Non è solo una semplificazione — un video di otto secondi
+richiede comunque un flusso audio, e il difetto che ha motivato la migrazione
+viveva in un componente che una immagine ferma non ha.
 
 `pensiero_essenziale_it` pubblica con **Facebook Login + hosted_url + Cloudflare
 Quick Tunnel**. La sequenza è interamente automatica e dura quanto una singola
 pubblicazione:
 
 ```
-MP4 locale
+PNG locale 1080×1350
  -> server HTTP che conosce UN file a UN path casuale, su 127.0.0.1
  -> cloudflared tunnel --url http://127.0.0.1:<porta libera>
- -> https://<random>.trycloudflare.com/media/<uuid>.mp4
- -> verifiche: GET 200, HEAD 200, Range 206, video/mp4, dimensione esatta,
+ -> https://<random>.trycloudflare.com/media/<uuid>.png
+ -> verifiche: GET 200, HEAD 200, Range 206, image/png, dimensione esatta,
     e 404 su /, /.env, /.git/, /database/content.sqlite, /stories/
- -> POST /media  media_type=REELS  video_url=...  caption  share_to_feed
+ -> POST /media  media_type=IMAGE  image_url=...  caption
  -> polling fino a FINISHED
  -> UNA media_publish
  -> cloudflared spento, server spento, URL morto
 ```
 
+`share_to_feed` non viene inviato: è un parametro dei Reel e Meta lo rifiuta su
+un contenitore IMAGE. Il percorso video resta nel codice e resta testato — una
+pagina configurata con `feed_media_type: REELS` lo usa ancora — ma nessuna delle
+cinque pagine lo configura.
+
 **A riposo non c'è niente acceso**: nessun tunnel, nessun server, nessuna porta.
 Il worker li apre solo nel momento in cui deve pubblicare.
 
-Perché non il resumable upload, che sarebbe più semplice: su questo account
-`rupload.facebook.com` risponde `ProcessingFailedError` con zero byte accettati,
-con qualunque file e qualunque client — provato anche con `curl` nel formato
-documentato, sul media originale e su uno ricodificato in modo conservativo.
-`video_url` invece funziona. La matrice in `src/core/meta_api.py` impedisce di
-riconfigurare per sbaglio una combinazione che Meta non implementa.
+Perché non il resumable upload, che sarebbe più semplice: è un protocollo per
+video — un'immagine non ha byte da caricare, Meta la preleva da `image_url` — e
+in ogni caso su questo account `rupload.facebook.com` rispondeva
+`ProcessingFailedError` con zero byte accettati, con qualunque file e qualunque
+client. La matrice in `src/core/meta_api.py` impedisce di riconfigurare per
+sbaglio una combinazione che Meta non implementa, e `health-check` rifiuta
+`feed_media_type: IMAGE` accoppiato a `upload_method: resumable`.
 
 Cosa **non** serve: account Cloudflare, carta di credito, dominio, DNS, hosting
 persistente, porte aperte sul router, `ICE_PUBLIC_MEDIA_BASE_URL`.
@@ -186,34 +198,34 @@ giro di pochi giorni.
 
 ### Canary: un solo post, su una sola pagina
 
-Tre livelli, e la differenza è dichiarata:
-
 ```powershell
 .\scripts\go_live_canary.ps1 -WhatIf       # 0 chiamate Meta
-.\scripts\go_live_canary.ps1 -UploadOnly   # upload reale, nessuna pubblicazione
 .\scripts\go_live_canary.ps1               # una sola media_publish
 ```
 
-- **`-WhatIf`** sceglie il job, misura il file contro le specifiche pubblicate,
-  mostra didascalia e account di destinazione, elenca i passi e si ferma.
-  Nessun container, nessun upload, nessuna pubblicazione: non costruisce
-  nemmeno il client Graph.
-- **`-UploadOnly`** crea davvero il container, carica i byte, attende
-  `FINISHED` e si ferma lì. Stampa `UPLOAD META RIUSCITO` e `MEDIA NON
-  PUBBLICATO`. Sull'account non compare niente.
-- **senza parametri** riusa quel container — non ne crea un secondo e non
-  ricarica lo stesso Reel — ti mostra cosa uscirà, e pubblica solo dopo che
-  scrivi esattamente `PUBBLICA`.
+- **`-WhatIf`** sceglie il job, misura il file contro le specifiche pubblicate
+  del suo formato — una immagine contro le specifiche immagine, un Reel contro
+  quelle Reel — mostra didascalia, formato, trasporto e account di destinazione,
+  elenca i passi e si ferma. Nessun tunnel, nessun container, nessuna
+  pubblicazione: non costruisce nemmeno il client Graph.
+- **senza parametri** ti mostra cosa uscirà e pubblica solo dopo che scrivi
+  esattamente `PUBBLICA`. La conferma viene **prima** che il tunnel si apra.
+
+**`-UploadOnly` non esiste per una pagina con Quick Tunnel**, e lo script lo
+dice invece di fingere: il contenitore nasce da un URL che vive solo dentro la
+sessione del tunnel, quindi "carica adesso, pubblica dopo" pubblicherebbe da un
+indirizzo che non risponde più. Creazione, prelievo e pubblicazione sono un atto
+solo. Per una pagina con trasporto `resumable` i livelli restano tre.
 
 Il job scelto è **il primo futuro** della pagina con il media pronto: mai uno
-già scaduto. Se il processo muore fra l'upload e la pubblicazione, il canary
-successivo riconosce il container e propone di finire, invece di crearne un
-altro.
+già scaduto.
 
 Il canary **non arma la pagina**. È l'unico percorso del progetto che può
 pubblicare senza armamento, e resta irraggiungibile per sbaglio: pagina
-esplicita, job esplicito, container già `FINISHED`, audit verde, health check
-verde, processo interattivo, la parola, e una volta sola.
+esplicita, job esplicito, audit verde, health check verde, processo interattivo,
+la parola, e una volta sola. Un container rimasto da un tentativo precedente lo
+ferma invece di essere riusato — il suo URL è morto e vale la pena guardare
+l'account prima di riprovare.
 
 Per sapere a che punto è:
 
@@ -276,9 +288,11 @@ sbagliato sull'account.
 | Dataset | `validate-datasets` | 0 errori bloccanti |
 | Ripetitività | `editorial-stats --strict` | 0 segnalazioni |
 | Segreti | `security-check` | nessuno |
-| Media | `media-audit --buffer --all` | conformi alle specifiche Meta |
+| Media | `media-audit --buffer --all` | immagini 1080×1350 conformi alle specifiche Meta |
 | Versione API | `tools/check_meta_api_version.py` | v25.0 supportata fino al 2028-07-29 |
 | Specifiche Reel | `pytest tests/unit/test_reel_specs.py` | 3 s – 15 min, 300 MB, un'unica fonte |
+| Post immagine | `pytest tests/unit/test_image_post.py tests/unit/test_image_audit.py` | 4:5, niente video/audio, `image_url` |
+| Canary immagine | `pytest tests/unit/test_image_canary.py` | una sola volta, tunnel solo dopo la conferma |
 | Percorso canary | `pytest tests/unit/test_go_live_guards.py` | pubblica una volta, non arma |
 | Wrapper PowerShell | `pytest tests/unit/test_powershell_behaviour.py` | preflight, `-WhatIf`, `-UploadOnly` |
 
@@ -319,9 +333,10 @@ rischierebbe di invalidare token funzionanti.
 
 ## 6. Limiti dichiarati
 
-- **Nessuna chiamata Meta autenticata è mai stata eseguita.** Il client è
-  verificato contro la documentazione ufficiale e con mock; la prima prova reale
-  è il canary.
+- Su `@pensiero_essenziale` sono già usciti **due Reel reali** (canary del
+  trasporto resumable e canary del Quick Tunnel). Le altre quattro pagine non
+  hanno mai effettuato una chiamata Meta autenticata: per ciascuna la prima
+  prova reale sarà il proprio canary.
 - Il corpus è verificato **automaticamente a partire dalle fonti**
   (`verification_executor: automated_source_first`), non da una persona che ha
   letto cinquemila schede. Ogni elemento porta la prova con cui è stato

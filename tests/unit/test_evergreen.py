@@ -60,8 +60,10 @@ def test_five_yaml_pages_load(project_paths):
                     == "cloudflare_quick_tunnel")
         else:
             assert page.publishing.upload_method == "resumable"
-        assert page.publishing.feed_media_type == "REELS"
-        assert page.publishing.share_reel_to_feed is True
+        # Every page publishes a 4:5 still. share_reel_to_feed is kept in the
+        # configuration but means nothing to an image post; the publisher only
+        # sends it for a REEL.
+        assert page.publishing.feed_media_type == "IMAGE"
 
 
 def test_exactly_five_active_pages(project_paths):

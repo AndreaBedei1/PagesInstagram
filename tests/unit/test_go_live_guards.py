@@ -241,15 +241,20 @@ def test_canary_plan_cannot_reach_the_network_at_all(monkeypatch):
     result = CliRunner().invoke(
         cli, ["instagram", "canary-plan", "--page", PAGE_ID, "--json"])
     assert not isinstance(result.exception, AssertionError), result.exception
-    if result.exit_code != 0:
-        # No buffer on this machine: the command still has to have got as far
-        # as looking, without a socket. Anything else is a real failure.
-        assert "Nessun job futuro" in result.output, result.output
-        return
+
+    # This test is about the socket, not about the verdict. The command runs
+    # against the real database, so it legitimately exits 1 for reasons that
+    # have nothing to do with the network — no buffer, or a file that fails its
+    # audit. What it must never do is open a connection, and it must always get
+    # far enough to say something intelligible.
     import json
 
-    payload = json.loads(result.output.strip().splitlines()[-1])
+    output = result.output.strip()
+    if "Nessun job futuro" in output:
+        return
+    payload = json.loads(output.splitlines()[-1])
     assert payload["job_id"] and payload["output_path"], payload
+    assert payload["transport"], payload
 
 
 def test_canary_selects_a_future_job_never_an_expired_one(tmp_db, project_paths):

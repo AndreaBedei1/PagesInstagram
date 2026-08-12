@@ -57,6 +57,17 @@ CLOUDFLARED_URL = ("https://github.com/cloudflare/cloudflared/releases/latest/"
 
 TRYCLOUDFLARE_RE = re.compile(r"https://[a-z0-9][a-z0-9-]*\.trycloudflare\.com")
 
+#: What Meta is told the bytes are. Guessed from the extension rather than
+#: assumed to be video: a still image post is now the main format, and serving
+#: a PNG as video/mp4 would fail in a way that reads like a network problem.
+CONTENT_TYPES = {".mp4": "video/mp4", ".mov": "video/quicktime",
+                 ".png": "image/png", ".jpg": "image/jpeg",
+                 ".jpeg": "image/jpeg"}
+
+
+def content_type_for(path) -> str:
+    return CONTENT_TYPES.get(Path(path).suffix.lower(), "application/octet-stream")
+
 #: Paths that must never resolve, checked against the live tunnel before Meta
 #: is told the URL exists. Not a formality: this is the whole security argument.
 FORBIDDEN_PATHS = ("/", "/.env", "/.git/", "/database/content.sqlite",
@@ -76,6 +87,7 @@ class _OneFileHandler(BaseHTTPRequestHandler):
     file_path: Path = Path()
     route: str = ""
     size: int = 0
+    content_type: str = "application/octet-stream"
 
     def log_message(self, fmt, *args):
         log.debug("one-file %s %s", self.address_string(), fmt % args)
@@ -92,7 +104,7 @@ class _OneFileHandler(BaseHTTPRequestHandler):
         if not self._authorised():
             return self._not_found()
         self.send_response(200)
-        self.send_header("Content-Type", "video/mp4")
+        self.send_header("Content-Type", self.content_type)
         self.send_header("Content-Length", str(self.size))
         self.send_header("Accept-Ranges", "bytes")
         self.end_headers()
@@ -123,7 +135,7 @@ class _OneFileHandler(BaseHTTPRequestHandler):
             return
         length = end - start + 1
         self.send_response(206 if partial else 200)
-        self.send_header("Content-Type", "video/mp4")
+        self.send_header("Content-Type", self.content_type)
         self.send_header("Content-Length", str(length))
         self.send_header("Accept-Ranges", "bytes")
         if partial:
@@ -163,7 +175,9 @@ class OneFileServer:
         # A fresh UUID per publication: an address that leaks is worthless the
         # moment the tunnel closes, and it never encodes the job, the page, the
         # date or the real filename.
-        self.route = route or f"/media/{uuid.uuid4()}.mp4"
+        self.content_type = content_type_for(self.file_path)
+        suffix = self.file_path.suffix.lower() or ".bin"
+        self.route = route or f"/media/{uuid.uuid4()}{suffix}"
         self.port = port or free_port()
         self._server: ThreadingHTTPServer | None = None
         self._thread: threading.Thread | None = None
@@ -175,7 +189,7 @@ class OneFileServer:
     def start(self) -> "OneFileServer":
         handler = type("_Bound", (_OneFileHandler,),
                        {"file_path": self.file_path, "route": self.route,
-                        "size": self.size})
+                        "size": self.size, "content_type": self.content_type})
         self._server = ThreadingHTTPServer(("127.0.0.1", self.port), handler)
         self._thread = threading.Thread(target=self._server.serve_forever,
                                         name="one-file-server", daemon=True)
@@ -397,6 +411,7 @@ def wait_until_reachable(url: str, *, timeout: float = EDGE_READY_TIMEOUT,
 
 
 def check_public_url(url: str, expected_size: int, *,
+                     expected_type: str = "video/mp4",
                      timeout: float = 45.0, session=None) -> TunnelHealth:
     """Prove the URL works, and prove nothing else does — before telling Meta.
 
@@ -417,9 +432,10 @@ def check_public_url(url: str, expected_size: int, *,
         health.checks["bytes"] = body
         if r.status_code != 200:
             health.problems.append(f"GET {r.status_code}, atteso 200")
-        if (r.headers.get("Content-Type") or "").split(";")[0] != "video/mp4":
+        if (r.headers.get("Content-Type") or "").split(";")[0] != expected_type:
             health.problems.append(
-                f"Content-Type {r.headers.get('Content-Type')!r}, atteso video/mp4")
+                f"Content-Type {r.headers.get('Content-Type')!r}, "
+                f"atteso {expected_type}")
         if body != expected_size:
             health.problems.append(
                 f"{body} byte serviti, {expected_size} attesi")
@@ -502,7 +518,8 @@ class TunnelSession:
                 raise PublishError(
                     "l'edge Cloudflare non ha instradato il tunnel entro il "
                     "tempo previsto", retryable=True, code="TUNNEL_EDGE")
-            self.health = check_public_url(self.public_url, self.server.size)
+            self.health = check_public_url(self.public_url, self.server.size,
+                                           expected_type=self.server.content_type)
             if not self.health.ok:
                 raise PublishError(
                     "il tunnel non ha superato i controlli: "
@@ -526,6 +543,11 @@ class TunnelSession:
                 log.warning("errore fermando %s: %s", name, e)
         if self.tunnel and self.tunnel.alive:
             log.error("cloudflared risulta ancora vivo dopo lo stop")
+        elif self.public_url:
+            # A clean teardown used to leave no trace at all, which makes "did
+            # it really close?" a question the log cannot answer. It can now.
+            log.info("tunnel chiuso: cloudflared e server fermi, URL non più "
+                     "raggiungibile")
         self.tunnel = None
         self.server = None
         if self._lock is not None:
