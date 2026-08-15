@@ -653,6 +653,10 @@ def worker(interval: float = typer.Option(60.0), once: bool = typer.Option(False
             stats = w.run_once()
             console.print(f"[green]tick[/] published={stats.published} prepared={stats.prepared} "
                           f"skipped={stats.skipped} review={stats.review} failed={stats.failed}")
+            if stats.blocked:
+                console.print(f"[red]{stats.blocked} pubblicazioni non tentate: "
+                              f"Meta sta rifiutando le credenziali[/] — "
+                              f"'instagram health-check' per il dettaglio")
         else:
             stop = threading.Event()
             try:
@@ -1263,14 +1267,28 @@ def arm_page(
 def arming_status():
     """Which pages may publish, and since when."""
     from ..publishing.arming import all_states
+    from ..publishing.credential_block import block_state
 
     paths, settings, registry, db = _ctx()
     t = Table(title=f"Armamento — ICE_MODE={settings.mode}")
     t.add_column("pagina"); t.add_column("stato"); t.add_column("dal")
+    # An armed page that Meta is refusing publishes nothing, and "armata" on its
+    # own reads as "sta pubblicando". The two facts belong in the same table.
+    t.add_column("credenziali")
+    blocked = []
     for s in all_states(db, registry.ids()):
+        cb = block_state(db, s.page_id)
+        if cb:
+            blocked.append((s.page_id, cb))
         t.add_row(s.page_id, "[green]armata[/]" if s.armed else "disarmata",
-                  s.armed_at or "—")
+                  s.armed_at or "—",
+                  f"[red]rifiutate dal {cb.get('since', '?')}[/]" if cb
+                  else "[green]accettate[/]")
     console.print(t)
+    for page_id, cb in blocked:
+        console.print(f"[red]{page_id}:[/] {cb.get('message', '')}")
+        console.print("  le pubblicazioni sono sospese; i job restano "
+                      "pubblicabili e riprendono da soli appena Meta accetta.")
     db.close()
 
 

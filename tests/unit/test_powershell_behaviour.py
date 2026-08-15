@@ -98,10 +98,17 @@ def run_script(tmp_path: Path, script: str, *args: str, codes: str = "",
     env.update({"ICE_STUB_LOG": str(log), "ICE_STUB_CODES": codes,
                 "ICE_STUB_PLAN": plan})
 
-    # An empty .env, so the operator's real one is invisible to the test.
+    # An empty .env, so the operator's real one is invisible to the test — and,
+    # for rollback.ps1, untouched. These scripts run for real against the real
+    # scripts directory; the Python stub catches the CLI calls but not a
+    # PowerShell rewrite of a file, and rollback.ps1 rewrites ICE_MODE. Without
+    # this seam every full test run quietly returned a production machine to
+    # dry_run, which is precisely the kind of silent stop this suite exists to
+    # prevent.
     env_file = tmp_path / "dotenv"
-    env_file.write_text("", encoding="utf-8")
-    extra = ["-EnvFile", str(env_file)] if script == "preflight.ps1" else []
+    env_file.write_text("ICE_MODE=production\n", encoding="utf-8")
+    extra = (["-EnvFile", str(env_file)]
+             if script in ("preflight.ps1", "rollback.ps1") else [])
 
     result = subprocess.run(
         [_POWERSHELL, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
@@ -279,3 +286,27 @@ def test_arm_all_pages_requires_the_word(tmp_path):
     run = run_script(tmp_path, "arm_all_pages.ps1", stdin="no\n")
     assert run.returncode == 0
     assert not run.called("arm-page all"), "senza ARMA non si arma niente"
+
+
+# ---- the suite must not touch the machine it runs on ----------------------
+def test_no_script_rewrites_the_operators_env_file(tmp_path):
+    """A test run must never change what the machine does in production.
+
+    rollback.ps1 rewrites ICE_MODE, in plain PowerShell that the Python stub
+    cannot intercept, and the tests run it for real. So every full run put a
+    live machine back into dry_run: the worker kept ticking, the health check
+    stayed green, and nothing was ever published again — the failure mode this
+    whole suite is meant to catch, caused by the suite itself.
+    """
+    real_env = ROOT / ".env"
+    before = real_env.read_bytes() if real_env.exists() else None
+
+    run = run_script(tmp_path, "rollback.ps1")
+    assert run.returncode == 0, run.stdout
+
+    after = real_env.read_bytes() if real_env.exists() else None
+    assert after == before, (
+        "rollback.ps1 ha riscritto il .env reale durante i test")
+
+    # and it did rewrite the file it was given, so the seam is real
+    assert "dry_run" in (tmp_path / "dotenv").read_text(encoding="utf-8")

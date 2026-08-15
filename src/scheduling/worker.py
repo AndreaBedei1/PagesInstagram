@@ -21,6 +21,7 @@ from ..core.timeutils import now_utc, parse_iso, utcnow_iso
 from ..database import Database
 from ..content.service import (SelectionError, select_content_for_date,
                                select_content_for_page)
+from ..publishing import credential_block
 from ..publishing.publisher import Publisher
 from .pipeline import GenerationPipeline
 
@@ -43,6 +44,8 @@ class TickStats:
     failed: int = 0
     review: int = 0
     cleaned: int = 0
+    #: Publication attempts not made because Meta is refusing the credentials.
+    blocked: int = 0
     messages: list[str] = field(default_factory=list)
 
 
@@ -82,9 +85,9 @@ class Worker:
         if self.cleanup_enabled:
             self._cleanup_media(stats)
         log.info("tick: planned=%d prepared=%d published=%d skipped=%d resched=%d "
-                 "review=%d failed=%d cleaned=%d", stats.planned, stats.prepared,
-                 stats.published, stats.skipped, stats.rescheduled, stats.review,
-                 stats.failed, stats.cleaned)
+                 "review=%d failed=%d cleaned=%d bloccati=%d", stats.planned,
+                 stats.prepared, stats.published, stats.skipped, stats.rescheduled,
+                 stats.review, stats.failed, stats.cleaned, stats.blocked)
         return stats
 
     def _plan(self, stats: TickStats) -> None:
@@ -260,6 +263,8 @@ class Worker:
         for job in jobs:
             if self.db.is_page_paused(job["page_id"]):
                 continue
+            if self._credentials_refused(job["page_id"], stats):
+                continue
             status = JobStatus(job["status"])
             if status not in _INFLIGHT:  # MEDIA_READY -> subject to missed policy
                 action = self._missed_action(job, now_dt)
@@ -281,6 +286,39 @@ class Worker:
                 stats.published += 1
             elif outcome.status == JobStatus.FAILED:
                 stats.failed += 1
+
+    def _credentials_refused(self, page_id: str, stats: TickStats) -> bool:
+        """Is this page still barred by Meta — and is it time to ask again?
+
+        Retrying a refused token every minute publishes nothing, fills the log,
+        and is itself the kind of behaviour that gets an app blocked. So the
+        page waits, and the engine re-probes on a slow clock with the cheapest
+        read there is. The moment Meta accepts it again the mark is cleared and
+        this tick goes on to publish normally — no operator, no restart.
+        """
+        state = credential_block.block_state(self.db, page_id)
+        if not state:
+            return False
+        if not credential_block.due_for_probe(state):
+            stats.blocked += 1
+            return True
+
+        credential_block.mark_probe(self.db, page_id)
+        page = self.registry.get(page_id)
+        target = self.publisher._factory(page)
+        if target is None:
+            stats.blocked += 1
+            return True
+        ok, detail = credential_block.probe(target)
+        if not ok:
+            credential_block.record_block(self.db, page_id, detail)
+            log.warning("%s: credenziali ancora rifiutate (%s)", page_id, detail)
+            stats.blocked += 1
+            return True
+        credential_block.clear_block(self.db, page_id)
+        self.db.log_event(job_id=None, page_id=page_id,
+                          event="credentials_restored", response_summary=detail)
+        return False
 
     def _missed_action(self, job: dict, now_dt) -> str:
         sched = parse_iso(job["scheduled_at"])

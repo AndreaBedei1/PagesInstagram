@@ -35,6 +35,7 @@ from ..core.settings import Settings
 from ..core.timeutils import now_utc, parse_iso, utcnow_iso
 from ..database import Database
 from .credentials import resolve_credentials
+from .credential_block import is_auth_error, record_block
 from .graph_client import GraphClient
 
 log = get_logger("publishing.publisher")
@@ -506,6 +507,25 @@ class Publisher:
     def _handle_failure(self, job: dict, page: PageConfig,
                         e: PublishError) -> PublishOutcome:
         jid = job["id"]
+
+        # Meta refusing the credentials is not this job's fault. The media, the
+        # caption and the slot are all fine; what is missing is permission to
+        # speak. Burning the job as FAILED lost a post a day for two days while
+        # an app-level block was in force. It stays publishable instead, and
+        # the page is marked so the worker stops asking until the credentials
+        # are accepted again.
+        if is_auth_error(e):
+            state = record_block(self.db, page.page_id, str(e))
+            self.db.update_job(jid, status=JobStatus.MEDIA_READY,
+                               last_error=str(e), container_id=None,
+                               upload_uri=None, upload_offset=0)
+            self.db.log_event(job_id=jid, page_id=page.page_id,
+                              event="credentials_blocked", error=str(e))
+            log.error("job %s non pubblicato: %s (dal %s) — il job resta "
+                      "pubblicabile", jid, e, state.get("since"))
+            return PublishOutcome(jid, JobStatus.MEDIA_READY, self.s.mode,
+                                  message=f"credenziali rifiutate da Meta: {e}")
+
         retry_count = int(job.get("retry_count") or 0) + 1
         # A failed container must be recreated on the next attempt.
         clear_container = e.code in ("ERROR", "EXPIRED")
