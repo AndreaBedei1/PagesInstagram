@@ -247,12 +247,30 @@ costoso possibile: cinque account che partono insieme.
 ### Avviare, controllare, fermare
 
 ```powershell
-.\scripts\install_worker.ps1     # attività pianificata (logon + recupero giornaliero)
+.\scripts\install_worker.ps1     # fa ripartire il worker a ogni accesso
 .\scripts\start_worker.ps1       # in primo piano; -Once per un solo ciclo
 .\scripts\status.ps1             # modalità, armamento, job, worker
 .\scripts\stop_worker.ps1        # ferma subito; -Disarm disarma anche le pagine
+.\scripts\unregister_task_scheduler.ps1  # smette di ripartire da solo
 .\scripts\rollback.ps1           # ferma, disarma, riporta a dry_run
 ```
+
+`install_worker.ps1` prova prima l'**attività pianificata** — è il meccanismo
+migliore dove si può creare: riavvia il worker se muore e recupera se il PC era
+spento all'orario previsto. Dove la policy della macchina la vieta, sia
+`Register-ScheduledTask` sia `schtasks.exe` rispondono `Accesso negato`
+(0x80070005), e non c'è modo di aggirarlo con più tentativi. In quel caso lo
+script **ripiega da solo** sull'**Esecuzione automatica dell'utente**, che non
+richiede privilegi: un `.vbs` nella cartella Startup lancia
+`scripts\worker_loop.cmd`, senza finestra, e il ciclo riavvia il worker se il
+processo muore. Lo script dice **quale** dei due meccanismi ha usato, e
+`status.ps1` lo ripete: "installato" senza dire come è la frase che lascia una
+macchina a non pubblicare niente.
+
+In entrambi i casi il worker parte **all'accesso**, quindi il PC deve essere
+acceso e l'utente collegato all'orario di pubblicazione. Se era spento, al primo
+avvio si applica la `missed_job_policy` della pagina: 240 minuti di recupero,
+oltre i quali il giorno viene saltato invece di uscire fuori tempo.
 
 `rollback.ps1` non può cancellare un post già pubblicato — l'API non lo
 consente — ma garantisce che non ne esca un altro e ti elenca cosa è uscito.

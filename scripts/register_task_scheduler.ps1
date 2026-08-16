@@ -46,6 +46,13 @@ Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger `
   -Settings $settings -Principal $principal `
   -Description "Instagram Content Engine worker (plan -> generate -> publish)." | Out-Null
 
+# Claimed before checking, once. On a machine whose policy forbids task
+# creation this printed "registrato" and then the access-denied error, and the
+# first line is the one a person believes. Ask the scheduler instead.
+if (-not (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue)) {
+  Write-Host "Task '$TaskName' NON registrato: la creazione e' stata rifiutata." -ForegroundColor Red
+  exit 1
+}
 Write-Host "Task '$TaskName' registrato (avvio al login, riavvio automatico)." -ForegroundColor Green
 Write-Host "Avvio immediato:  Start-ScheduledTask -TaskName $TaskName"
 Write-Host "Rimozione:        scripts\unregister_task_scheduler.ps1"

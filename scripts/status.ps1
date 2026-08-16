@@ -24,7 +24,17 @@ if ($task) {
     Write-Host "  ultima esec. : $($info.LastRunTime)  esito $($info.LastTaskResult)"
     Write-Host "  prossima     : $($info.NextRunTime)"
 } else {
-    Write-Host "  attività pianificata non registrata (scripts\install_worker.ps1)"
+    # Not necessarily a problem: where policy forbids scheduled tasks the engine
+    # starts from the per-user Startup folder instead. Reporting only the task
+    # would call a working machine unconfigured.
+    $vbs = Join-Path ([Environment]::GetFolderPath('Startup')) 'InstagramContentEngineWorker.vbs'
+    if (Test-Path $vbs) {
+        Write-Host "  avvio        : automatico all'accesso (Esecuzione automatica)"
+        Write-Host "                 $vbs"
+    } else {
+        Write-Host "  avvio        : NON automatico — non riparte dopo un riavvio"
+        Write-Host "                 (scripts\install_worker.ps1)"
+    }
 }
 # The running worker holds an exclusive lock on this file, so Get-Content
 # throws exactly when the answer is most interesting. A lock that cannot be
